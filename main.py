@@ -4,27 +4,30 @@ import sys
 # Initialisation de Pygame
 pygame.init()
 
-# Dimensions de la fenêtre
+# Dimensions de l'écran
 screen_width, screen_height = 800, 600
-screen = pygame.display.set_mode((screen_width, screen_height))
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)  # Fenêtre redimensionnable
 pygame.display.set_caption("Menu Principal")
+
+# Chargement du fond d'écran
+background = pygame.image.load("background/prison-cellulaire.jpg").convert()
+background = pygame.transform.scale(background, (screen_width, screen_height))
 
 # Couleurs
 white = (255, 255, 255)
 black = (0, 0, 0)
-gray = (200, 200, 200)
 
-# Police
+# Police pour les boutons
 font = pygame.font.Font(None, 50)
 
-# Boutons
+# Boutons (définis par des rectangles)
 button_play = pygame.Rect(300, 150, 200, 50)
 button_settings = pygame.Rect(300, 250, 200, 50)
 button_quit = pygame.Rect(300, 350, 200, 50)
 
 def draw_menu():
-    """Dessine le menu principal."""
-    screen.fill(white)
+    """Dessine le menu principal avec les boutons."""
+    screen.blit(background, (0, 0))  # Affiche le fond
 
     # Dessiner les boutons
     pygame.draw.rect(screen, black, button_play)
@@ -40,39 +43,16 @@ def draw_menu():
     screen.blit(settings_text, (button_settings.x + 10, button_settings.y + 5))
     screen.blit(quit_text, (button_quit.x + 50, button_quit.y + 5))
 
-def game_page():
-    """Affiche la page de jeu."""
-    running_game = True
-    while running_game:
-        screen.fill(gray)
-        game_text = font.render("Page de Jeu - Appuyez sur Echap pour revenir", True, black)
-        screen.blit(game_text, (50, screen_height // 2 - 25))
-        pygame.display.flip()
+def toggle_fullscreen():
+    """Permet de basculer entre plein écran et mode fenêtré."""
+    global screen
+    fullscreen = pygame.display.get_surface().get_flags() & pygame.FULLSCREEN
+    if fullscreen:
+        screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
+    else:
+        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running_game = False
-                return False
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running_game = False
-
-def settings_page():
-    """Affiche la page des paramètres."""
-    running_settings = True
-    while running_settings:
-        screen.fill(gray)
-        settings_text = font.render("Page des Paramètres - Appuyez sur Echap pour revenir", True, black)
-        screen.blit(settings_text, (50, screen_height // 2 - 25))
-        pygame.display.flip()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running_settings = False
-                return False
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running_settings = False
-
-# Boucle principale
+# Boucle principale du menu
 running = True
 while running:
     draw_menu()
@@ -82,13 +62,9 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Clic gauche
-            if button_play.collidepoint(event.pos):
-                game_page()
-            elif button_settings.collidepoint(event.pos):
-                settings_page()
-            elif button_quit.collidepoint(event.pos):
-                running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_f:  # Appuyer sur 'F' pour basculer en plein écran
+                toggle_fullscreen()
 
 pygame.quit()
 sys.exit()
