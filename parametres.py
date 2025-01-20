@@ -6,10 +6,10 @@ def page_parametres():
     act = True
     while act:
         ecr.fill((150, 150, 150))
-        txt = fnt.render("Page des Paramètres - Appuyez sur Echap pour revenir", True, BLC)
-        ecr.blit(txt, (50, htr // 2 - 25))
+        txt = fnt.render("Paramètres - ECHAP pour revenir", True, BLC)
+        ecr.blit(txt, (50, htr//2 - 25))
         display.flip()
-
+        
         for evt in event.get():
             if evt.type == QUIT:
                 return False
