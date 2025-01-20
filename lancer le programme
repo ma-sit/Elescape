@@ -1,0 +1,3 @@
+Creer un fichier appelé "game" puis introduire le programme principal appelé "main.py"
+Pour pouvoir lancer le menu/programme principal, il faut telecharger le background du menu nommé "bg_menu.png".
+Ensuite, dans le fichier "game", creer un fichier "background" où sera introduit le fichier "bg_menu.png"
