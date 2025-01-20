@@ -1,5 +1,7 @@
 from pygame import *
 
+init()
+
 # Initialisation écran
 ecr = display.set_mode((0, 0), FULLSCREEN)  # Plein écran par défaut
 rec = ecr.get_rect()
