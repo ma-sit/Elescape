@@ -10,7 +10,7 @@ screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE
 pygame.display.set_caption("Menu Principal")
 
 # Chargement du fond d'écran
-background = pygame.image.load("background/bg_menu.jpg").convert()
+background = pygame.image.load("background/bg_menu.png").convert()
 background = pygame.transform.scale(background, (screen_width, screen_height))
 
 # Couleurs
