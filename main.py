@@ -1,17 +1,19 @@
-import pygame
+from pygame import *
 import sys
+import pygame
 
 # Initialisation de Pygame
 pygame.init()
 
 # Dimensions initiales de l'écran
-screen_width, screen_height = 800, 600
-screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)  # Fenêtre redimensionnable
+screen = pygame.display.set_mode((0, 0), FULLSCREEN)  # Fenêtre redimensionnable
+scrrec = screen.get_rect()
 pygame.display.set_caption("Menu Principal")
+width, height = screen.get_size()
 
 # Chargement du fond d'écran
 background = pygame.image.load("background/bg_menu.png").convert()
-background = pygame.transform.scale(background, (screen_width, screen_height))
+background = pygame.transform.scale(background, (scrrec.right, scrrec.bottom))
 
 # Couleurs
 white = (255, 255, 255)
@@ -20,10 +22,15 @@ black = (0, 0, 0)
 # Police pour les boutons
 font = pygame.font.Font(None, 50)
 
+# Taille des boutons
+
+b_whidth = 250
+b_height = 60
+
 # Boutons (définis par des rectangles)
-button_play = pygame.Rect(300, 150, 200, 50)
-button_settings = pygame.Rect(300, 250, 200, 50)
-button_quit = pygame.Rect(300, 350, 200, 50)
+button_play = pygame.Rect(width/2-b_whidth/2, height/2-100, b_whidth, b_height)
+button_settings = pygame.Rect(width/2-b_whidth/2, height/2, b_whidth, b_height)
+button_quit = pygame.Rect(width/2-b_whidth/2, height/2+100, b_whidth, b_height)
 
 def draw_menu():
     """Dessine le menu principal avec les boutons."""
@@ -39,9 +46,9 @@ def draw_menu():
     settings_text = font.render("Paramètres", True, white)
     quit_text = font.render("Quitter", True, white)
 
-    screen.blit(play_text, (button_play.x + 50, button_play.y + 5))
-    screen.blit(settings_text, (button_settings.x + 10, button_settings.y + 5))
-    screen.blit(quit_text, (button_quit.x + 50, button_quit.y + 5))
+    screen.blit(play_text, (button_play.x + 75, button_play.y + b_height/5))
+    screen.blit(settings_text, (button_settings.x + 25, button_settings.y + b_height/5))
+    screen.blit(quit_text, (button_quit.x + 60, button_quit.y + b_height/5))
 
 def game_page():
     """Affiche la page de jeu."""
