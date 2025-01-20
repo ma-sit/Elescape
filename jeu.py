@@ -2,7 +2,7 @@ from pygame import *
 from config import *
 
 def page_jeu():
-    """Page du jeu"""
+    """Page de jeu"""
     act = True
     while act:
         ecr.fill((100, 100, 100))
