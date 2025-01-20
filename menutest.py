@@ -1,38 +1,31 @@
-
-import pygame
-import sys
+from pygame import *
 from config import *
 
-# Initialisation fenêtre
-def init_fenetre():
-    """Configure la fenêtre principale du jeu"""
-    pygame.init()
-    ecr = pygame.display.set_mode((LRG, HTR), pygame.RESIZABLE)
-    pygame.display.set_caption("Menu Principal")
-    return ecr
-
-def dessiner_menu(ecr, fnt, fnd):
-    """Affiche les éléments du menu"""
+def dessiner_menu(ecr, fnd):
+    """Dessine le menu"""
+    # Affiche fond
     ecr.blit(fnd, (0, 0))
-    
-    # Dessin boutons
-    pygame.draw.rect(ecr, NOR, btn_jeu)
-    pygame.draw.rect(ecr, NOR, btn_cfg)
-    pygame.draw.rect(ecr, NOR, btn_fin)
-    
-    # Textes des boutons
+
+    # Dessine boutons
+    draw.rect(ecr, NOR, btn_jeu)
+    draw.rect(ecr, NOR, btn_cfg)
+    draw.rect(ecr, NOR, btn_fin)
+
+    # Texte boutons
     txt_jeu = fnt.render("Jouer", True, BLC)
     txt_cfg = fnt.render("Paramètres", True, BLC)
     txt_fin = fnt.render("Quitter", True, BLC)
-    
-    ecr.blit(txt_jeu, (btn_jeu.x + 50, btn_jeu.y + 5))
-    ecr.blit(txt_cfg, (btn_cfg.x + 10, btn_cfg.y + 5))
-    ecr.blit(txt_fin, (btn_fin.x + 50, btn_fin.y + 5))
 
-def plein_ecran(ecr):
-    """Bascule entre mode fenêtré et plein écran"""
-    if pygame.display.get_surface().get_flags() & pygame.FULLSCREEN:
-        ecr = pygame.display.set_mode((LRG, HTR), pygame.RESIZABLE)
+    # Position texte
+    ecr.blit(txt_jeu, (btn_jeu.x + 75, btn_jeu.y + btn_h/5))
+    ecr.blit(txt_cfg, (btn_cfg.x + 25, btn_cfg.y + btn_h/5))
+    ecr.blit(txt_fin, (btn_fin.x + 60, btn_fin.y + btn_h/5))
+
+def plein_ecran():
+    """Bascule plein écran"""
+    global ecr
+    if display.get_surface().get_flags() & FULLSCREEN:
+        ecr = display.set_mode((lrg, htr), RESIZABLE)
     else:
-        ecr = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-    return ecr
+        ecr = display.set_mode((0, 0), FULLSCREEN)
+
