@@ -1,0 +1,12 @@
+ID;Nom;Créations;DR;Image
+0;Humain;6,5,9;1;image/humain
+1;Seau d'eau;4;0;image/seau_d'eau
+2;Graine;4;0;image/graine
+3;Pierre;6;1;image/pierre
+4;Plante;5;0;image/plante
+5;Bois;7;1;image/bois
+6;Etincelles;7;0;image/etincelles
+7;Chaleur;8;0;image/chaleur
+8;Metal;9;0;image/metal
+9;Clé;;1;image/clé
+10;Seau;8;0;image/seau
