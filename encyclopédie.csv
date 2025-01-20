@@ -1,4 +1,4 @@
-ID;Nom;Créations;DR;Image
+ID;Nom;CrÃ©ations;DR;Image
 0;Humain;6,5,9;1;image/humain
 1;Seau d'eau;4;0;image/seau_d'eau
 2;Graine;4;0;image/graine
@@ -8,5 +8,13 @@ ID;Nom;Créations;DR;Image
 6;Etincelles;7;0;image/etincelles
 7;Chaleur;8;0;image/chaleur
 8;Metal;9;0;image/metal
-9;Clé;;1;image/clé
+9;ClÃ©;;1;image/clÃ©
 10;Seau;8;0;image/seau
+11;Pioche;
+12;Lame;
+13;Pierre lisse;
+14;Metal;
+15;Feu;
+16;Cuisiner;
+17;Gaz;
+18;Energie;
