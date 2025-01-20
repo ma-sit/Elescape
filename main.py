@@ -2,13 +2,13 @@ from pygame import *
 import sys
 from config import *
 from menu import dessiner_menu, plein_ecran
-from jeu import page_jeu
+from selection_niveau import selection_niveau
 from parametres import page_parametres
 
-# Initialisation de Pygame
+# Initialisation
 init()
 
-# Chargement du fond d'écran
+# Chargement fond menu
 fnd = image.load("background/bg_menu.png").convert()
 fnd = transform.scale(fnd, (rec.right, rec.bottom))
 
@@ -21,25 +21,23 @@ while act:
     for evt in event.get():
         if evt.type == QUIT:
             act = False
-
-        # Gestion des clics souris
+            
         if evt.type == MOUSEBUTTONDOWN and evt.button == 1:
             if btn_jeu.collidepoint(evt.pos):
-                act = page_jeu()
+                act = selection_niveau()
             elif btn_cfg.collidepoint(evt.pos):
                 act = page_parametres()
             elif btn_fin.collidepoint(evt.pos):
                 act = False
 
-        # Gestion clavier
         if evt.type == KEYDOWN:
-            if evt.key == K_f:      # F: plein écran
+            if evt.key == K_f:
                 plein_ecran()
-            elif evt.key == K_p:    # P: jouer
-                act = page_jeu()
-            elif evt.key == K_s:    # S: paramètres
+            elif evt.key == K_p:
+                act = selection_niveau()
+            elif evt.key == K_s:
                 act = page_parametres()
-            elif evt.key == K_q:    # Q: quitter
+            elif evt.key == K_q:
                 act = False
 
 quit()
