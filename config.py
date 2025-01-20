@@ -1,13 +1,13 @@
 from pygame import *
 
 # Initialisation écran
-ecr = display.set_mode((0, 0), FULLSCREEN)
+ecr = display.set_mode((0, 0), FULLSCREEN)  # Plein écran par défaut
 rec = ecr.get_rect()
 lrg, htr = ecr.get_size()
 
-# Dimensions boutons
-btn_l = 250  # Largeur bouton
-btn_h = 60   # Hauteur bouton
+# Taille des boutons
+btn_l = 250
+btn_h = 60
 
 # Couleurs
 BLC = (255, 255, 255)
