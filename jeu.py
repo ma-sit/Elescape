@@ -1,7 +1,7 @@
 from pygame import *
 from config import *
 
-def page_jeu(ecr, fnt):
+def page_jeu():
     """Page du jeu"""
     act = True
     while act:
