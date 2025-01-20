@@ -1,7 +1,7 @@
 from pygame import *
 from config import *
 
-def page_parametres(ecr, fnt):
+def page_parametres():
     """Page des paramètres"""
     act = True
     while act:
@@ -16,4 +16,3 @@ def page_parametres(ecr, fnt):
             if evt.type == KEYDOWN and evt.key == K_ESCAPE:
                 act = False
     return True
-
