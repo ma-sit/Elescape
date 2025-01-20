@@ -1,47 +1,46 @@
-import pygame
+from pygame import *
 import sys
 from config import *
-from menutest import *
+from menu import dessiner_menu, plein_ecran
 from jeu import page_jeu
 from parametres import page_parametres
 
-def main():
-    """Fonction principale du jeu"""
-    ecr = init_fenetre()
-    fnt = pygame.font.Font(None, 50)
-    fnd = pygame.image.load("background/bg_menu.png").convert()
-    fnd = pygame.transform.scale(fnd, (LRG, HTR))
-    
-    act = True
-    while act:
-        dessiner_menu(ecr, fnt, fnd)
-        pygame.display.flip()
+# Initialisation de Pygame
+init()
 
-        for evt in pygame.event.get():
-            if evt.type == pygame.QUIT:
+# Chargement du fond d'écran
+fnd = image.load("background/bg_menu.png").convert()
+fnd = transform.scale(fnd, (rec.right, rec.bottom))
+
+# Boucle principale
+act = True
+while act:
+    dessiner_menu(ecr, fnd)
+    display.flip()
+
+    for evt in event.get():
+        if evt.type == QUIT:
+            act = False
+
+        # Gestion des clics souris
+        if evt.type == MOUSEBUTTONDOWN and evt.button == 1:
+            if btn_jeu.collidepoint(evt.pos):
+                act = page_jeu()
+            elif btn_cfg.collidepoint(evt.pos):
+                act = page_parametres()
+            elif btn_fin.collidepoint(evt.pos):
                 act = False
 
-            if evt.type == pygame.MOUSEBUTTONDOWN and evt.button == 1:
-                if btn_jeu.collidepoint(evt.pos):
-                    act = page_jeu(ecr, fnt)
-                elif btn_cfg.collidepoint(evt.pos):
-                    act = page_parametres(ecr, fnt)
-                elif btn_fin.collidepoint(evt.pos):
-                    act = False
+        # Gestion clavier
+        if evt.type == KEYDOWN:
+            if evt.key == K_f:      # F: plein écran
+                plein_ecran()
+            elif evt.key == K_p:    # P: jouer
+                act = page_jeu()
+            elif evt.key == K_s:    # S: paramètres
+                act = page_parametres()
+            elif evt.key == K_q:    # Q: quitter
+                act = False
 
-            if evt.type == pygame.KEYDOWN:
-                if evt.key == pygame.K_f:
-                    ecr = plein_ecran(ecr)
-                elif evt.key == pygame.K_p:
-                    act = page_jeu(ecr, fnt)
-                elif evt.key == pygame.K_s:
-                    act = page_parametres(ecr, fnt)
-                elif evt.key == pygame.K_q:
-                    act = False
-
-    pygame.quit()
-    sys.exit()
-
-if __name__ == "__main__":
-    main()
-
+quit()
+sys.exit()
