@@ -1,5 +1,5 @@
 from pygame import *
-from config import *
+from sources.shared.components.config import *
 
 def page_parametres():
     """Page des paramètres"""

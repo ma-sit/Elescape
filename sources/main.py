@@ -1,9 +1,9 @@
 from pygame import *
 import sys
-from config import *
-from menu import dessiner_menu, plein_ecran
-from selection_niveau import selection_niveau
-from parametres import page_parametres
+from sources.shared.components.config import *
+from sources.interface.menu import dessiner_menu, plein_ecran
+from sources.interface.selection_niveau import selection_niveau
+from sources.interface.parametres import page_parametres
 
 # Initialisation
 init()

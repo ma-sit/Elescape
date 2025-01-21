@@ -1,5 +1,5 @@
 from pygame import *
-from config import *
+from sources.shared.components.config import *
 
 def niveau1():
     """Premier niveau du jeu"""

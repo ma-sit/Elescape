@@ -1,6 +1,6 @@
 from pygame import *
-from config import *
-from niveau1 import niveau1
+from sources.shared.components.config import *
+from data.level.niveau1 import niveau1
 
 def selection_niveau():
     """Menu de sélection des niveaux"""
