@@ -1,5 +1,8 @@
 from pygame import *
-from sources.shared.components.config import *
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from shared.components.config import *
 
 def dessiner_menu(ecr, fnd):
     """Affiche le menu principal"""

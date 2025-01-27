@@ -1,5 +1,8 @@
 from pygame import *
-from sources.shared.components.config import *
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from shared.components.config import *
 from data.level.niveau1 import niveau1
 
 def selection_niveau():
@@ -7,7 +10,7 @@ def selection_niveau():
     act = True
     
     # Chargement image niveau 1
-    img_niv1 = image.load("background/niveau1_bg.png").convert()
+    img_niv1 = image.load("data/images/bg_level1.jpg").convert()
     img_niv1 = transform.scale(img_niv1, (lrg//3, htr//2))
     
     # Zone cliquable niveau 1

@@ -1,12 +1,15 @@
 from pygame import *
-from sources.shared.components.config import *
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from shared.components.config import *
 
 def niveau1():
     """Premier niveau du jeu"""
     act = True
     
     # Fond niveau 1
-    fnd_niv1 = image.load("background/niveau1_bg.png").convert()
+    fnd_niv1 = image.load("data/images/bg_level1.jpg").convert()
     fnd_niv1 = transform.scale(fnd_niv1, (lrg, htr))
     
     while act:

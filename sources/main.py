@@ -1,15 +1,15 @@
 from pygame import *
 import sys
-from sources.shared.components.config import *
-from sources.interface.menu import dessiner_menu, plein_ecran
-from sources.interface.selection_niveau import selection_niveau
-from sources.interface.parametres import page_parametres
+from shared.components.config import *
+from interface.menu import dessiner_menu, plein_ecran
+from interface.selection_niveau import selection_niveau
+from interface.parametres import page_parametres
 
 # Initialisation
 init()
 
 # Chargement fond menu
-fnd = image.load("background/bg_menu.png").convert()
+fnd = image.load("data/images/bg_menu.png").convert()
 fnd = transform.scale(fnd, (rec.right, rec.bottom))
 
 # Boucle principale
