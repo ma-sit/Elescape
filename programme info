@@ -1,4 +1,9 @@
-Creer un fichier appelé "game" puis introduire le programme principal appelé "mainv1.py"
-Pour pouvoir lancer le menu/programme principal, il faut telecharger le background du menu nommé "bg_menu.png".
-Ensuite, dans le fichier "game", creer un fichier "background" où sera introduit le fichier "bg_menu.png"
-!!! Scipt et modification des fichier en cours !!!
+1.  Téléchargement des fichiers : Rendez-vous sur le dépôt GitHub du projet. Cliquez sur "Code", 
+    puis sélectionnez "Télécharger ZIP". Extrayez le contenu du fichier ZIP sur votre ordinateur.
+
+2.  Lancement du programme : Ouvrez le dossier extrait, localisez le fichier main.py et
+    exécutez-le pour démarrer le programme.
+
+3.  Importation des images dans VS Code : Si vous utilisez Visual Studio Code assurez-vous que les chemins
+    des images incluent un préfixe source/ avant le chemin (par exemple, sources/Data/images/bg_menu.png). 
+    Cela garantit que les images sont correctement référencées.
