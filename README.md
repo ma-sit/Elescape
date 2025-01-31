@@ -1,4 +1,4 @@
-J'ai cherché sur chat gpt quelques idées de nom, je trouvais qu'un nom latin irait bien (le tout avec un thème plutôt mistérieux/obscure car prison) :
+J'ai cherché sur chat gpt quelques idées de nom, je trouvais qu'un nom latin irait bien (le tout avec un thème plutôt mistérieux/obscur car prison) :
   - Genesis Occultus → Création cachée, la naissance de nouveaux éléments et mystères
   - Creare Tenebris → Créer dans les ténèbres, une fusion mystique dans l'obscurité.
   - Lux et Materia → Lumière et matière, la fusion de l'ombre et de la lumière pour créer quelque chose de nouveau.
