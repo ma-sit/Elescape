@@ -4,6 +4,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
+from data.level.niveau1 import niveau1
 
 def create_button(x, y, width, height, text, font_size=32):
     button_rect = Rect(x, y, width, height)
@@ -54,8 +55,12 @@ def selection_niveau():
                 mouse_pos = mouse.get_pos()
                 for i, (button_rect, _, _) in enumerate(buttons):
                     if button_rect.collidepoint(mouse_pos):
-                        print(f"Niveau {i+1} sélectionné")
-                        # Ici, vous pouvez ajouter la logique pour charger le niveau
-                        return True
+                        if i == 0:  # Si c'est le niveau 1
+                            return niveau1()
+                        else:
+                            print(f"Niveau {i+1} non disponible")
+#                        if i == 1: 
+#                            return niveau2()
+                        
 
     return True
