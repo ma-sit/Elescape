@@ -1,9 +1,3 @@
-from pygame import *
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from shared.components.config import *
-
 def niveau1():
     """Premier niveau du jeu"""
     act = True
@@ -19,6 +13,11 @@ def niveau1():
         for evt in event.get():
             if evt.type == QUIT:
                 return False
-            if evt.type == KEYDOWN and evt.key == K_ESCAPE:
-                act = False
+            if evt.type == KEYDOWN:
+                if evt.key == K_ESCAPE:
+                    # Afficher le menu paramètres
+                    resultat = menu_parametres()
+                    if not resultat:
+                        return False
+        
     return True
