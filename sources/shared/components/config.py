@@ -8,6 +8,9 @@ ecr = display.set_mode((0, 0), FULLSCREEN)
 rec = ecr.get_rect()
 lrg, htr = ecr.get_size()
 
+#Sons des clic
+son_clic = mixer.Sound("sons/click_002.wav")
+
 # Boutons menu
 btn_jeu = Rect(lrg/2-125, htr/2-100, 250, 60)
 btn_cfg = Rect(lrg/2-125, htr/2, 250, 60)
