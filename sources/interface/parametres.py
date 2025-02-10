@@ -1,6 +1,4 @@
 from pygame import *
-import sys
-import os
 from shared.components.config import *
 
 def page_parametres():
@@ -36,13 +34,13 @@ def page_parametres():
             ("Touches", lrg // 2 + bouton_largeur + espacement)
         ]
         
+        # Dessiner les boutons
         for texte, x in positions_boutons:
             couleur = BLEU if texte == section_active else BLC
-            draw.rect(ecr, couleur, (x - bouton_largeur//2, bouton_y, bouton_largeur, bouton_hauteur), 
-                     border_radius=10)
+            rect_bouton = Rect(x - bouton_largeur//2, bouton_y, bouton_largeur, bouton_hauteur)
+            draw.rect(ecr, couleur, rect_bouton)
             afficher_texte(texte, x, bouton_y + bouton_hauteur//2, police_options, NOR)
         
-        # Affichage du contenu selon la section active
         if section_active == "Audio":
             # Textes des volumes
             afficher_texte(f"Volume général : {int(volume_general * 100)}%", 
@@ -57,19 +55,13 @@ def page_parametres():
                                 (volume_musique, barre_y_musique), 
                                 (volume_sfx, barre_y_sfx)]:
                 # Barre de fond
-                draw.rect(ecr, BLC, (barre_x, y_pos, barre_largeur, barre_hauteur), 
-                         border_radius=10)
+                rect_barre = Rect(barre_x, y_pos, barre_largeur, barre_hauteur)
+                draw.rect(ecr, BLC, rect_barre)
+                
                 # Barre de remplissage
-                largeur_remplie = int(barre_largeur * volume)
-                if largeur_remplie > 0:
-                    if volume == 1.0:
-                        draw.rect(ecr, BLEU, 
-                                (barre_x, y_pos, largeur_remplie, barre_hauteur),
-                                border_radius=10)
-                    else:
-                        draw.rect(ecr, BLEU, 
-                                (barre_x, y_pos, largeur_remplie, barre_hauteur),
-                                border_top_left_radius=10, border_bottom_left_radius=10)
+                if volume > 0:
+                    rect_rempli = Rect(barre_x, y_pos, int(barre_largeur * volume), barre_hauteur)
+                    draw.rect(ecr, BLEU, rect_rempli)
         
         afficher_texte("Retour (Appuie sur Échap)", lrg // 2, 550, police_options, BLEU)
         
@@ -87,7 +79,7 @@ def page_parametres():
                         if pos_x - bouton_largeur//2 <= x <= pos_x + bouton_largeur//2:
                             section_active = texte
                 
-                # Gestion des barres de volume si dans la section Audio
+                # Gestion des barres de volume
                 if section_active == "Audio":
                     if barre_x <= x <= barre_x + barre_largeur:
                         if barre_y_general <= y <= barre_y_general + barre_hauteur:
@@ -109,7 +101,6 @@ def page_parametres():
                 nouveau_volume = max(0.0, min(1.0, (x - barre_x) / barre_largeur))
                 if barre_active == "general":
                     volume_general = nouveau_volume
-                    # Le volume général affecte les autres volumes
                     volume_musique = volume_general
                     volume_sfx = volume_general
                 elif barre_active == "musique":
@@ -128,9 +119,7 @@ def page_parametres():
     return True
 
 def afficher_texte(texte, x, y, plc, couleur, align="center"):
-    """ Affiche un texte avec alignement personnalisable """
-    police = plc
-    surface_texte = police.render(texte, True, couleur)
+    surface_texte = plc.render(texte, True, couleur)
     rect_texte = surface_texte.get_rect()
     if align == "center":
         rect_texte.center = (x, y)
