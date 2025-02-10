@@ -4,7 +4,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
-from data.level.niveau1 import niveau1
+from interface.jeu import page_jeu
 
 def create_button(x, y, width, height, text):
     button_rect = Rect(x, y, width, height)
@@ -14,28 +14,28 @@ def create_button(x, y, width, height, text):
 
 def selection_niveau():
     running = True
-    
+
     # Dimensions et style
     button_width = 120
     button_height = 50
     padding = 20
-    
+
     # Titres
     title_font = font.Font(None, 100)
     subtitle_font = font.Font(None, 60)
     title = title_font.render("VITANOX", True, (255, 255, 255))
     subtitle = subtitle_font.render("Select your level", True, (255, 255, 255))
-    
+
     # Position des titres
     title_rect = title.get_rect(center=(lrg//2, htr//4))
     subtitle_rect = subtitle.get_rect(center=(lrg//2, htr//4 + 80))
-    
+
     # Calcul positions des boutons
     total_width = 5 * (button_width + padding) - padding
     start_x = (lrg - total_width) // 2
     first_row_y = htr//2 + 100
     second_row_y = first_row_y + button_height + padding
-    
+
     # Création des boutons
     buttons = []
     for i in range(10):
@@ -47,17 +47,17 @@ def selection_niveau():
 
     while running:
         ecr.fill((40, 40, 40))  # Fond gris foncé
-        
+
         # Affichage titres
         ecr.blit(title, title_rect)
         ecr.blit(subtitle, subtitle_rect)
-        
+
         # Affichage boutons avec effet de bordure
         for button_rect, button_text, text_rect in buttons:
             draw.rect(ecr, (80, 80, 80), button_rect)  # Bouton
             draw.rect(ecr, (120, 120, 120), button_rect, 2)  # Bordure
             ecr.blit(button_text, text_rect)
-        
+
         display.flip()
 
         for evt in event.get():
@@ -70,7 +70,7 @@ def selection_niveau():
                 for i, (button_rect, _, _) in enumerate(buttons):
                     if button_rect.collidepoint(mouse_pos):
                         if i == 0:
-                            return niveau1()
+                            return page_jeu()
                         else:
                             print(f"Niveau {i+1} non disponible")
 
