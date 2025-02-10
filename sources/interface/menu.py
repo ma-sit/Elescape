@@ -12,6 +12,11 @@ def dessiner_menu(ecr, fnd):
     draw.rect(ecr, NOR, btn_cfg)
     draw.rect(ecr, NOR, btn_fin)
     
+    """Titre du jeu"""
+    y=200
+    txt_texte = police_titre.render("Vitanox", True, (255, 255, 255))
+    rect_texte = txt_texte.get_rect(center=(lrg // 2, y))
+    
     txt_jeu = fnt.render("Jouer", True, BLC)
     txt_cfg = fnt.render("Paramètres", True, BLC)
     txt_fin = fnt.render("Quitter", True, BLC)
