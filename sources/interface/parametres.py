@@ -11,60 +11,60 @@ def page_parametres():
     barre_active = None
     horloge = time.Clock()
     section_active = "Audio"
-    
+
     # Position des boutons du menu
     bouton_largeur = 150
     bouton_hauteur = 40
     bouton_y = 150
     espacement = 20
-    
+
     # Position des barres
     barre_y_general = 250
     barre_y_musique = 350
     barre_y_sfx = 450
-    
+
     while act:
         ecr.fill(NOR)
         afficher_texte("Paramètres", lrg // 2, 100, police_titre, BLC)
-        
+
         # Affichage des boutons du menu
         positions_boutons = [
             ("Audio", lrg // 2 - bouton_largeur - espacement),
             ("Interface", lrg // 2),
             ("Touches", lrg // 2 + bouton_largeur + espacement)
         ]
-        
+
         # Dessiner les boutons
         for texte, x in positions_boutons:
             couleur = BLEU if texte == section_active else BLC
             rect_bouton = Rect(x - bouton_largeur//2, bouton_y, bouton_largeur, bouton_hauteur)
             draw.rect(ecr, couleur, rect_bouton)
             afficher_texte(texte, x, bouton_y + bouton_hauteur//2, police_options, NOR)
-        
+
         if section_active == "Audio":
             # Textes des volumes
-            afficher_texte(f"Volume général : {int(volume_general * 100)}%", 
+            afficher_texte(f"Volume général : {int(volume_general * 100)}%",
                           barre_x, barre_y_general - 30, police_options, BLEU, "left")
-            afficher_texte(f"Volume musique : {int(volume_musique * 100)}%", 
+            afficher_texte(f"Volume musique : {int(volume_musique * 100)}%",
                           barre_x, barre_y_musique - 30, police_options, BLEU, "left")
-            afficher_texte(f"Volume interface : {int(volume_sfx * 100)}%", 
+            afficher_texte(f"Volume interface : {int(volume_sfx * 100)}%",
                           barre_x, barre_y_sfx - 30, police_options, BLEU, "left")
-            
+
             # Barres de volume
-            for volume, y_pos in [(volume_general, barre_y_general), 
-                                (volume_musique, barre_y_musique), 
+            for volume, y_pos in [(volume_general, barre_y_general),
+                                (volume_musique, barre_y_musique),
                                 (volume_sfx, barre_y_sfx)]:
                 # Barre de fond
                 rect_barre = Rect(barre_x, y_pos, barre_largeur, barre_hauteur)
                 draw.rect(ecr, BLC, rect_barre)
-                
+
                 # Barre de remplissage
                 if volume > 0:
                     rect_rempli = Rect(barre_x, y_pos, int(barre_largeur * volume), barre_hauteur)
                     draw.rect(ecr, BLEU, rect_rempli)
-        
+
         afficher_texte("Retour (Appuie sur Échap)", lrg // 2, 550, police_options, BLEU)
-        
+
         for evt in event.get():
             if evt.type == QUIT:
                 return False
@@ -78,7 +78,7 @@ def page_parametres():
                     for texte, pos_x in positions_boutons:
                         if pos_x - bouton_largeur//2 <= x <= pos_x + bouton_largeur//2:
                             section_active = texte
-                
+
                 # Gestion des barres de volume
                 if section_active == "Audio":
                     if barre_x <= x <= barre_x + barre_largeur:
@@ -107,12 +107,12 @@ def page_parametres():
                     volume_musique = nouveau_volume
                 elif barre_active == "sfx":
                     volume_sfx = nouveau_volume
-        
+
         # Mise à jour des volumes
         volume_musique_final = volume_musique * volume_general
         volume_sfx_final = volume_sfx * volume_general
         mixer.music.set_volume(volume_musique_final)
-        
+
         display.flip()
         horloge.tick(30)
 
