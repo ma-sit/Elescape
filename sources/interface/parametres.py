@@ -1,12 +1,7 @@
 from pygame import *
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
-
-# Initialisation de pygame et du mixer
-init()
-mixer.init()
 
 def page_parametres():
     """Page des paramètres"""
@@ -90,7 +85,6 @@ def page_parametres():
                 if bouton_y <= y <= bouton_y + bouton_hauteur:
                     for texte, pos_x in positions_boutons:
                         if pos_x - bouton_largeur//2 <= x <= pos_x + bouton_largeur//2:
-                            son_clic.play()
                             section_active = texte
                 
                 # Gestion des barres de volume si dans la section Audio
@@ -115,6 +109,7 @@ def page_parametres():
                 nouveau_volume = max(0.0, min(1.0, (x - barre_x) / barre_largeur))
                 if barre_active == "general":
                     volume_general = nouveau_volume
+                    # Le volume général affecte les autres volumes
                     volume_musique = volume_general
                     volume_sfx = volume_general
                 elif barre_active == "musique":
