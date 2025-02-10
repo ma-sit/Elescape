@@ -1,5 +1,12 @@
 from pygame import *
-mixer.init()  # Initialisation du mixer audio
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from shared.components.config import *
+
+# Initialisation de pygame et du mixer
+init()
+mixer.init()
 
 def page_parametres():
     """Page des paramètres"""
@@ -86,14 +93,8 @@ def page_parametres():
                     volume_sfx = nouveau_volume
         
         # Mise à jour des volumes
-        if barre_active == "general":
-            mixer.music.set_volume(volume_general)
-        elif barre_active == "musique":
-            mixer.music.set_volume(volume_musique)
-        elif barre_active == "sfx":
-            # Implémentez ici la gestion du volume des effets sonores
-            pass
-            
+        mixer.music.set_volume(volume_musique)
+        
         display.flip()
         horloge.tick(30)
 
