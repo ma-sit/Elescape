@@ -9,7 +9,14 @@ rec = ecr.get_rect()
 lrg, htr = ecr.get_size()
 
 #Sons des clic
-son_clic = mixer.Sound("sons/click_002.wav")
+try:
+    son_clic = mixer.Sound("data/son,s/click_002.wav")
+    mixer.music.load("data/sons/musique_test.mp3")
+    mixer.music.set_volum(0.5)
+    mixer.music.play(-1)
+except:
+    print("Error : fichiers sons non trouvés")
+    
 
 # Boutons menu
 btn_jeu = Rect(lrg/2-125, htr/2-100, 250, 60)
