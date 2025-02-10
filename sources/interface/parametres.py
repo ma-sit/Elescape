@@ -1,3 +1,6 @@
+from pygame import *
+mixer.init()  # Initialisation du mixer audio
+
 def page_parametres():
     """Page des paramètres"""
     act = True
@@ -17,7 +20,7 @@ def page_parametres():
         ecr.fill(NOR)
         afficher_texte("Paramètres", lrg // 2, 100, police_titre, BLC)
         
-        # Textes des volumes (alignés à gauche au-dessus des barres)
+        # Textes des volumes
         afficher_texte(f"Volume général : {int(volume_general * 100)}%", 
                       barre_x, barre_y_general - 30, 
                       police_options, BLEU, "left")
@@ -30,22 +33,25 @@ def page_parametres():
         
         afficher_texte("Retour (Appuie sur Échap)", lrg // 2, 500, police_options, BLEU)
         
-        # Barre volume général
-        draw.rect(ecr, BLC, (barre_x, barre_y_general, barre_largeur, barre_hauteur), 
-                 border_radius=10)
-        dessiner_barre_remplie(volume_general, barre_y_general)
+        # Barres de volume
+        for volume, y_pos in [(volume_general, barre_y_general), 
+                            (volume_musique, barre_y_musique), 
+                            (volume_sfx, barre_y_sfx)]:
+            # Barre de fond
+            draw.rect(ecr, BLC, (barre_x, y_pos, barre_largeur, barre_hauteur), 
+                     border_radius=10)
+            # Barre de remplissage
+            largeur_remplie = int(barre_largeur * volume)
+            if largeur_remplie > 0:
+                if volume == 1.0:
+                    draw.rect(ecr, BLEU, 
+                            (barre_x, y_pos, largeur_remplie, barre_hauteur),
+                            border_radius=10)
+                else:
+                    draw.rect(ecr, BLEU, 
+                            (barre_x, y_pos, largeur_remplie, barre_hauteur),
+                            border_top_left_radius=10, border_bottom_left_radius=10)
         
-        # Barre volume musique
-        draw.rect(ecr, BLC, (barre_x, barre_y_musique, barre_largeur, barre_hauteur), 
-                 border_radius=10)
-        dessiner_barre_remplie(volume_musique, barre_y_musique)
-        
-        # Barre volume SFX
-        draw.rect(ecr, BLC, (barre_x, barre_y_sfx, barre_largeur, barre_hauteur), 
-                 border_radius=10)
-        dessiner_barre_remplie(volume_sfx, barre_y_sfx)
-        
-        # Gestion des événements
         for evt in event.get():
             if evt.type == QUIT:
                 return False
@@ -79,21 +85,29 @@ def page_parametres():
                 elif barre_active == "sfx":
                     volume_sfx = nouveau_volume
         
-        mixer.music.set_volume(volume_musique)
+        # Mise à jour des volumes
+        if barre_active == "general":
+            mixer.music.set_volume(volume_general)
+        elif barre_active == "musique":
+            mixer.music.set_volume(volume_musique)
+        elif barre_active == "sfx":
+            # Implémentez ici la gestion du volume des effets sonores
+            pass
+            
         display.flip()
         horloge.tick(30)
 
     return True
 
-def dessiner_barre_remplie(volume, y_pos):
-    """Fonction utilitaire pour dessiner la partie remplie d'une barre"""
-    largeur_remplie = int(barre_largeur * volume)
-    if largeur_remplie > 0:
-        if volume == 1.0:
-            draw.rect(ecr, BLEU, 
-                     (barre_x, y_pos, largeur_remplie, barre_hauteur),
-                     border_radius=10)
-        else:
-            draw.rect(ecr, BLEU, 
-                     (barre_x, y_pos, largeur_remplie, barre_hauteur),
-                     border_top_left_radius=10, border_bottom_left_radius=10)
+def afficher_texte(texte, x, y, plc, couleur, align="center"):
+    """ Affiche un texte avec alignement personnalisable """
+    police = plc
+    surface_texte = police.render(texte, True, couleur)
+    rect_texte = surface_texte.get_rect()
+    if align == "center":
+        rect_texte.center = (x, y)
+    elif align == "right":
+        rect_texte.midright = (x, y)
+    elif align == "left":
+        rect_texte.midleft = (x, y)
+    ecr.blit(surface_texte, rect_texte)
