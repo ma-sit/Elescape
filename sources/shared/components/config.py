@@ -9,10 +9,11 @@ rec = ecr.get_rect()
 lrg, htr = ecr.get_size()
 
 #Sons des clic
+
 try:
-    son_clic = mixer.Sound("data/son,s/click_002.wav")
+    son_clic = mixer.Sound("data/sons/click_002.wav")
     mixer.music.load("data/sons/musique_test.mp3")
-    mixer.music.set_volum(0.5)
+    mixer.music.set_volume(0.5)
     mixer.music.play(-1)
 except:
     print("Error : fichiers sons non trouvés")
