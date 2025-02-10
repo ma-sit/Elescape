@@ -1,6 +1,7 @@
 - adapter la taille de la page à l'écran ... fait par Simon
-- réorganiser les fichier dans plusieur : "jeu.py", "menu.py", "main.py" (modifié), "parametres.py" et "config.py" ... en cours par Mathis
+- réorganiser les fichier dans plusieur : "jeu.py", "menu.py", "main.py" (modifié), "parametres.py" et "config.py" ... fait par Mathis
 - mouvement du personnage ... en cours par Simon
 - encyclopédie .. en cours par Julien
 - creer le niveau 1 et 2 du jeu ... à faire
-- regler le probleme 
+- faire les paramètres du jeu ... en cours par Mathis
+- 
