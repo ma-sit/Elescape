@@ -1,3 +1,13 @@
+from pygame import *
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from shared.components.config import *
+
+# Initialisation de pygame et du mixer
+init()
+mixer.init()
+
 def page_parametres():
     """Page des paramètres"""
     act = True
@@ -7,7 +17,7 @@ def page_parametres():
     clic_souris = False
     barre_active = None
     horloge = time.Clock()
-    section_active = "Audio"  # Section par défaut
+    section_active = "Audio"
     
     # Position des boutons du menu
     bouton_largeur = 150
@@ -51,8 +61,10 @@ def page_parametres():
             for volume, y_pos in [(volume_general, barre_y_general), 
                                 (volume_musique, barre_y_musique), 
                                 (volume_sfx, barre_y_sfx)]:
+                # Barre de fond
                 draw.rect(ecr, BLC, (barre_x, y_pos, barre_largeur, barre_hauteur), 
                          border_radius=10)
+                # Barre de remplissage
                 largeur_remplie = int(barre_largeur * volume)
                 if largeur_remplie > 0:
                     if volume == 1.0:
@@ -64,7 +76,7 @@ def page_parametres():
                                 (barre_x, y_pos, largeur_remplie, barre_hauteur),
                                 border_top_left_radius=10, border_bottom_left_radius=10)
         
-        afficher_texte("Retour (Appuie sur Échap)", lrg // 2, 500, police_options, BLEU)
+        afficher_texte("Retour (Appuie sur Échap)", lrg // 2, 550, police_options, BLEU)
         
         for evt in event.get():
             if evt.type == QUIT:
@@ -78,6 +90,7 @@ def page_parametres():
                 if bouton_y <= y <= bouton_y + bouton_hauteur:
                     for texte, pos_x in positions_boutons:
                         if pos_x - bouton_largeur//2 <= x <= pos_x + bouton_largeur//2:
+                            son_clic.play()
                             section_active = texte
                 
                 # Gestion des barres de volume si dans la section Audio
@@ -118,3 +131,16 @@ def page_parametres():
         horloge.tick(30)
 
     return True
+
+def afficher_texte(texte, x, y, plc, couleur, align="center"):
+    """ Affiche un texte avec alignement personnalisable """
+    police = plc
+    surface_texte = police.render(texte, True, couleur)
+    rect_texte = surface_texte.get_rect()
+    if align == "center":
+        rect_texte.center = (x, y)
+    elif align == "right":
+        rect_texte.midright = (x, y)
+    elif align == "left":
+        rect_texte.midleft = (x, y)
+    ecr.blit(surface_texte, rect_texte)
