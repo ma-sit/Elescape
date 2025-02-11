@@ -7,8 +7,6 @@ from shared.components.config import *
 
 def page_jeu():
     """Menu du jeu avec déplacement du personnage"""
-    init()
-    
     # Chargement des touches
     try:
         with open("data/touches.json", "r") as f:
@@ -48,20 +46,15 @@ def page_jeu():
             if distance > speed:
                 x += (dx / distance) * speed
                 y += (dy / distance) * speed
-                image_to_blit, current_image = get_next_image(current_image, walk_images)
+                current_image = (current_image + 1) % len(walk_images)
             else:
                 x, y = target_x, target_y
                 moving = False
-        else:
-            image_to_blit = walk_images[0]
+                current_image = 0
         
-        ecr.blit(image_to_blit, (x - image_to_blit.get_width() // 2, 
-                                y - image_to_blit.get_height() // 2))
+        ecr.blit(walk_images[current_image], (x - walk_images[current_image].get_width() // 2, 
+                                            y - walk_images[current_image].get_height() // 2))
         display.flip()
         clock.tick(30)
         
     return True
-
-def get_next_image(current_image, walk_images):
-    current_image = (current_image + 1) % len(walk_images)
-    return walk_images[current_image], current_image
