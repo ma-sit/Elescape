@@ -1,15 +1,18 @@
+from pygame import *
+import json
+from shared.components.config import *
+
 def menu_parametres():
     """Menu des paramètres qui s'affiche par-dessus le niveau"""
+    # Chargement des touches
     try:
         with open("data/touches.json", "r") as f:
             touches = json.load(f)
     except:
         touches = {
-            'Déplacement': BUTTON_RIGHT,
-            'Action': K_SPACE,
             'Retour': K_ESCAPE
         }
-        
+    
     menu_actif = True
     menu_width = 300
     menu_height = 200
@@ -27,14 +30,14 @@ def menu_parametres():
         ecr.blit(surf_overlay, (0, 0))
         
         draw.rect(ecr, (50, 50, 50), (menu_x, menu_y, menu_width, menu_height))
-        draw.rect(ecr, (200, 200, 200), (menu_x, menu_y, menu_width, menu_height), 2)
+        draw.rect(ecr, BLC, (menu_x, menu_y, menu_width, menu_height), 2)
         
         titre = font.Font(None, 36).render("Parameters", True, BLC)
         titre_rect = titre.get_rect(center=(menu_x + menu_width//2, menu_y + 30))
         ecr.blit(titre, titre_rect)
         
         draw.rect(ecr, (150, 150, 150), quit_button)
-        draw.rect(ecr, (200, 200, 200), quit_button, 2)
+        draw.rect(ecr, BLC, quit_button, 2)
         quit_text = font.Font(None, 32).render("Quit", True, BLC)
         quit_text_rect = quit_text.get_rect(center=quit_button.center)
         ecr.blit(quit_text, quit_text_rect)
@@ -49,5 +52,5 @@ def menu_parametres():
             if evt.type == MOUSEBUTTONDOWN and evt.button == 1:
                 if quit_button.collidepoint(evt.pos):
                     return False
-                    
+    
     return True
