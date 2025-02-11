@@ -1,10 +1,10 @@
 from pygame import *
 import sys
+import json
 from shared.components.config import *
 from interface.menu import dessiner_menu, plein_ecran
 from interface.selection_niveau import selection_niveau
 from interface.parametres import page_parametres
-import json
 
 # Initialisation
 init()
