@@ -49,10 +49,27 @@ def page_parametres():
             draw.rect(ecr, couleur, rect_bouton)
             afficher_texte(texte, x, 170, police_options, NOR)
 
+        # Section Audio
         if section_active == "Audio":
-            # [Code existant pour l'audio]
-            pass
-            
+            # Afficher les textes des volumes
+            afficher_texte(f"Volume général : {int(volume_general * 100)}%", 
+                         barre_x, barre_y_general - 30, police_options, BLEU, "left")
+            afficher_texte(f"Volume musique : {int(volume_musique * 100)}%", 
+                         barre_x, barre_y_musique - 30, police_options, BLEU, "left")
+            afficher_texte(f"Volume interface : {int(volume_sfx * 100)}%", 
+                         barre_x, barre_y_sfx - 30, police_options, BLEU, "left")
+
+            # Barres de volume
+            for volume, y_pos in [(volume_general, barre_y_general),
+                                (volume_musique, barre_y_musique),
+                                (volume_sfx, barre_y_sfx)]:
+                rect_barre = Rect(barre_x, y_pos, barre_largeur, barre_hauteur)
+                draw.rect(ecr, BLC, rect_barre)
+                if volume > 0:
+                    rect_rempli = Rect(barre_x, y_pos, int(barre_largeur * volume), barre_hauteur)
+                    draw.rect(ecr, BLEU, rect_rempli)
+
+        # Section Touches
         elif section_active == "Touches":
             y_pos = 250
             espacement = 80
@@ -78,6 +95,8 @@ def page_parametres():
             else:
                 afficher_texte("Cliquez sur une touche à modifier", 
                              lrg // 2, 550, police_options, BLEU)
+
+        afficher_texte("Retour (Échap)", lrg // 2, 550, police_options, BLEU)
 
         for evt in event.get():
             if evt.type == QUIT:
@@ -120,7 +139,37 @@ def page_parametres():
                                 touche_active = None
                         y_pos += espacement
 
-                # [Code existant pour l'audio]
+                # Gestion des barres de volume
+                if section_active == "Audio":
+                    if barre_x <= x <= barre_x + barre_largeur:
+                        if barre_y_general <= y <= barre_y_general + barre_hauteur:
+                            barre_active = "general"
+                            clic_souris = True
+                        elif barre_y_musique <= y <= barre_y_musique + barre_hauteur:
+                            barre_active = "musique"
+                            clic_souris = True
+                        elif barre_y_sfx <= y <= barre_y_sfx + barre_hauteur:
+                            barre_active = "sfx"
+                            clic_souris = True
+
+            if evt.type == MOUSEBUTTONUP:
+                clic_souris = False
+                barre_active = None
+
+            if evt.type == MOUSEMOTION and clic_souris and section_active == "Audio":
+                x = evt.pos[0]
+                nouveau_volume = max(0.0, min(1.0, (x - barre_x) / barre_largeur))
+                if barre_active == "general":
+                    volume_general = nouveau_volume
+                elif barre_active == "musique":
+                    volume_musique = nouveau_volume
+                elif barre_active == "sfx":
+                    volume_sfx = nouveau_volume
+
+                volume_musique_final = volume_musique * volume_general
+                volume_sfx_final = volume_sfx * volume_general
+                mixer.music.set_volume(volume_musique_final)
+                son_clic.set_volume(volume_sfx_final)
 
         display.flip()
         horloge.tick(30)
