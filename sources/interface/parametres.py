@@ -1,6 +1,5 @@
 from pygame import *
 from shared.components.config import *
-import json
 
 def page_parametres():
     """Page des paramètres"""
@@ -12,22 +11,12 @@ def page_parametres():
     barre_active = None
     horloge = time.Clock()
     section_active = "Audio"
-    
-    # Chargement des touches sauvegardées ou utilisation des touches par défaut
-    try:
-        with open("data/touches.json", "r") as f:
-            touches = json.load(f)
-    except:
-        touches = {
-            'Déplacement': BUTTON_RIGHT,
-            'Action': K_SPACE,
-            'Retour': K_ESCAPE,
-            'Plein écran': K_f,
-            'Paramètres': K_s,
-            'Jouer': K_p,
-            'Quitter': K_q
-        }
-    touche_active = None
+
+    # Position des boutons du menu
+    bouton_largeur = 150
+    bouton_hauteur = 40
+    bouton_y = 150
+    espacement = 20
 
     while act:
         ecr.fill(NOR)
@@ -35,7 +24,7 @@ def page_parametres():
         # Titre
         afficher_texte("Paramètres", lrg // 2, 100, police_titre, BLC)
 
-        # Boutons du menu
+        # Position des boutons
         positions_boutons = [
             ("Audio", lrg // 2 - 170),
             ("Interface", lrg // 2),
@@ -45,11 +34,10 @@ def page_parametres():
         # Dessiner les boutons du menu
         for texte, x in positions_boutons:
             couleur = BLEU if texte == section_active else BLC
-            rect_bouton = Rect(x - 75, 150, 150, 40)
+            rect_bouton = Rect(x - 75, bouton_y, 150, bouton_hauteur)
             draw.rect(ecr, couleur, rect_bouton)
-            afficher_texte(texte, x, 170, police_options, NOR)
+            afficher_texte(texte, x, bouton_y + bouton_hauteur // 2, police_options, NOR)
 
-        # Section Audio
         if section_active == "Audio":
             # Afficher les textes des volumes
             afficher_texte(f"Volume général : {int(volume_general * 100)}%", 
@@ -69,65 +57,21 @@ def page_parametres():
                     rect_rempli = Rect(barre_x, y_pos, int(barre_largeur * volume), barre_hauteur)
                     draw.rect(ecr, BLEU, rect_rempli)
 
-        # Section Touches
-        elif section_active == "Touches":
-            y_pos = 250
-            espacement = 80
-            
-            for nom, code in touches.items():
-                rect_touche = Rect(lrg//2 - 200, y_pos, 400, 60)
-                couleur = BLEU if touche_active == nom else BLC
-                draw.rect(ecr, NOR, rect_touche)
-                draw.rect(ecr, couleur, rect_touche, 2)
-                
-                nom_touche = "Clic droit" if code == BUTTON_RIGHT else key.name(code).upper()
-                afficher_texte(f"{nom} : {nom_touche}", 
-                             lrg//2, y_pos + 30, police_options, couleur)
-                y_pos += espacement
-
-            if touche_active:
-                afficher_texte("Appuyez sur une touche...", 
-                             lrg // 2, 550, police_options, BLEU)
-            else:
-                afficher_texte("Cliquez sur une touche à modifier", 
-                             lrg // 2, 550, police_options, BLEU)
-
         afficher_texte("Retour (Échap)", lrg // 2, 550, police_options, BLEU)
 
         for evt in event.get():
             if evt.type == QUIT:
-                with open("data/touches.json", "w") as f:
-                    json.dump(touches, f)
                 return False
-
-            if evt.type == KEYDOWN:
-                if touche_active:
-                    touches[touche_active] = evt.key
-                    with open("data/touches.json", "w") as f:
-                        json.dump(touches, f)
-                    touche_active = None
-                elif evt.key == K_ESCAPE:
-                    with open("data/touches.json", "w") as f:
-                        json.dump(touches, f)
-                    act = False
-
+            if evt.type == KEYDOWN and evt.key == K_ESCAPE:
+                act = False
             if evt.type == MOUSEBUTTONDOWN:
                 x, y = evt.pos
                 
                 # Gestion des clics sur les boutons du menu
-                if 150 <= y <= 190:
+                if bouton_y <= y <= bouton_y + bouton_hauteur:
                     for texte, pos_x in positions_boutons:
                         if pos_x - 75 <= x <= pos_x + 75:
                             section_active = texte
-                
-                # Gestion des touches
-                if section_active == "Touches":
-                    y_pos = 250
-                    for nom in touches:
-                        rect_touche = Rect(lrg//2 - 200, y_pos, 400, 60)
-                        if rect_touche.collidepoint(x, y):
-                            touche_active = nom
-                        y_pos += espacement
 
                 # Gestion des barres de volume
                 if section_active == "Audio":
@@ -156,6 +100,7 @@ def page_parametres():
                 elif barre_active == "sfx":
                     volume_sfx = nouveau_volume
 
+                # Application du volume
                 volume_musique_final = volume_musique * volume_general
                 volume_sfx_final = volume_sfx * volume_general
                 mixer.music.set_volume(volume_musique_final)
