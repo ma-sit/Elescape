@@ -70,7 +70,7 @@ def selection_niveau():
                 for i, (button_rect, _, _) in enumerate(buttons):
                     if button_rect.collidepoint(mouse_pos):
                         if i == 0:
-                            return niveau1()
+                            return page_jeu(i+1)
                         else:
                             print(f"Niveau {i+1} non disponible")
 
