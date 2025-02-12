@@ -13,15 +13,17 @@ lrg, htr = ecr.get_size()
 try:
     son_clic = mixer.Sound("data/sons/click_002.wav")
     mixer.music.load("data/sons/musique_test.mp3")
+    son_survol = mixer.Sound("data/sons/clic1.wav")
+    son_clicmenu = mixer.Sound("data/sons/clic2.wav")
     mixer.music.set_volume(0.5)
     mixer.music.play(-1)
 except:
     print("Error : fichiers sons non trouvés")
 
 # Boutons menu
-btn_jeu = Rect(lrg/2-125, htr/2-100, 250, 60)
-btn_cfg = Rect(lrg/2-125, htr/2, 250, 60)
-btn_fin = Rect(lrg/2-125, htr/2+100, 250, 60)
+btn_jeu = {"rect": Rect(lrg/2-125, htr/2-100, 250, 60), "a_joue_son": False}
+btn_cfg = {"rect": Rect(lrg/2-125, htr/2, 250, 60), "a_joue_son": False}
+btn_fin = {"rect": Rect(lrg/2-125, htr/2+100, 250, 60), "a_joue_son": False}
 
 # Couleurs
 BLC = (255, 255, 255)
@@ -30,7 +32,7 @@ BLEU = (0, 100, 200)
 
 # Police
 fnt = font.Font(None, 50)
-police_titre = font.Font(None, 80)
+police_titre = font.Font(None, 150)
 police_options = font.Font(None, 40)
 
 # Position de la barre de volume
