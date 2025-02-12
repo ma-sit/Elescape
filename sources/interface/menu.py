@@ -22,7 +22,8 @@ def bouton(ecr, couleur, btn, texte, son_survol, son_click, surbrillance=None):
     ecr.blit(txt_rendu, (rect.x + (rect.width - txt_rendu.get_width()) // 2, rect.y + 10))
 
     return survole
-    
+
+
 
 def dessiner_menu(ecr, fnd):
     """Affiche le menu principal"""
@@ -33,10 +34,29 @@ def dessiner_menu(ecr, fnd):
     hover_fin = bouton(ecr, NOR, btn_fin, "Quitter", son_survol, son_clicmenu, surbrillance=(150, 150, 150))
     
     """Titre du jeu"""
-    y=300
-    txt_titre = police_titre.render("Vitanox", True, (0, 0, 0))
-    rect_titre = txt_titre.get_rect(center=(lrg // 2, y))
+    rect_titre = Rect(0, 0, 550, 100)  # Zone du titre (ajuste si besoin)
+    rect_titre.center = (ecr.get_width() // 2, 290)  # Centrer
+
+    survol_titre = rect_titre.collidepoint(mouse.get_pos())
+    
+    titre_agrandi = False
+    taille_titre = 200  # Taille normale du titre
+    taille_titre_max = 250  # Taille agrandie
+
+    # 🔹 Ajustement de la taille
+    if survol_titre and not titre_agrandi:
+        taille_titre = min(taille_titre + 8, taille_titre_max)  # Grandit progressivement
+        titre_agrandi = True
+    elif not survol_titre and titre_agrandi:
+        taille_titre = max(taille_titre - 8, 60)  # Revient à la taille normale
+        titre_agrandi = False
+
+    # 🔹 Affichage du titre
+    police_titre = font.Font(None, taille_titre)  # Appliquer la taille dynamique
+    txt_titre = police_titre.render("Vitanox", True, (0, 0, 0))  # Blanc
+    rect_titre = txt_titre.get_rect(center=(ecr.get_width() // 2, 300))  # Centrer
     ecr.blit(txt_titre, rect_titre)
+    
     
 
 def plein_ecran():
