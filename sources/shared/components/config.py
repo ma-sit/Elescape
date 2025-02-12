@@ -32,7 +32,6 @@ BLEU = (0, 100, 200)
 
 # Police
 fnt = font.Font(None, 50)
-police_titre = font.Font(None, 150)
 police_options = font.Font(None, 40)
 
 # Position de la barre de volume
