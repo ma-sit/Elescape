@@ -37,7 +37,7 @@ def fusionner(element1, element2):
                 return int(element)  # Retourne l'ID du nouvel élément créé
     return None
 
-def afficher_elements(ecr, elements):
+def afficher_elements(ecr, elements,elementsbase):
     objets = []
     positions_initiales = [(100 + i * 150, 500) for i in range(len(elements))]
 
@@ -46,15 +46,16 @@ def afficher_elements(ecr, elements):
             continue
 
         if element["Image"]:
-            img = image.load(element["Image"])  # Chargement de l'image
-            objets.append({
-                "id": elem_id, 
-                "image": img, 
-                "rect": img.get_rect(topleft=(x, y)), 
-                "x": x, 
-                "y": y, 
-                "selected": False
-            })
+            if elem_id in elementsbase:
+                img = image.load(element["Image"])  # Chargement de l'image
+                objets.append({
+                    "id": elem_id, 
+                    "image": img, 
+                    "rect": img.get_rect(topleft=(x, y)), 
+                    "x": x, 
+                    "y": y, 
+                    "selected": False
+                })
 
     return objets
 
@@ -74,14 +75,14 @@ def page_jeu(niveau):
     target_x, target_y = x, y
     moving = False
     
-    objets = afficher_elements(ecr, elements)
+    objets = afficher_elements(ecr, elements,elementsbase)
     perso_rect = walk_images[0].get_rect(center=(x, y))  # Rect du personnage
     
     while act:
         ecr.fill(BLC)
 
-        for el in elementsbase:
-            ecr.blit(image.load(elements[el]["Image"]), (objets[el]["x"], objets[el]["y"]))
+        for obj in objets:
+            ecr.blit(obj["image"], (obj["rect"].x, obj["rect"].y))
 
         for evt in event.get():
             if evt.type == QUIT:
@@ -146,6 +147,6 @@ def page_jeu(niveau):
             ecr.blit(obj["image"], obj["rect"])
 
         display.flip()
-        clock.tick(10)
+        clock.tick(30)
     
     return True
