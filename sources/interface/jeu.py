@@ -5,6 +5,7 @@ import csv
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
+from interface.menu_interf_jeu import menu_parametres
 
 elements = {}
 
@@ -88,7 +89,7 @@ def page_jeu(niveau):
             if evt.type == QUIT:
                 return False
             elif evt.type == KEYDOWN and evt.key == K_ESCAPE:
-                act = False
+                act = menu_parametres()
             elif evt.type == MOUSEBUTTONDOWN:
                 if evt.button == 1:  # Clic gauche pour déplacer un élément
                     for obj in objets:
