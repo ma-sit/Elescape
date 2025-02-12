@@ -1,0 +1,23 @@
+ID;Nom;Creations;DR;Image
+0;Humain;6,5,9,16,18;1;
+1;Seau d'eau;4;0;data/images/seau_d'eau.png
+2;Graine;4;0;data/images/graine.png
+3;Pierre;6;1;data/images/pierre.png
+4;Plante;5;0;data/images/plante.png
+5;Bois;7,11;1;data/images/bois.png
+6;Etincelles;7;0;data/images/etincelles.png
+7;Chaleur;8;0;data/images/chaleur.png
+8;Metal;9,12;0;data/images/metal.png
+9;Cle;8;1;data/images/cle.png
+10;Seau;8;0;
+11;Pioche;;1;
+12;Lame;11;0;
+13;Pierre lisse;12;0;
+14;Fruits;16;;
+15;Feu;8;0;
+16;Cuisiner;15;0;
+17;Gaz;15;0;
+18;Energie;17;0;
+19;Terre;13;0;
+20;Air;18,13;1;
+21;Eau;17;0;
