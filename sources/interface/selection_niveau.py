@@ -4,7 +4,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
-from data.level.niveau1 import niveau1
+from interface.jeu import page_jeu
 
 def create_button(x, y, width, height, text):
     button_rect = Rect(x, y, width, height)
@@ -46,7 +46,10 @@ def selection_niveau():
         buttons.append(create_button(x, y, button_width, button_height, f"Level {i+1}"))
 
     while running:
-        ecr.fill((40, 40, 40))  # Fond gris foncé
+        
+        fnd = image.load("data/images/image_menu.png").convert()
+        fnd = transform.scale(fnd, (rec.right, rec.bottom))
+        ecr.blit(fnd, (0, 0))  # Fond gris foncé
         
         # Affichage titres
         ecr.blit(title, title_rect)
