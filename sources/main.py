@@ -1,6 +1,7 @@
 from pygame import *
 import sys
 import json
+import cv2
 from shared.components.config import *
 from interface.menu import bouton,dessiner_menu, plein_ecran
 from interface.selection_niveau import selection_niveau
@@ -25,13 +26,12 @@ except:
     }
 
 # Chargement fond menu
-fnd = image.load("data/images/bg_menu.png").convert()
-fnd = transform.scale(fnd, (rec.right, rec.bottom))
+video = cv2.VideoCapture("data/images/video_menu3.mp4")
 
 # Boucle principale
 act = True
 while act:
-    dessiner_menu(ecr, fnd)
+    dessiner_menu(ecr, video)
     
     for evt in event.get():
         if evt.type == QUIT:
@@ -56,7 +56,7 @@ while act:
             elif evt.key == touches['Quitter']:
                 act = False
     display.flip()
-    time.delay(10)
+    time.delay(30)
 
 quit()
 sys.exit()
