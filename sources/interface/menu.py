@@ -1,7 +1,6 @@
 from pygame import *
 import sys
 import os
-import cv2
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
 
@@ -26,18 +25,10 @@ def bouton(ecr, couleur, btn, texte, son_survol, son_click, surbrillance=None):
 
 
 
-def dessiner_menu(ecr, video):
+def dessiner_menu(ecr):
     """Affiche le menu principal"""
-    ret, frame = video.read()
-    if not ret:  # Si la vidéo est terminée, on la relance
-        video.set(cv2.CAP_PROP_POS_FRAMES, 0)
-        ret, frame = video.read()  
     
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame = surfarray.make_surface(frame)
-    frame = transform.scale(frame, (lrg, htr))
-
-    ecr.blit(frame, (0, 0))
+    ecr.fill(BLC)
     
     hover_jeu = bouton(ecr, NOR, btn_jeu, "Jouer", son_survol, son_clicmenu, surbrillance=(150, 150, 150))
     hover_cfg = bouton(ecr, NOR, btn_cfg, "Paramètres", son_survol, son_clicmenu, surbrillance=(150, 150, 150))
