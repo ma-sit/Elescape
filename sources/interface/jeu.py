@@ -6,6 +6,7 @@ import csv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
 from interface.menu_interf_jeu import menu_parametres
+from interface.menu import bouton
 
 elements = {}
 
@@ -79,9 +80,16 @@ def page_jeu(niveau):
     objets = afficher_elements(ecr, elements,elementsbase)
     perso_rect = walk_images[0].get_rect(center=(x, y))  # Rect du personnage
     
+    fnd = image.load("data/images/bg_menu.png").convert()
+    fnd = transform.scale(fnd, (rec.right, rec.bottom))
+    
+    
     while act:
-        ecr.fill(BLC)
 
+        ecr.blit(fnd, (0, 0))
+        
+        hover_ency = bouton(ecr, BLC , btn_ency, "Encyclopédie", son_survol, son_clicmenu,r_jeu, surbrillance=(150, 150, 150))
+        
         for obj in objets:
             ecr.blit(obj["image"], (obj["rect"].x, obj["rect"].y))
 
@@ -148,6 +156,6 @@ def page_jeu(niveau):
             ecr.blit(obj["image"], obj["rect"])
 
         display.flip()
-        clock.tick(30)
+        clock.tick(60)
     
     return True
