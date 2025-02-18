@@ -1,4 +1,4 @@
-rom pygame import *
+from pygame import *
 import sys
 import os
 import cv2
