@@ -137,7 +137,6 @@ def page_parametres():
                                 with open("data/touches.json", "w") as f:
                                     json.dump(touches, f)
                                 touche_active = None
-                        y_pos += espacement
 
                 # Gestion des barres de volume
                 if section_active == "Audio":
