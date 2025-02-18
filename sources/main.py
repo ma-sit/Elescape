@@ -5,7 +5,6 @@ from interface.menu import bouton,dessiner_menu, plein_ecran
 from interface.selection_niveau import selection_niveau
 from interface.parametres import page_parametres
 
-@@ -24,6 +24,41 @@
         'Quitter': K_q
     }
 
