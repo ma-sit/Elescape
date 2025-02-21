@@ -40,7 +40,7 @@ def dessiner_menu(ecr, image):
     
     """Titre du jeu"""
     rect_titre = Rect(0, 0, 550, 100)  # Zone du titre (ajuste si besoin)
-    rect_titre.center = (ecr.get_width() // 2, 290)  # Centrer
+    rect_titre.center = (lrg // 2, htr // 4)  # Centrer
 
     survol_titre = rect_titre.collidepoint(mouse.get_pos())
     
@@ -59,7 +59,7 @@ def dessiner_menu(ecr, image):
     # 🔹 Affichage du titre
     police_titre = font.Font(None, taille_titre)  # Appliquer la taille dynamique
     txt_titre = police_titre.render("Vitanox", True, (0, 0, 0))
-    rect_titre = txt_titre.get_rect(center=(ecr.get_width() // 2, 300))  # Centrer
+    rect_titre = txt_titre.get_rect(center=(lrg // 2, htr // 4))  # Centrer
     ecr.blit(txt_titre, rect_titre)
     
     
