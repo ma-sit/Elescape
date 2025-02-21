@@ -19,7 +19,7 @@ def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius , surbrillanc
     
     if btn["image"]:
         draw.rect(ecr, couleur, rect, border_radius=radius)
-        ecr.blit(btn["image"], rect.topleft)
+        ecr.blit(btn["image"], (rect.x + (rect.width - btn["image"].get_width()) // 2, rect.y + 15))
     
     else:
         draw.rect(ecr, couleur, rect, border_radius=radius)  # Dessiner le bouton arrondi
@@ -29,11 +29,10 @@ def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius , surbrillanc
     return survole
 
 
-
-def dessiner_menu(ecr):
+def dessiner_menu(ecr, image):
     """Affiche le menu principal"""
     
-    ecr.fill(BLC)
+    ecr.blit(image, (0, 0))
     
     hover_jeu = bouton(ecr, NOR, btn_jeu, "Jouer", son_survol, son_clicmenu,r_menu, surbrillance=(150, 150, 150))
     hover_cfg = bouton(ecr, NOR, btn_cfg, "Paramètres", son_survol, son_clicmenu,r_menu, surbrillance=(150, 150, 150))
@@ -59,7 +58,7 @@ def dessiner_menu(ecr):
 
     # 🔹 Affichage du titre
     police_titre = font.Font(None, taille_titre)  # Appliquer la taille dynamique
-    txt_titre = police_titre.render("Vitanox", True, (0, 0, 0))  # Blanc
+    txt_titre = police_titre.render("Vitanox", True, (0, 0, 0))
     rect_titre = txt_titre.get_rect(center=(ecr.get_width() // 2, 300))  # Centrer
     ecr.blit(txt_titre, rect_titre)
     
