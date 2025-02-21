@@ -7,6 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
 from interface.menu_interf_jeu import menu_parametres
 from interface.menu import bouton
+from interface.page_laterale_jeu_combinaisons import Page
 
 elements = {}
 
@@ -88,7 +89,7 @@ def page_jeu(niveau):
 
         ecr.blit(fnd, (0, 0))
         
-        hover_ency = bouton(ecr, BLC , btn_ency, "Encyclopédie", son_survol, son_clicmenu,r_jeu, surbrillance=(150, 150, 150))
+        hover_ency = bouton(ecr, (150, 150, 150) , btn_ency, "Encyclopédie", son_survol, son_clicmenu,r_jeu, surbrillance=BLC)
         
         for obj in objets:
             ecr.blit(obj["image"], (obj["rect"].x, obj["rect"].y))
@@ -99,11 +100,15 @@ def page_jeu(niveau):
             elif evt.type == KEYDOWN and evt.key == K_ESCAPE:
                 act = menu_parametres()
             elif evt.type == MOUSEBUTTONDOWN:
-                if evt.button == 1:  # Clic gauche pour déplacer un élément
-                    for obj in objets:
-                        if obj["rect"].collidepoint(evt.pos):
-                            selected_obj = obj
-                            break
+                if evt.button == 1:
+                    if btn_ency["rect"].collidepoint(evt.pos):
+                        son_clicmenu.play()
+                        Page(ecr)
+                    else:
+                        for obj in objets:
+                            if obj["rect"].collidepoint(evt.pos):
+                                selected_obj = obj
+                                break
                 elif evt.button == 3:  # Clic droit pour déplacer le personnage
                     target_x, target_y = mouse.get_pos()
                     moving = True
@@ -154,6 +159,7 @@ def page_jeu(niveau):
 
         for obj in objets:
             ecr.blit(obj["image"], obj["rect"])
+            
 
         display.flip()
         clock.tick(60)
