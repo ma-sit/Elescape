@@ -47,7 +47,7 @@ def selection_niveau():
 
     while running:
         
-        fnd = image.load("data/images/image_menu.png").convert()
+        fnd = image.load("data/images/image_selection_niveau.png").convert()
         fnd = transform.scale(fnd, (rec.right, rec.bottom))
         ecr.blit(fnd, (0, 0))  # Fond gris foncé
         
