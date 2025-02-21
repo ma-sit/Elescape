@@ -24,11 +24,13 @@ except:
         'Quitter': K_q
     }
 
-
+# Chargement fond menu
+image = image.load("data/images/image_menu.png").convert()
+image = transform.scale(image, (rec.right, rec.bottom))
 # Boucle principale
 act = True
 while act:
-    dessiner_menu(ecr)
+    dessiner_menu(ecr, image)
     
     for evt in event.get():
         if evt.type == QUIT:
