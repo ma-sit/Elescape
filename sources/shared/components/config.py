@@ -12,7 +12,7 @@ lrg, htr = ecr.get_size()
 # Sons
 try:
     son_clic = mixer.Sound("data/sons/click_002.wav")
-    mixer.music.load("data/sons/musique_test.mp3")
+    mixer.music.load("data/sons/musique_test1.mp3")
     son_survol = mixer.Sound("data/sons/clic1.wav")
     son_clicmenu = mixer.Sound("data/sons/clic2.wav")
     mixer.music.set_volume(0.5)
