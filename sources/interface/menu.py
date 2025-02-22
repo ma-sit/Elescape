@@ -6,7 +6,7 @@ from shared.components.config import *
 
 def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius , surbrillance=None):
     """Dessine un bouton interactif avec sons et coins arrondis"""
-    rect = btn["rect"]  # Récupérer le pygame.Rect
+    rect = btn["rect"]
     survole = rect.collidepoint(mouse.get_pos())
 
     if survole:
@@ -22,7 +22,7 @@ def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius , surbrillanc
         ecr.blit(btn["image"], (rect.x + (rect.width - btn["image"].get_width()) // 2, rect.y + 15))
     
     else:
-        draw.rect(ecr, couleur, rect, border_radius=radius)  # Dessiner le bouton arrondi
+        draw.rect(ecr, couleur, rect, border_radius=radius)
         txt_rendu = fnt.render(texte, True, (255, 255, 255))
         ecr.blit(txt_rendu, (rect.x + (rect.width - txt_rendu.get_width()) // 2, rect.y + 10))
 
@@ -39,8 +39,8 @@ def dessiner_menu(ecr, image):
     hover_fin = bouton(ecr, NOR, btn_fin, "Quitter", son_survol, son_clicmenu,r_menu, surbrillance=(150, 150, 150))
     
     """Titre du jeu"""
-    rect_titre = Rect(0, 0, 550, 100)  # Zone du titre (ajuste si besoin)
-    rect_titre.center = (lrg // 2, htr // 4)  # Centrer
+    rect_titre = Rect(0, 0, 550, 100)
+    rect_titre.center = (lrg // 2, htr // 4)
 
     survol_titre = rect_titre.collidepoint(mouse.get_pos())
     
@@ -48,7 +48,7 @@ def dessiner_menu(ecr, image):
     taille_titre = 200  # Taille normale du titre
     taille_titre_max = 250  # Taille agrandie
 
-    # 🔹 Ajustement de la taille
+    # Ajustement de la taille
     if survol_titre and not titre_agrandi:
         taille_titre = min(taille_titre + 8, taille_titre_max)  # Grandit progressivement
         titre_agrandi = True
@@ -56,10 +56,10 @@ def dessiner_menu(ecr, image):
         taille_titre = max(taille_titre - 8, 60)  # Revient à la taille normale
         titre_agrandi = False
 
-    # 🔹 Affichage du titre
-    police_titre = font.Font(None, taille_titre)  # Appliquer la taille dynamique
+    # Affichage du titre
+    police_titre = font.Font(None, taille_titre)
     txt_titre = police_titre.render("Vitanox", True, (0, 0, 0))
-    rect_titre = txt_titre.get_rect(center=(lrg // 2, htr // 4))  # Centrer
+    rect_titre = txt_titre.get_rect(center=(lrg // 2, htr // 4))
     ecr.blit(txt_titre, rect_titre)
     
     
