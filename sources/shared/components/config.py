@@ -12,7 +12,7 @@ lrg, htr = ecr.get_size()
 # Sons
 try:
     son_clic = mixer.Sound("data/sons/click_002.wav")
-    mixer.music.load("data/sons/musique_test1.mp3")
+    mixer.music.load("data/sons/musique_test.mp3")
     son_survol = mixer.Sound("data/sons/clic1.wav")
     son_clicmenu = mixer.Sound("data/sons/clic2.wav")
     mixer.music.set_volume(0.5)
@@ -28,7 +28,7 @@ btn_fin = {"rect": Rect(lrg/2-125, htr/2+100, 250, 60), "image": None, "a_joue_s
 r_menu = 15
 
 # Boutons jeu
-img_bouton = image.load("data/images/book-open-text.png")
+img_bouton = image.load("data/images/autres/book-open-text.png")
 img_bouton = transform.scale(img_bouton, (70, 70))
 
 btn_ency = {"rect": Rect(lrg/20*19-50, htr/40, 100, 100), "image": img_bouton, "a_joue_son": False}
