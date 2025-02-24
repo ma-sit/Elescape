@@ -39,6 +39,7 @@ r_jeu = 30
 BLC = (255, 255, 255)
 NOR = (0, 0, 0)
 BLEU = (0, 100, 200)
+GRIS = (200, 200, 200)
 
 # Police
 fnt = font.Font(None, 50)
