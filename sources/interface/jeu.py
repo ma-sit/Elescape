@@ -74,17 +74,14 @@ def afficher_elements(ecr, elements, elementsbase):
 
     # Trie les objets par ordre croissant de la coordonnée y (du plus bas au plus haut)
     objets.sort(key=lambda obj: obj["rect"].y)
-    
     return objets
 
 def flouter(surface):
-    """Applique un flou simple à l'image (en la rendant plus opaque et en lui ajoutant un filtre)."""
     blurred_surface = surface.copy()
-    blurred_surface.fill(GREY, special_flags=pygame.BLEND_RGBA_MULT)  # Applique un flou simple
+    blurred_surface.fill(GRIS, special_flags=BLEND_RGBA_MULT)  # Applique un flou simple
     return blurred_surface
 
 def page_jeu(niveau):
-    """Affichage du jeu avec déplacement du personnage et interactions avec les éléments."""
     
     elementsbase = {}
 
@@ -115,6 +112,8 @@ def page_jeu(niveau):
     clock = time.Clock()
     act = True
     selected_obj = None
+    selected_obj_h = None
+    element_decouvert = [1,3]
     element_discovered = False
     
     walk_images = [image.load(f"data/images/perso/i{i}.jpg") for i in range(1, 7)]
@@ -129,13 +128,24 @@ def page_jeu(niveau):
     
     fnd = transform.scale(fnd, (rec.right, rec.bottom))
     
+    cible = None
+    
     offset_x, offset_y = 0, 0
     
     while act:
         ecr.blit(fnd, (0, 0))
         
+        current_time = time.get_ticks()
+        
         for obj in objets:
             ecr.blit(obj["image"], (obj["rect"].x, obj["rect"].y))
+            if "enlarge_start" in obj:
+                if current_time - obj["enlarge_start"] > 100:  # 200 ms par exemple
+                    obj["image"] = obj["original_image"]
+                    # On garde le même centre pour le rect
+                    obj["rect"] = obj["original_image"].get_rect(center=obj["rect"].center)
+                    # Supprimer la clé pour éviter de répéter la réinitialisation
+                    del obj["enlarge_start"]
 
         for evt in event.get():
             if evt.type == QUIT:
@@ -161,38 +171,52 @@ def page_jeu(niveau):
                 elif evt.button == 3:  # Clic droit pour déplacer le personnage
                     target_x, target_y = mouse.get_pos()
                     moving = True
-            elif evt.type == MOUSEBUTTONUP and evt.button == 1:
-                if selected_obj:
                     for obj in objets:
-                        if "original_image" in obj:
+                        if obj["rect"].collidepoint(evt.pos):
+                            if obj["rect"].collidepoint(evt.pos):
+                                obj["enlarge_start"] = time.get_ticks()
+                                cible = obj
+                                orig_w, orig_h = obj["original_image"].get_size()
+                                new_size = (int(orig_w * 1.1), int(orig_h * 1.1))
+                                obj["image"] = transform.scale(obj["original_image"], new_size)
+                                obj["rect"] = obj["image"].get_rect(center=obj["rect"].center)
+                                break
+            elif evt.type == MOUSEBUTTONUP:
+                if evt.button == 1:
+                    if selected_obj:
+                        if "original_image" in selected_obj:
                             selected_obj["image"] = selected_obj["original_image"]
                             selected_obj["rect"] = selected_obj["image"].get_rect(center=selected_obj["rect"].center)
-                        if obj != selected_obj and obj["rect"].colliderect(selected_obj["rect"]):
-                            new_id = fusionner(obj["id"], selected_obj["id"])
-                            print(evt)
-                            if new_id:
-                                img = image.load(elements[new_id]["Image"])
-                                nouvel_objet = {
-                                    "id": new_id,
-                                    "image": img,
-                                    "original_image": img.copy(),
-                                    "rect": img.get_rect(center=evt.pos)
-                                }
-                                objets.append(nouvel_objet)
-                                if elements[obj["id"]]["DR"] == 0:
-                                    objets.remove(obj)
-                                if elements[selected_obj["id"]]["DR"] == 0:
-                                    objets.remove(selected_obj)
-                    # Déplacer l'objet et mettre à jour sa position
-                    selected_obj["rect"].center = (evt.pos[0] - offset_x, evt.pos[1] - offset_y)
-                    selected_obj["x"], selected_obj["y"] = selected_obj["rect"].center  # Mise à jour de la position de l'objet
+                        for obj in objets:
+                            if obj != selected_obj and obj["rect"].colliderect(selected_obj["rect"]):
+                                new_id = fusionner(obj["id"], selected_obj["id"])
+                                if new_id and new_id not in element_decouvert:
+                                    element_discovered = new_id
+                                    element_decouvert.append(new_id)
+                                if new_id:
+                                    img = image.load(elements[new_id]["Image"])
+                                    nouvel_objet = {
+                                        "id": new_id,
+                                        "image": img,
+                                        "original_image": img.copy(),
+                                        "rect": img.get_rect(center=evt.pos)
+                                    }
+                                    objets.append(nouvel_objet)
+                                    if elements[obj["id"]]["DR"] == 0:
+                                        objets.remove(obj)
+                                    if elements[selected_obj["id"]]["DR"] == 0:
+                                        objets.remove(selected_obj)
+                        # Déplacer l'objet et mettre à jour sa position
+                        selected_obj["rect"].center = (evt.pos[0] - offset_x, evt.pos[1] - offset_y)
+                        selected_obj["x"], selected_obj["y"] = selected_obj["rect"].center  # Mise à jour de la position de l'objet
 
-                    # Re-trier les objets après le déplacement
-                    objets.sort(key=lambda obj: obj["rect"].y)
-                selected_obj = None
+                        # Re-trier les objets après le déplacement
+                        objets.sort(key=lambda obj: obj["rect"].y)
+                    selected_obj = None
             elif evt.type == MOUSEMOTION and selected_obj:
                 selected_obj["rect"].move_ip(evt.rel)
-
+                
+                            
         if moving:
             dx, dy = target_x - x, target_y - y
             distance = (dx ** 2 + dy ** 2) ** 0.5
@@ -206,19 +230,28 @@ def page_jeu(niveau):
         perso_rect.center = (x, y)  # Mise à jour de la position du rect du personnage
         ecr.blit(get_next_image(current_image, walk_images), perso_rect.topleft)
 
-        # Vérifier la collision entre le personnage et les objets
-        for obj in objets[:]:  # Copie de la liste pour éviter modification en boucle
-            if perso_rect.colliderect(obj["rect"]):
-                new_id = fusionner(0, obj["id"])  # Fusionner l'humain avec l'objet
-                if new_id:
-                    objets.append({
-                        "id": new_id,
-                        "image": image.load(elements[new_id]["Image"]),
-                        "rect": image.load(elements[new_id]["Image"]).get_rect(center=(x, y))
-                    })
-                    if elements[obj["id"]]["DR"] == 0:
-                        objets.remove(obj)
-
+        if perso_rect.colliderect(obj["rect"]) and cible == obj:
+            # Fusionner le personnage avec l'objet
+            new_id = fusionner(0, obj["id"])  # Fusionner l'humain avec l'objet
+            if new_id and new_id not in element_decouvert:
+                element_discovered = new_id
+                element_decouvert.append(new_id)
+            if new_id:
+                img = image.load(elements[new_id]["Image"])
+                nouvel_objet = {
+                    "id": new_id,
+                    "image": img,
+                    "original_image": img.copy(),
+                    "rect": img.get_rect(center=obj["rect"].center)
+                }
+                objets.append(nouvel_objet)
+                if elements[obj["id"]]["DR"] == 0:
+                    objets.remove(obj)
+            # Enlever l'agrandissement et réinitialiser l'objet
+            obj["image"] = obj["original_image"]
+            obj["rect"] = obj["original_image"].get_rect(center=obj["rect"].center)
+            cible = None
+                                
         for obj in objets:
             ecr.blit(obj["image"], obj["rect"])
         
@@ -227,14 +260,23 @@ def page_jeu(niveau):
             blurred_bg = flouter(ecr)
             ecr.blit(blurred_bg, (0, 0))
 
-            # Affiche l'élément découvert au centre
-            element_rect = discovered_element.get_rect(center=(lrg // 2, htr // 2))
-            ecr.blit(discovered_element, element_rect)
-        
+            # Chargement et agrandissement de l'image
+            img = image.load(elements[element_discovered]["Image"])
+            img = transform.scale(img, (int(img.get_width() * 1.5), int(img.get_height() * 1.5)))
+
+            # Centrage de l'image
+            element_rect = img.get_rect(center=(lrg // 2, htr // 2 - 50))  # Légèrement remonté pour laisser de la place au texte
+            ecr.blit(img, element_rect)
+
+            # Affichage du nom sous l'image
+            text = fnt.render(elements[element_discovered]["Nom"], True, (255, 255, 255))  # Texte blanc
+            text_rect = text.get_rect(center=(lrg // 2, element_rect.bottom + 20))  # Position sous l'image
+            ecr.blit(text, text_rect)
+
         hover_ency = bouton(ecr, (150, 150, 150) , btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
-            
 
         display.flip()
         clock.tick(60)
     
     return True
+    
