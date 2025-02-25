@@ -1,5 +1,0 @@
-ID;Nom;Creations;DR;Image
-0;Humain;2;1;
-1;Arbre;2;0;data/images/elements/arbre1.png, data/images/elements/arbre2.png, data/images/elements/arbre3.png, data/images/elements/arbre4.png
-2;Bois;;0;data/images/elements/bois.png
-3;Rocher;;0;data/images/elements/rocher1.png, data/images/elements/rocher2.png, data/images/elements/rocher3.png
