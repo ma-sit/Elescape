@@ -175,7 +175,7 @@ def page_jeu(niveau):
                         if obj["rect"].collidepoint(evt.pos):
                             if obj["rect"].collidepoint(evt.pos):
                                 obj["enlarge_start"] = time.get_ticks()
-                                cible = obj
+                                target_obj = obj
                                 orig_w, orig_h = obj["original_image"].get_size()
                                 new_size = (int(orig_w * 1.1), int(orig_h * 1.1))
                                 obj["image"] = transform.scale(obj["original_image"], new_size)
@@ -226,31 +226,28 @@ def page_jeu(niveau):
             else:
                 x, y = target_x, target_y
                 moving = False
+                
+                if target_obj and perso_rect.colliderect(target_obj["rect"]):
+                    new_id = fusionner(0, target_obj["id"])  # Fusionner l'humain avec l'objet
+                    if new_id and new_id not in element_decouvert:
+                        element_discovered = new_id
+                        element_decouvert.append(new_id)
+                    if new_id:
+                        img = image.load(elements[new_id]["Image"])
+                        nouvel_objet = {
+                            "id": new_id,
+                            "image": img,
+                            "original_image": img.copy(),
+                            "rect": img.get_rect(center=target_obj["rect"].center)
+                        }
+                        objets.append(nouvel_objet)
+                        if elements[target_obj["id"]]["DR"] == 0:
+                            objets.remove(target_obj)
+                
+                    target_obj = None
 
         perso_rect.center = (x, y)  # Mise à jour de la position du rect du personnage
         ecr.blit(get_next_image(current_image, walk_images), perso_rect.topleft)
-
-        if perso_rect.colliderect(obj["rect"]) and cible == obj:
-            # Fusionner le personnage avec l'objet
-            new_id = fusionner(0, obj["id"])  # Fusionner l'humain avec l'objet
-            if new_id and new_id not in element_decouvert:
-                element_discovered = new_id
-                element_decouvert.append(new_id)
-            if new_id:
-                img = image.load(elements[new_id]["Image"])
-                nouvel_objet = {
-                    "id": new_id,
-                    "image": img,
-                    "original_image": img.copy(),
-                    "rect": img.get_rect(center=obj["rect"].center)
-                }
-                objets.append(nouvel_objet)
-                if elements[obj["id"]]["DR"] == 0:
-                    objets.remove(obj)
-            # Enlever l'agrandissement et réinitialiser l'objet
-            obj["image"] = obj["original_image"]
-            obj["rect"] = obj["original_image"].get_rect(center=obj["rect"].center)
-            cible = None
                                 
         for obj in objets:
             ecr.blit(obj["image"], obj["rect"])
@@ -279,4 +276,3 @@ def page_jeu(niveau):
         clock.tick(60)
     
     return True
-    
