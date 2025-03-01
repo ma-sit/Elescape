@@ -81,6 +81,39 @@ def flouter(surface):
     blurred_surface.fill(GRIS, special_flags=BLEND_RGBA_MULT)  # Applique un flou simple
     return blurred_surface
 
+import pygame
+
+def creer_objet(new_id, img, target_obj, objets):
+
+    x_existing, y_existing = target_obj["rect"].center
+    w_existing, h_existing = target_obj["rect"].size
+
+    # Liste des décalages à tester
+    offsets = [(w_existing /2, h_existing /2),(0, h_existing /2),(-w_existing /2, h_existing /2),(-w_existing /2, 0),(-w_existing /2, -h_existing /2),(0, -h_existing /2),(w_existing /2, -h_existing /2),(w_existing /2, 0)]
+    offset_index = 0
+
+    # Vérifier qu'on place l'objet dans un emplacement libre
+    while True:
+        offset_x, offset_y = offsets[offset_index]
+        new_x, new_y = x_existing + offset_x, y_existing + offset_y
+        new_rect = pygame.Rect(new_x, new_y, img.get_width(), img.get_height())
+
+        if not any(obj["rect"].colliderect(new_rect) for obj in objets):
+            break
+
+        offset_index += 1
+        if offset_index >= len(offsets):  
+            # Si toutes les directions sont bloquées, on garde l’emplacement d'origine
+            new_x, new_y = x_existing + offset_x, y_existing + offset_y
+            break
+
+    return {
+        "id": new_id,
+        "image": img,
+        "original_image": img.copy(),
+        "rect": img.get_rect(center=(new_x, new_y))
+    }
+
 def page_jeu(niveau):
     
     elementsbase = {}
@@ -128,7 +161,7 @@ def page_jeu(niveau):
     
     fnd = transform.scale(fnd, (rec.right, rec.bottom))
     
-    cible = None
+    target_obj = None
     
     offset_x, offset_y = 0, 0
     
@@ -187,24 +220,36 @@ def page_jeu(niveau):
                         if "original_image" in selected_obj:
                             selected_obj["image"] = selected_obj["original_image"]
                             selected_obj["rect"] = selected_obj["image"].get_rect(center=selected_obj["rect"].center)
+                            
+                        closest_obj = None
                         for obj in objets:
                             if obj != selected_obj and obj["rect"].colliderect(selected_obj["rect"]):
-                                new_id = fusionner(obj["id"], selected_obj["id"])
-                                if new_id and new_id not in element_decouvert:
-                                    element_discovered = new_id
-                                    element_decouvert.append(new_id)
-                                if new_id:
-                                    img = image.load(elements[new_id]["Image"])
+                                if fusionner(obj["id"], selected_obj["id"]) is not None:
+                                    closest_obj = obj
+                                    break
+                        if closest_obj:
+                            new_id = fusionner(closest_obj["id"], selected_obj["id"])
+                            if new_id and new_id not in element_decouvert:
+                                element_discovered = new_id
+                                element_decouvert.append(new_id)
+                            if new_id:
+                                img = image.load(elements[new_id]["Image"])
+                                
+                                if elements[closest_obj["id"]]["DR"] == 0 or elements[selected_obj["id"]]["DR"] == 0:
                                     nouvel_objet = {
                                         "id": new_id,
                                         "image": img,
                                         "original_image": img.copy(),
-                                        "rect": img.get_rect(center=evt.pos)
+                                        "rect": img.get_rect(center=closest_obj["rect"].center)
                                     }
                                     objets.append(nouvel_objet)
-                                    if elements[obj["id"]]["DR"] == 0:
-                                        objets.remove(obj)
-                                    if elements[selected_obj["id"]]["DR"] == 0:
+                                else:
+                                    objets.append(creer_objet(new_id, img, selected_obj, objets))
+                                        
+                                if elements[closest_obj["id"]]["DR"] == 0:
+                                    objets.remove(closest_obj)
+                                if elements[selected_obj["id"]]["DR"] == 0:
+                                    if selected_obj in objets:
                                         objets.remove(selected_obj)
                         # Déplacer l'objet et mettre à jour sa position
                         selected_obj["rect"].center = (evt.pos[0] - offset_x, evt.pos[1] - offset_y)
@@ -234,15 +279,17 @@ def page_jeu(niveau):
                         element_decouvert.append(new_id)
                     if new_id:
                         img = image.load(elements[new_id]["Image"])
-                        nouvel_objet = {
-                            "id": new_id,
-                            "image": img,
-                            "original_image": img.copy(),
-                            "rect": img.get_rect(center=target_obj["rect"].center)
-                        }
-                        objets.append(nouvel_objet)
                         if elements[target_obj["id"]]["DR"] == 0:
+                            nouvel_objet = {
+                                "id": new_id,
+                                "image": img,
+                                "original_image": img.copy(),
+                                "rect": img.get_rect(center=target_obj["rect"].center)
+                            }
+                            objets.append(nouvel_objet)
                             objets.remove(target_obj)
+                        else:
+                            objets.append(creer_objet(new_id, img, target_obj, objets))
                 
                     target_obj = None
 
