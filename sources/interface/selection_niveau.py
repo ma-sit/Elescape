@@ -5,12 +5,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
 from interface.jeu import page_jeu
-
-def create_button(x, y, width, height, text):
-    button_rect = Rect(x, y, width, height)
-    button_text = font.Font(None, 36).render(text, True, (255, 255, 255))
-    text_rect = button_text.get_rect(center=button_rect.center)
-    return (button_rect, button_text, text_rect)
+from interface.menu import bouton
 
 def selection_niveau():
     running = True
@@ -43,23 +38,27 @@ def selection_niveau():
         col = i % 5
         x = start_x + col * (button_width + padding)
         y = first_row_y if row == 0 else second_row_y
-        buttons.append(create_button(x, y, button_width, button_height, f"Level {i+1}"))
+        
+        btn = {
+            "rect": Rect(x, y, button_width, button_height),
+            "image": None,
+            "a_joue_son": False,
+            "text": f"Level {i+1}"
+        }
+        buttons.append(btn)
 
     while running:
-        
         fnd = image.load("data/images/image_selection_niveau.png").convert()
         fnd = transform.scale(fnd, (rec.right, rec.bottom))
-        ecr.blit(fnd, (0, 0))  # Fond gris foncé
+        ecr.blit(fnd, (0, 0))
         
         # Affichage titres
         ecr.blit(title, title_rect)
         ecr.blit(subtitle, subtitle_rect)
         
         # Affichage boutons avec effet de bordure
-        for button_rect, button_text, text_rect in buttons:
-            draw.rect(ecr, (80, 80, 80), button_rect)  # Bouton
-            draw.rect(ecr, (120, 120, 120), button_rect, 2)  # Bordure
-            ecr.blit(button_text, text_rect)
+        for i, btn in enumerate(buttons):
+            hover = bouton(ecr, (80, 80, 80), btn, btn["text"], son_survol, son_clicmenu, 10, surbrillance=(120, 120, 120))
         
         display.flip()
 
@@ -70,8 +69,9 @@ def selection_niveau():
                 running = False
             if evt.type == MOUSEBUTTONDOWN and evt.button == 1:
                 mouse_pos = mouse.get_pos()
-                for i, (button_rect, _, _) in enumerate(buttons):
-                    if button_rect.collidepoint(mouse_pos):
+                for i, btn in enumerate(buttons):
+                    if btn["rect"].collidepoint(mouse_pos):
+                        son_clicmenu.play()
                         if i == 0:
                             return page_jeu(i+1)
                         else:
