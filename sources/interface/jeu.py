@@ -9,6 +9,7 @@ from shared.components.config import *
 from interface.menu_interf_jeu import menu_parametres
 from interface.menu import bouton
 from interface.page_laterale_jeu_combinaisons import Page
+from interface.fin_niveau import affichage_victoire
 
 elements = {}
 
@@ -33,10 +34,11 @@ def get_next_image(c, w):
     c = (c + 1) % len(w)
     return w[c]
 
-def fusionner(element1, element2):
+def fusionner(element1, element2,nb_fusions):
     if elements[element1]["Nom"] != elements[element2]["Nom"]:
         for element in elements[element1]["Creations"]:
             if element in elements[element2]["Creations"]:
+                nb_fusions += 1
                 return int(element)  # Retourne l'ID du nouvel élément créé
     return None
 
@@ -72,23 +74,21 @@ def afficher_elements(ecr, elements, elementsbase):
                     "selected": False
                 })
 
-    # Trie les objets par ordre croissant de la coordonnée y (du plus bas au plus haut)
+    # Trie les objets par ordre croissant pour afficher les objets dans l'ordre
     objets.sort(key=lambda obj: obj["rect"].y)
     return objets
 
 def flouter(surface):
     blurred_surface = surface.copy()
-    blurred_surface.fill(GRIS, special_flags=BLEND_RGBA_MULT)  # Applique un flou simple
+    blurred_surface.fill(GRIS, special_flags=BLEND_RGBA_MULT)
     return blurred_surface
-
-import pygame
 
 def creer_objet(new_id, img, target_obj, objets):
 
     x_existing, y_existing = target_obj["rect"].center
     w_existing, h_existing = target_obj["rect"].size
 
-    # Liste des décalages à tester
+    # Liste des emplacements à tester
     offsets = [(w_existing /2, h_existing /2),(0, h_existing /2),(-w_existing /2, h_existing /2),(-w_existing /2, 0),(-w_existing /2, -h_existing /2),(0, -h_existing /2),(w_existing /2, -h_existing /2),(w_existing /2, 0)]
     offset_index = 0
 
@@ -96,7 +96,7 @@ def creer_objet(new_id, img, target_obj, objets):
     while True:
         offset_x, offset_y = offsets[offset_index]
         new_x, new_y = x_existing + offset_x, y_existing + offset_y
-        new_rect = pygame.Rect(new_x, new_y, img.get_width(), img.get_height())
+        new_rect = Rect(new_x, new_y, img.get_width(), img.get_height())
 
         if not any(obj["rect"].colliderect(new_rect) for obj in objets):
             break
@@ -106,7 +106,6 @@ def creer_objet(new_id, img, target_obj, objets):
             # Si toutes les directions sont bloquées, on garde l’emplacement d'origine
             new_x, new_y = x_existing + offset_x, y_existing + offset_y
             break
-
     return {
         "id": new_id,
         "image": img,
@@ -117,13 +116,13 @@ def creer_objet(new_id, img, target_obj, objets):
 def page_jeu(niveau):
     
     elementsbase = {}
-
-    # Chargement des éléments de base
     with open(f'data/csv/niveau{niveau}.csv', newline='', encoding='utf-8') as csvfile:
         spamreader = csv.DictReader(csvfile, delimiter=';')
         for row in spamreader:
             row = {k.strip(): v.strip() for k, v in row.items()}
             bg = row.get("bg")
+            elfinal = row.get("elfinal")
+            elfinal = elfinal.strip()
             if bg:
                 fnd = image.load(bg).convert()
             elem_id = row.get("elements_base")
@@ -134,9 +133,9 @@ def page_jeu(niveau):
                     x, y = map(int, emplacement.split(','))
                     
                     if elem_id not in elementsbase:
-                        elementsbase[elem_id] = []  # Crée une liste si l'élément n'existe pas encore
+                        elementsbase[elem_id] = []
 
-                    elementsbase[elem_id].append({"x": x, "y": y})  # Ajoute une nouvelle instance
+                    elementsbase[elem_id].append({"x": x, "y": y})
                 except ValueError:
                     print(f"Erreur de format dans le CSV pour l'élément {elem_id}: {emplacement}")
         
@@ -148,6 +147,9 @@ def page_jeu(niveau):
     selected_obj_h = None
     element_decouvert = [1,3]
     element_discovered = False
+    nb_fusions = 0
+    start_time = time.get_ticks()
+    elfinal = 11
     
     walk_images = [image.load(f"data/images/perso/i{i}.jpg") for i in range(1, 7)]
     x, y = lrg // 2, htr // 2  # Position initiale
@@ -155,14 +157,10 @@ def page_jeu(niveau):
     current_image = 0
     target_x, target_y = x, y
     moving = False
-    
     objets = afficher_elements(ecr, elements, elementsbase)
     perso_rect = walk_images[0].get_rect(center=(x, y))  # Rect du personnage
-    
     fnd = transform.scale(fnd, (rec.right, rec.bottom))
-    
     target_obj = None
-    
     offset_x, offset_y = 0, 0
     
     while act:
@@ -173,11 +171,9 @@ def page_jeu(niveau):
         for obj in objets:
             ecr.blit(obj["image"], (obj["rect"].x, obj["rect"].y))
             if "enlarge_start" in obj:
-                if current_time - obj["enlarge_start"] > 100:  # 200 ms par exemple
+                if current_time - obj["enlarge_start"] > 100:
                     obj["image"] = obj["original_image"]
-                    # On garde le même centre pour le rect
                     obj["rect"] = obj["original_image"].get_rect(center=obj["rect"].center)
-                    # Supprimer la clé pour éviter de répéter la réinitialisation
                     del obj["enlarge_start"]
 
         for evt in event.get():
@@ -201,7 +197,7 @@ def page_jeu(niveau):
                                     obj["rect"] = obj["image"].get_rect(center=obj["rect"].center)
                                 offset_x, offset_y = evt.pos[0] - obj["rect"].centerx, evt.pos[1] - obj["rect"].centery
                                 break
-                elif evt.button == 3:  # Clic droit pour déplacer le personnage
+                elif evt.button == 3:
                     target_x, target_y = mouse.get_pos()
                     moving = True
                     for obj in objets:
@@ -224,11 +220,11 @@ def page_jeu(niveau):
                         closest_obj = None
                         for obj in objets:
                             if obj != selected_obj and obj["rect"].colliderect(selected_obj["rect"]):
-                                if fusionner(obj["id"], selected_obj["id"]) is not None:
+                                if fusionner(obj["id"], selected_obj["id"],nb_fusions) is not None:
                                     closest_obj = obj
                                     break
                         if closest_obj:
-                            new_id = fusionner(closest_obj["id"], selected_obj["id"])
+                            new_id = fusionner(closest_obj["id"], selected_obj["id"],nb_fusions)
                             if new_id and new_id not in element_decouvert:
                                 element_discovered = new_id
                                 element_decouvert.append(new_id)
@@ -251,7 +247,7 @@ def page_jeu(niveau):
                                 if elements[selected_obj["id"]]["DR"] == 0:
                                     if selected_obj in objets:
                                         objets.remove(selected_obj)
-                        # Déplacer l'objet et mettre à jour sa position
+                                        
                         selected_obj["rect"].center = (evt.pos[0] - offset_x, evt.pos[1] - offset_y)
                         selected_obj["x"], selected_obj["y"] = selected_obj["rect"].center  # Mise à jour de la position de l'objet
 
@@ -273,7 +269,7 @@ def page_jeu(niveau):
                 moving = False
                 
                 if target_obj and perso_rect.colliderect(target_obj["rect"]):
-                    new_id = fusionner(0, target_obj["id"])  # Fusionner l'humain avec l'objet
+                    new_id = fusionner(0, target_obj["id"],nb_fusions)
                     if new_id and new_id not in element_decouvert:
                         element_discovered = new_id
                         element_decouvert.append(new_id)
@@ -293,31 +289,37 @@ def page_jeu(niveau):
                 
                     target_obj = None
 
-        perso_rect.center = (x, y)  # Mise à jour de la position du rect du personnage
+        perso_rect.center = (x, y)  # Mise à jour de la position du rect du perso
         ecr.blit(get_next_image(current_image, walk_images), perso_rect.topleft)
                                 
         for obj in objets:
             ecr.blit(obj["image"], obj["rect"])
         
         if element_discovered:
-            # Applique le flou sur l'arrière-plan
-            blurred_bg = flouter(ecr)
-            ecr.blit(blurred_bg, (0, 0))
+            if element_discovered == int(elfinal):
+                # il faudra ajouter une animation qui affiche l'element final avant d'afficher la page de fin 
+                temps_ecoule = time.get_ticks() - start_time
+                act = affichage_victoire(niveau, temps_ecoule, nb_fusions, None)
+            else:
+                # Applique le flou sur l'arrière-plan
+                blurred_bg = flouter(ecr)
+                ecr.blit(blurred_bg, (0, 0))
 
-            # Chargement et agrandissement de l'image
-            img = image.load(elements[element_discovered]["Image"])
-            img = transform.scale(img, (int(img.get_width() * 1.5), int(img.get_height() * 1.5)))
+                # Chargement et agrandissement de l'image
+                img = image.load(elements[element_discovered]["Image"])
+                img = transform.scale(img, (int(img.get_width() * 1.5), int(img.get_height() * 1.5)))
 
-            # Centrage de l'image
-            element_rect = img.get_rect(center=(lrg // 2, htr // 2 - 50))  # Légèrement remonté pour laisser de la place au texte
-            ecr.blit(img, element_rect)
+                # Centrage de l'image
+                element_rect = img.get_rect(center=(lrg // 2, htr // 2 - 50))  # Légèrement remonté pour laisser de la place au texte
+                ecr.blit(img, element_rect)
 
-            # Affichage du nom sous l'image
-            text = fnt.render(elements[element_discovered]["Nom"], True, (255, 255, 255))  # Texte blanc
-            text_rect = text.get_rect(center=(lrg // 2, element_rect.bottom + 20))  # Position sous l'image
-            ecr.blit(text, text_rect)
+                # Affichage du nom sous l'image
+                text = fnt.render(elements[element_discovered]["Nom"], True, (255, 255, 255))  # Texte blanc
+                text_rect = text.get_rect(center=(lrg // 2, element_rect.bottom + 20))  # Position sous l'image
+                ecr.blit(text, text_rect)
 
-        hover_ency = bouton(ecr, (150, 150, 150) , btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
+        bouton(ecr, (150, 150, 150) , btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
+        
 
         display.flip()
         clock.tick(60)
