@@ -35,6 +35,8 @@ btn_ency = {"rect": Rect(lrg/20*19-50, htr/40, 100, 100), "image": img_bouton, "
 
 r_jeu = 30
 
+# Boutons fin de niveau
+btn_quit = {"rect": Rect(lrg//2 - 100, 300, 200, 50), "image": None, "a_joue_son": False}
 # Couleurs
 BLC = (255, 255, 255)
 NOR = (0, 0, 0)
@@ -45,6 +47,7 @@ GRIS = (200, 200, 200)
 fnt = font.Font(None, 50)
 police_titre = font.Font(None, 150)
 police_options = font.Font(None, 40)
+police_fin_niv = font.Font(None, 80)
 
 # Position de la barre de volume
 barre_x = 200
