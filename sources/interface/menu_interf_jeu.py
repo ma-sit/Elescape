@@ -13,7 +13,7 @@ def menu_parametres():
             'Retour': K_ESCAPE
         }
     
-    act = True
+    menu_actif = True
     menu_width = 300
     menu_height = 200
     menu_x = (lrg - menu_width) // 2
@@ -24,7 +24,7 @@ def menu_parametres():
     button_y = menu_y + menu_height - button_height - 20
     quit_button = Rect(button_x, button_y, button_width, button_height)
     
-    while act:
+    while menu_actif:
         surf_overlay = Surface((lrg, htr), SRCALPHA)
         surf_overlay.fill((0, 0, 0, 128))
         ecr.blit(surf_overlay, (0, 0))
@@ -51,6 +51,6 @@ def menu_parametres():
                 menu_actif = False
             if evt.type == MOUSEBUTTONDOWN and evt.button == 1:
                 if quit_button.collidepoint(evt.pos):
-                    act = False
+                    return False
     
     return True
