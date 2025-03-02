@@ -4,7 +4,7 @@ import json
 from shared.components.config import *
 from interface.menu import bouton, dessiner_menu, plein_ecran
 from interface.selection_niveau import selection_niveau
-from interface.parametres import page_parametres, page_parametres_superpose
+from interface.parametres import page_parametres, page_parametres_superpose, TOUCHES_DEFAUT
 
 # Initialisation
 try:
@@ -17,17 +17,15 @@ except Exception as e:
 try:
     with open("data/touches.json", "r") as f:
         touches = json.load(f)
+    
+    # Vérification que toutes les touches requises sont présentes
+    for key in TOUCHES_DEFAUT:
+        if key not in touches:
+            touches[key] = TOUCHES_DEFAUT[key]
+            print(f"Touche '{key}' manquante, utilisation de la valeur par défaut")
 except Exception as e:
     print(f"Erreur lors du chargement des touches: {e}")
-    touches = {
-        'Déplacement': BUTTON_RIGHT,
-        'Action': K_SPACE,
-        'Retour': K_ESCAPE,
-        'Plein écran': K_f,
-        'Paramètres': K_s,
-        'Jouer': K_p,
-        'Quitter': K_q
-    }
+    touches = TOUCHES_DEFAUT.copy()
     # Sauvegarde du fichier par défaut
     try:
         with open("data/touches.json", "w") as f:
@@ -76,29 +74,32 @@ while act:
                     son_clicmenu.play()
                     act = False
             if evt.type == KEYDOWN:
-                if evt.key == touches['Plein écran']:
-                    try:
-                        plein_ecran()
-                    except Exception as e:
-                        print(f"Erreur lors du changement de mode d'écran: {e}")
-                elif evt.key == touches['Jouer']:
-                    try:
-                        act = selection_niveau()
-                    except Exception as e:
-                        print(f"Erreur lors de l'accès à la sélection de niveau: {e}")
-                elif evt.key == touches['Paramètres']:
-                    try:
-                        # Capture l'écran actuel pour l'utiliser comme arrière-plan
-                        current_screen = ecr.copy()
-                        # Utilise la version superposée des paramètres en passant l'écran actuel
-                        param_result = page_parametres_superpose(current_screen)
-                        # Si page_parametres_superpose() retourne False, on quitte l'application
-                        if not param_result:
+                # Vérifier si la touche est dans notre configuration
+                for action, key_code in touches.items():
+                    if evt.key == key_code:
+                        if action == 'Plein écran':
+                            try:
+                                plein_ecran()
+                            except Exception as e:
+                                print(f"Erreur lors du changement de mode d'écran: {e}")
+                        elif action == 'Jouer':
+                            try:
+                                act = selection_niveau()
+                            except Exception as e:
+                                print(f"Erreur lors de l'accès à la sélection de niveau: {e}")
+                        elif action == 'Paramètres':
+                            try:
+                                # Capture l'écran actuel pour l'utiliser comme arrière-plan
+                                current_screen = ecr.copy()
+                                # Utilise la version superposée des paramètres en passant l'écran actuel
+                                param_result = page_parametres_superpose(current_screen)
+                                # Si page_parametres_superpose() retourne False, on quitte l'application
+                                if not param_result:
+                                    act = False
+                            except Exception as e:
+                                print(f"Erreur lors de l'accès aux paramètres: {e}")
+                        elif action == 'Quitter':
                             act = False
-                    except Exception as e:
-                        print(f"Erreur lors de l'accès aux paramètres: {e}")
-                elif evt.key == touches['Quitter']:
-                    act = False
         display.flip()
         time.delay(30)
     except Exception as e:

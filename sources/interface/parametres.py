@@ -8,6 +8,17 @@ global_volume_general = 1.0
 global_volume_musique = 1.0
 global_volume_sfx = 1.0
 
+# Touches par défaut qui serviront pour la réinitialisation
+TOUCHES_DEFAUT = {
+    'Déplacement': BUTTON_RIGHT,
+    'Action': K_SPACE,
+    'Retour': K_ESCAPE,
+    'Plein écran': K_f,
+    'Paramètres': K_s,
+    'Jouer': K_p,
+    'Quitter': K_q
+}
+
 # Version standard des paramètres (utilisée depuis le menu principal)
 def page_parametres():
     """Page des paramètres"""
@@ -69,21 +80,26 @@ def page_parametres_interne(background_image=None):
     retour_width = 150
     retour_button = {"rect": Rect(lrg // 2 - retour_width // 2, panel_y + panel_height - 70, retour_width, section_height), "image": None, "a_joue_son": False, "text": "Retour"}
     
+    # Ajout du bouton de réinitialisation pour les touches
+    reset_width = 200
+    reset_button = {"rect": Rect(panel_x + panel_width//2 - reset_width//2, panel_y + panel_height - 140, reset_width, section_height), 
+                    "image": None, "a_joue_son": False, "text": "Réinitialiser"}
+    
     # Chargement des touches
     try:
         with open("data/touches.json", "r") as f:
             touches = json.load(f)
     except:
-        touches = {
-            'Déplacement': BUTTON_RIGHT,
-            'Action': K_SPACE,
-            'Retour': K_ESCAPE,
-            'Plein écran': K_f,
-            'Paramètres': K_s,
-            'Jouer': K_p,
-            'Quitter': K_q
-        }
+        touches = TOUCHES_DEFAUT.copy()
+        # Sauvegarde du fichier par défaut
+        try:
+            with open("data/touches.json", "w") as f:
+                json.dump(touches, f)
+        except:
+            print("Impossible de sauvegarder le fichier touches.json par défaut")
+    
     touche_active = None
+    remapping_active = False
 
     # Dimensions pour les boutons de touches
     touch_width = panel_width - 100  # Largeur selon l'image
@@ -213,6 +229,45 @@ def page_parametres_interne(background_image=None):
             
         return text_surf, rect
 
+    # Fonction pour obtenir le nom d'une touche à partir de son code
+    def get_key_name(key_code):
+        if key_code == BUTTON_RIGHT:
+            return "Clic droit"
+        elif key_code == BUTTON_LEFT:
+            return "Clic gauche"
+        elif key_code == BUTTON_MIDDLE:
+            return "Clic milieu"
+        else:
+            try:
+                # Gérer le cas où key.name() échoue
+                return key.name(key_code).upper()
+            except:
+                return f"Touche {key_code}"
+
+    # Fonction pour sauvegarder les touches
+    def save_touches():
+        try:
+            with open("data/touches.json", "w") as f:
+                json.dump(touches, f)
+            print("Touches sauvegardées avec succès")
+            return True
+        except Exception as e:
+            print(f"Erreur lors de la sauvegarde des touches: {e}")
+            return False
+
+    # Fonction pour réinitialiser les touches aux valeurs par défaut
+    def reset_touches():
+        nonlocal touches, touch_buttons
+        touches = TOUCHES_DEFAUT.copy()
+        
+        # Mettre à jour les boutons de touches
+        for btn in touch_buttons:
+            if btn["key"] in touches:
+                btn["code"] = touches[btn["key"]]
+        
+        # Sauvegarder les touches par défaut
+        return save_touches()
+
     while act:
         dt = horloge.tick(60) / 1000.0  # Delta time en secondes pour des animations fluides
         
@@ -339,25 +394,29 @@ def page_parametres_interne(background_image=None):
         # Section Touches
         elif section_active == "Touches":
             # Titre de la section
+            section_title_text = "Configuration des touches"
+            if remapping_active:
+                section_title_text = f"Appuyez sur une touche pour '{touche_active}'"
+                
             section_title, title_rect = animated_text(
                 "section_title", 
-                "Configuration des touches", 
+                section_title_text, 
                 content_x + content_width // 2, 
                 content_y + 25, 
                 font.Font(None, 28), 
-                (200, 220, 255)
+                (200, 220, 255) if not remapping_active else (255, 220, 100)
             )
             ecr.blit(section_title, title_rect)
             
             # Définir la zone de clippage pour les touches
             touch_area = Rect(content_x + 10, content_y + 50, content_width - 30, content_height - 70)
             
-            # Dessiner la barre de défilement
+            # Dessiner la scrollbar si nécessaire
             if len(touch_buttons) > max_visible_touches:
-                # Piste de la barre de défilement (fond)
+                # Piste de la scrollbar (fond)
                 draw.rect(ecr, (30, 50, 100), Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height), border_radius=8)
                 
-                # Poignée de la barre de défilement
+                # Poignée (thumb) de la scrollbar
                 thumb_height = calculate_thumb_height()
                 thumb_y = calculate_thumb_y()
                 thumb_rect = Rect(scrollbar_x, thumb_y, scrollbar_width, thumb_height)
@@ -376,10 +435,7 @@ def page_parametres_interne(background_image=None):
                     btn["rect"].y = btn_y
                     
                     # Mettre à jour le texte du bouton
-                    if btn["key"] == "Déplacement":
-                        nom_touche = "Clic droit" if btn["code"] == BUTTON_RIGHT else "Clic gauche"
-                    else:
-                        nom_touche = key.name(btn["code"]).upper()
+                    nom_touche = get_key_name(btn["code"])
                     
                     text_key = f"touch_{btn['key']}"
                     btn["text"] = f"{btn['key']} : {nom_touche}"
@@ -417,6 +473,31 @@ def page_parametres_interne(background_image=None):
             
             # Réinitialiser la zone de clippage
             ecr.set_clip(None)
+            
+            # Dessiner le bouton de réinitialisation (seulement dans la section Touches)
+            if section_active == "Touches" and not remapping_active:
+                # Dessiner le fond du bouton
+                draw.rect(ecr, (50, 120, 200), reset_button["rect"], border_radius=15)
+                draw.rect(ecr, (100, 180, 255), reset_button["rect"], 2, border_radius=15)
+                
+                # Texte du bouton
+                reset_text, reset_text_rect = animated_text(
+                    "reset_btn", 
+                    reset_button["text"], 
+                    reset_button["rect"].centerx, 
+                    reset_button["rect"].centery, 
+                    font.Font(None, 30), 
+                    (220, 240, 255)
+                )
+                ecr.blit(reset_text, reset_text_rect)
+                
+                # Gestion du survol
+                if reset_button["rect"].collidepoint(mouse.get_pos()):
+                    if not reset_button["a_joue_son"]:
+                        son_survol.play()
+                        reset_button["a_joue_son"] = True
+                else:
+                    reset_button["a_joue_son"] = False
 
         # Section Interface (vide pour le moment)
         elif section_active == "Interface":
@@ -465,8 +546,7 @@ def page_parametres_interne(background_image=None):
         for evt in event.get():
             if evt.type == QUIT:
                 # Sauvegarde des touches et des volumes globaux
-                with open("data/touches.json", "w") as f:
-                    json.dump(touches, f)
+                save_touches()
                 # Mise à jour des volumes globaux avant de quitter
                 global_volume_general = volume_general
                 global_volume_musique = volume_musique
@@ -474,22 +554,38 @@ def page_parametres_interne(background_image=None):
                 return False
 
             if evt.type == KEYDOWN:
-                if touche_active:
-                    if touche_active != "Déplacement":
-                        touches[touche_active] = evt.key
-                        # Mettre à jour le code de la touche dans le bouton correspondant
-                        for btn in touch_buttons:
-                            if btn["key"] == touche_active:
-                                btn["code"] = evt.key
+                if remapping_active:
+                    # Si on est en train de remapper une touche
+                    if evt.key == K_ESCAPE:
+                        # Échap annule le remapping
+                        remapping_active = False
+                        touche_active = None
+                    else:
+                        # Vérifier si cette touche est déjà utilisée
+                        touche_deja_utilisee = False
+                        for key, code in touches.items():
+                            if code == evt.key and key != touche_active:
+                                touche_deja_utilisee = True
                                 break
                         
-                        with open("data/touches.json", "w") as f:
-                            json.dump(touches, f)
+                        # Si la touche n'est pas déjà utilisée, l'assigner
+                        if not touche_deja_utilisee:
+                            touches[touche_active] = evt.key
+                            # Mettre à jour le code de la touche dans le bouton correspondant
+                            for btn in touch_buttons:
+                                if btn["key"] == touche_active:
+                                    btn["code"] = evt.key
+                                    break
+                            
+                            # Sauvegarder immédiatement les modifications
+                            save_touches()
+                        
+                        # Terminer le mode remapping
+                        remapping_active = False
                         touche_active = None
                 elif evt.key == K_ESCAPE:
                     # Sauvegarde des touches et des volumes globaux
-                    with open("data/touches.json", "w") as f:
-                        json.dump(touches, f)
+                    save_touches()
                     # Mise à jour des volumes globaux avant de quitter
                     global_volume_general = volume_general
                     global_volume_musique = volume_musique
@@ -510,17 +606,18 @@ def page_parametres_interne(background_image=None):
             if evt.type == MOUSEBUTTONDOWN:
                 x, y = evt.pos
                 
-                # Gestion des clics sur les onglets
-                for btn in section_buttons:
-                    if btn["rect"].collidepoint(x, y):
-                        son_clicmenu.play()
-                        # Animation de transition entre sections
-                        old_section = section_active
-                        section_active = btn["text"]
-                        section_transition = 0.0
+                # Gestion des clics sur les onglets (seulement si on n'est pas en mode remapping)
+                if not remapping_active:
+                    for btn in section_buttons:
+                        if btn["rect"].collidepoint(x, y):
+                            son_clicmenu.play()
+                            # Animation de transition entre sections
+                            old_section = section_active
+                            section_active = btn["text"]
+                            section_transition = 0.0
                 
                 # Gestion de la barre de défilement
-                if section_active == "Touches" and len(touch_buttons) > max_visible_touches:
+                if section_active == "Touches" and len(touch_buttons) > max_visible_touches and not remapping_active:
                     scrollbar_rect = Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height)
                     if scrollbar_rect.collidepoint(x, y):
                         scroll_active = True
@@ -530,19 +627,21 @@ def page_parametres_interne(background_image=None):
                         target_scroll_offset = track_pos * (len(touch_buttons) - max_visible_touches)
                         target_scroll_offset = max(0, min(len(touch_buttons) - max_visible_touches, target_scroll_offset))
                 
-                # Gestion des touches (seulement les visibles)
-                if section_active == "Touches":
+                # Gestion des touches (seulement les visibles et si on n'est pas déjà en mode remapping)
+                if section_active == "Touches" and not remapping_active:
+                    # Vérifier le clic sur le bouton de réinitialisation
+                    if reset_button["rect"].collidepoint(x, y):
+                        son_clicmenu.play()
+                        reset_touches()
+                        continue
+                        
                     for i, btn in enumerate(touch_buttons):
                         visible_index = i - int(scroll_offset)
                         if 0 <= visible_index < max_visible_touches and btn["rect"].collidepoint(x, y):
                             son_clicmenu.play()
                             touche_active = btn["key"]
-                            if btn["key"] == "Déplacement":
-                                touches[btn["key"]] = evt.button
-                                btn["code"] = evt.button
-                                with open("data/touches.json", "w") as f:
-                                    json.dump(touches, f)
-                                touche_active = None
+                            remapping_active = True
+                            break
 
                 # Gestion des barres de volume
                 if section_active == "Audio":
@@ -571,11 +670,10 @@ def page_parametres_interne(background_image=None):
                                 break
                 
                 # Gestion du clic sur le bouton de retour
-                if retour_button["rect"].collidepoint(x, y):
+                if retour_button["rect"].collidepoint(x, y) and not remapping_active:
                     son_clicmenu.play()
                     # Sauvegarde des touches et des volumes globaux
-                    with open("data/touches.json", "w") as f:
-                        json.dump(touches, f)
+                    save_touches()
                     # Mise à jour des volumes globaux avant de quitter
                     global_volume_general = volume_general
                     global_volume_musique = volume_musique

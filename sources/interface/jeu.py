@@ -3,12 +3,14 @@ import sys
 import os
 import csv
 import random
+import json
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
 from interface.menu_interf_jeu import menu_parametres
 from interface.menu import bouton
 from interface.page_laterale_jeu_combinaisons import Page
+from interface.parametres import TOUCHES_DEFAUT
 
 # Variables pour le paramètre de volume global
 global_volume_general = 1.0
@@ -16,6 +18,20 @@ global_volume_musique = 1.0
 global_volume_sfx = 1.0
 
 elements = {}
+
+# Chargement des touches du jeu
+def charger_touches():
+    try:
+        with open("data/touches.json", "r") as f:
+            touches = json.load(f)
+        # Vérification que toutes les touches requises sont présentes
+        for key in TOUCHES_DEFAUT:
+            if key not in touches:
+                touches[key] = TOUCHES_DEFAUT[key]
+        return touches
+    except Exception as e:
+        print(f"Erreur lors du chargement des touches: {e}")
+        return TOUCHES_DEFAUT.copy()
 
 try:
     with open('data/csv/encyclopedie.csv', newline='', encoding='utf-8') as csvfile:
@@ -141,6 +157,9 @@ def page_jeu(niveau):
     # Utiliser les paramètres de volume global
     global global_volume_general, global_volume_musique, global_volume_sfx
     
+    # Charger les touches configurées par l'utilisateur
+    touches = charger_touches()
+    
     elementsbase = {}
 
     # Chargement des éléments de base
@@ -250,16 +269,21 @@ def page_jeu(niveau):
             for evt in event.get():
                 if evt.type == QUIT:
                     return False
-                elif evt.type == KEYDOWN and evt.key == K_ESCAPE:
-                    # Appeler le menu de pause qui s'affiche en superposition
-                    # Capturer l'écran du jeu actuel
-                    game_screen = ecr.copy()
-                    # Passer l'écran du jeu au menu de pause
-                    act = menu_parametres(game_screen)
+                elif evt.type == KEYDOWN:
+                    # Vérifier si la touche correspond à une action configurée
+                    for action, key_code in touches.items():
+                        if evt.key == key_code:
+                            if action == 'Retour':
+                                # Appeler le menu de pause qui s'affiche en superposition
+                                # Capturer l'écran du jeu actuel
+                                game_screen = ecr.copy()
+                                # Passer l'écran du jeu au menu de pause
+                                act = menu_parametres(game_screen)
+                            # On peut ajouter d'autres actions spécifiques au jeu ici
                 elif evt.type == MOUSEBUTTONDOWN:
                     if element_discovered:
                         element_discovered = False
-                    elif evt.button == 1:
+                    elif evt.button == 1:  # Clic gauche
                         if btn_ency["rect"].collidepoint(evt.pos):
                             son_clicmenu.play()
                             # Passer les éléments et les éléments découverts à l'encyclopédie
@@ -273,7 +297,8 @@ def page_jeu(niveau):
                                         obj["rect"] = obj["image"].get_rect(center=obj["rect"].center)
                                     offset_x, offset_y = evt.pos[0] - obj["rect"].centerx, evt.pos[1] - obj["rect"].centery
                                     break
-                    elif evt.button == 3:  # Clic droit pour déplacer le personnage
+                    # Utiliser la touche configurée pour Déplacement au lieu de hardcoder le clic droit
+                    elif evt.button == touches.get('Déplacement', BUTTON_RIGHT):
                         target_x, target_y = mouse.get_pos()
                         moving = True
                         for obj in objets:
@@ -306,8 +331,9 @@ def page_jeu(niveau):
                                     element_decouvert.append(new_id)
                                 if new_id:
                                     try:
-                                        img_path = elements[new_id]["Image"]
-                                        if img_path:
+                                        img_paths = elements[new_id]["Image"].split(',')
+                                        if img_paths:
+                                            img_path = random.choice([path.strip().strip('"') for path in img_paths])
                                             img = image.load(img_path)
                                             
                                             if elements[closest_obj["id"]]["DR"] == 0 or elements[selected_obj["id"]]["DR"] == 0:
@@ -355,8 +381,9 @@ def page_jeu(niveau):
                             element_decouvert.append(new_id)
                         if new_id:
                             try:
-                                img_path = elements[new_id]["Image"]
-                                if img_path:
+                                img_paths = elements[new_id]["Image"].split(',')
+                                if img_paths:
+                                    img_path = random.choice([path.strip().strip('"') for path in img_paths])
                                     img = image.load(img_path)
                                     if elements[target_obj["id"]]["DR"] == 0:
                                         nouvel_objet = {
@@ -390,8 +417,9 @@ def page_jeu(niveau):
 
                 try:
                     # Chargement et agrandissement de l'image
-                    img_path = elements[element_discovered]["Image"]
-                    if img_path:
+                    img_paths = elements[element_discovered]["Image"].split(',')
+                    if img_paths:
+                        img_path = random.choice([path.strip().strip('"') for path in img_paths])
                         img = image.load(img_path)
                         img = transform.scale(img, (int(img.get_width() * 1.5), int(img.get_height() * 1.5)))
 

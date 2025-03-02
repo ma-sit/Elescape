@@ -2,7 +2,7 @@ from pygame import *
 import json
 from shared.components.config import *
 from interface.menu import bouton
-from interface.parametres import page_parametres, page_parametres_superpose
+from interface.parametres import page_parametres, page_parametres_superpose, TOUCHES_DEFAUT
 
 def menu_parametres(background_image=None):
     """Menu des paramètres qui s'affiche par-dessus le niveau"""
@@ -10,10 +10,17 @@ def menu_parametres(background_image=None):
     try:
         with open("data/touches.json", "r") as f:
             touches = json.load(f)
+        # Vérification que toutes les touches requises sont présentes
+        for key in TOUCHES_DEFAUT:
+            if key not in touches:
+                touches[key] = TOUCHES_DEFAUT[key]
     except:
-        touches = {
-            'Retour': K_ESCAPE
-        }
+        touches = TOUCHES_DEFAUT.copy()
+        try:
+            with open("data/touches.json", "w") as f:
+                json.dump(touches, f)
+        except:
+            print("Impossible de sauvegarder le fichier touches.json par défaut")
     
     menu_actif = True
     
@@ -96,8 +103,11 @@ def menu_parametres(background_image=None):
             if evt.type == QUIT:
                 return False
                 
-            if evt.type == KEYDOWN and evt.key == touches['Retour']:
-                menu_actif = False
+            if evt.type == KEYDOWN:
+                # Vérifier si la touche pressée correspond à une action définie
+                for action, key_code in touches.items():
+                    if evt.key == key_code and action == 'Retour':
+                        menu_actif = False
                 
             if evt.type == MOUSEBUTTONDOWN and evt.button == 1:
                 if resume_button["rect"].collidepoint(evt.pos):
@@ -121,4 +131,3 @@ def menu_parametres(background_image=None):
                     return False
     
     return True
-
