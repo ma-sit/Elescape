@@ -2,7 +2,7 @@ from pygame import *
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from shared.components.config import *
+from shared.components.config import * 
 
 def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius , surbrillance=None):
     """Dessine un bouton interactif avec sons et coins arrondis"""
