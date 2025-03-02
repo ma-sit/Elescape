@@ -8,8 +8,19 @@ global_volume_general = 1.0
 global_volume_musique = 1.0
 global_volume_sfx = 1.0
 
+# Version standard des paramètres (utilisée depuis le menu principal)
 def page_parametres():
     """Page des paramètres"""
+    # Utilise simplement la version superposée mais sans fond spécifique
+    return page_parametres_interne()
+
+# Version superposée des paramètres (utilisée depuis le jeu en pause)
+def page_parametres_superpose(background_image=None):
+    """Page des paramètres superposée au jeu"""
+    return page_parametres_interne(background_image)
+
+def page_parametres_interne(background_image=None):
+    """Implémentation commune des paramètres qui peut fonctionner en superposition"""
     global global_volume_general, global_volume_musique, global_volume_sfx
     
     act = True
@@ -105,13 +116,16 @@ def page_parametres():
     son_survol.set_volume(volume_sfx_final)
     son_clicmenu.set_volume(volume_sfx_final)
     
-    # Chargement du fond
-    try:
-        fond = image.load("data/images/image_menu.png").convert()
-        fond = transform.scale(fond, (rec.right, rec.bottom))
-    except:
-        fond = Surface((lrg, htr))
-        fond.fill((20, 20, 30))  # Fond sombre par défaut
+    # Utiliser l'image de fond fournie ou charger le fond standard
+    if background_image is not None:
+        fond = background_image
+    else:
+        try:
+            fond = image.load("data/images/image_menu.png").convert()
+            fond = transform.scale(fond, (rec.right, rec.bottom))
+        except:
+            fond = Surface((lrg, htr))
+            fond.fill((20, 20, 30))  # Fond sombre par défaut
 
     # Calcul des positions des barres de volume pour symétrie
     bar_width = panel_width - 140
