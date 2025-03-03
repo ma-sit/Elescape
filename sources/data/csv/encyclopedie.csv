@@ -1,13 +1,14 @@
-ID;Nom;Creations;DR;Image
-0;Humain;2,8;1;
-1;Arbre;2,11;0;data/images/elements/arbre1.png, data/images/elements/arbre2.png, data/images/elements/arbre3.png, data/images/elements/arbre4.png
-2;Buches;;0;data/images/elements/buches.png
-3;Rocher;;0;data/images/elements/rocher1.png, data/images/elements/rocher2.png, data/images/elements/rocher3.png
-4;Buisson;;0;data/images/elements/buisson.png
-5;Champignon;;0;data/images/elements/champignon1.png, data/images/elements/champignon2.png, data/images/elements/champignon3.png, data/images/elements/champignon4.png
-6;Foin;;0;data/images/elements/foin1.png, data/images/elements/foin2.png
-7;Puit;8;1;data/images/elements/puit.png
-8;Seau;11;0;data/images/elements/seau.png
-9;Baril;;0;data/images/elements/baril1.png, data/images/elements/baril2.png
-10;Souche;;0;data/images/elements/souche.png
-11;Pommier;;0;data/images/elements/pommier.png
+ID;Nom;Creations;DR;Image;Type
+0;Humain;2,8;1;;classique
+1;Arbre;2,11;0;data/images/elements/arbre1.png, data/images/elements/arbre2.png, data/images/elements/arbre3.png, data/images/elements/arbre4.png;classique
+2;Buches;;0;data/images/elements/buches.png;classique
+3;Rocher;;0;data/images/elements/rocher1.png, data/images/elements/rocher2.png, data/images/elements/rocher3.png;classique
+4;Buisson;;0;data/images/elements/buisson.png;classique
+5;Champignon;;0;data/images/elements/champignon1.png, data/images/elements/champignon2.png, data/images/elements/champignon3.png, data/images/elements/champignon4.png;classique
+6;Foin;;0;data/images/elements/foin1.png, data/images/elements/foin2.png;classique
+7;Puit;8;1;data/images/elements/puit.png;classique
+8;Seau;11;0;data/images/elements/seau.png;classique
+9;Baril;;0;data/images/elements/baril1.png, data/images/elements/baril2.png;classique
+10;Souche;;0;data/images/elements/souche.png;classique
+11;Pommier;;0;data/images/elements/pommier.png;classique
+12;cochon;;0;data/images/animaux/cochon;animal
