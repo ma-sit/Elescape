@@ -4,7 +4,7 @@ import os
 import csv
 import random
 import json
-import math as m  # Utilisation de l'alias "m" pour le module math standard
+import math as m  # Pour utiliser m.pi, m.cos, etc.
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
@@ -20,7 +20,7 @@ global_volume_sfx = 1.0
 
 elements = {}
 
-# Séquences d'animation pour les états extra
+# Séquences d'animation pour les états extra (pour les animaux)
 EXTRA_ANIM_SEQUENCES = {
     "sleep": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
     "eat":   [0, 1, 2, 3, 2, 3, 2, 3, 2, 1, 0]
@@ -37,6 +37,21 @@ def get_direction(dx, dy):
         return "up"
     else:
         return "left"
+
+# Fonction pour charger les frames d'animation du personnage depuis un dossier.
+def charger_frames_perso_from_folder(folder_path, directions=("down", "left", "right", "up"), nb_frames=4):
+    frames = {}
+    for direction in directions:
+        frames[direction] = []
+        for i in range(1, nb_frames+1):
+            file_name = f"{direction}{i}.png"  # ex: down1.png, down2.png, etc.
+            full_path = os.path.join(folder_path, file_name)
+            try:
+                frame = image.load(full_path).convert_alpha()
+                frames[direction].append(frame)
+            except Exception as e:
+                print(f"Erreur lors du chargement de {full_path}: {e}")
+    return frames
 
 # Chargement des touches du jeu
 def charger_touches():
@@ -85,14 +100,13 @@ def fusionner(element1, element2):
                 return int(element)
     return None
 
-# Charger les frames d'un animal depuis un dossier,
-# en chargeant pour chaque direction (ex: down1.png, down2.png, etc.) et pour les états extras (sleep, eat)
+# Charger les frames d'un animal depuis un dossier
 def charger_frames_animal_from_folder(folder_path, nb_frames=4, directions=("down", "left", "right", "up"), extras=("sleep", "eat")):
     frames = {}
     for direction in directions:
         frames[direction] = []
         for i in range(1, nb_frames+1):
-            file_name = f"{direction}{i}.png"  # ex: down1.png
+            file_name = f"{direction}{i}.png"
             full_path = os.path.join(folder_path, file_name)
             try:
                 frame = image.load(full_path).convert_alpha()
@@ -102,7 +116,7 @@ def charger_frames_animal_from_folder(folder_path, nb_frames=4, directions=("dow
     for extra in extras:
         frames[extra] = []
         for i in range(1, nb_frames+1):
-            file_name = f"{extra}{i}.png"  # ex: sleep1.png
+            file_name = f"{extra}{i}.png"
             full_path = os.path.join(folder_path, file_name)
             try:
                 frame = image.load(full_path).convert_alpha()
@@ -130,7 +144,6 @@ def afficher_elements(ecr, elements, elementsbase):
                     print(f"Erreur: Aucun chemin d'image valide pour l'élément {elem_id}")
                     continue
                 x, y = instance["x"], instance["y"]
-                # Pour un animal, charger les frames depuis le dossier
                 if elements[elem_id].get("Type", "").lower() == "animal":
                     try:
                         frames = charger_frames_animal_from_folder(img_paths[0])
@@ -138,17 +151,17 @@ def afficher_elements(ecr, elements, elementsbase):
                             "id": elem_id,
                             "is_animal": True,
                             "frames": frames,
-                            "current_direction": "down",  # direction initiale
+                            "current_direction": "down",
                             "anim_index": 0,
                             "last_anim_time": 0,
                             "last_move_time": 0,
-                            "state": "idle",            # état initial
+                            "state": "idle",
                             "state_start_time": 0,
                             "rect": frames["down"][0].get_rect(topleft=(x, y)),
                             "selected": False,
                             "x": x,
                             "y": y,
-                            "image": frames["down"][0]   # image initiale
+                            "image": frames["down"][0]
                         }
                         objets.append(obj)
                     except Exception as e:
@@ -248,41 +261,41 @@ def page_jeu(niveau):
     element_decouvert = [1, 3]
     element_discovered = False
 
+    # Charger les frames du personnage (perso) – 4 frames par direction
     try:
-        walk_images = []
-        for i in range(1, 7):
-            try:
-                img = image.load(f"data/images/perso/i{i}.jpg")
-                walk_images.append(img)
-            except:
-                print(f"Erreur lors du chargement de l'image perso/i{i}.jpg")
-        if not walk_images:
-            dummy = Surface((50, 50))
-            dummy.fill((255, 0, 0))
-            walk_images = [dummy]
+        perso_frames = charger_frames_perso_from_folder("data/images/perso")
+        perso_current_direction = "down"
+        perso_anim_index = 0
+        perso_last_anim_time = 0
+        perso_anim_delay = 150  # Délai en ms entre chaque frame
     except Exception as e:
-        print(f"Erreur lors du chargement des images du personnage: {e}")
-        dummy = Surface((50, 50))
-        dummy.fill((255, 0, 0))
-        walk_images = [dummy]
-        
+        print(f"Erreur lors du chargement des frames du personnage: {e}")
+        dummy = Surface((50,50))
+        dummy.fill((255,0,0))
+        perso_frames = {"down": [dummy]}
+        perso_current_direction = "down"
+        perso_anim_index = 0
+        perso_last_anim_time = 0
+        perso_anim_delay = 150
+
+    # Initialisation de la position du perso (centre)
     x, y = lrg // 2, htr // 2
-    speed = 7  
-    current_image = 0
+    speed = 7
+    current_image = 0  # Anciennement utilisé pour walk_images, non utilisé ici
     target_x, target_y = x, y
     moving = False
-    
+
     try:
         objets = afficher_elements(ecr, elements, elementsbase)
     except Exception as e:
         print(f"Erreur lors de l'affichage des éléments: {e}")
         objets = []
         
-    perso_rect = walk_images[0].get_rect(center=(x, y))
+    perso_rect = perso_frames["down"][0].get_rect(center=(x, y))
     fnd = transform.scale(fnd, (rec.right, rec.bottom))
     target_obj = None
     offset_x, offset_y = 0, 0
-    
+
     while act:
         try:
             ecr.blit(fnd, (0, 0))
@@ -343,7 +356,6 @@ def page_jeu(niveau):
                             if obj["rect"].collidepoint(evt.pos):
                                 obj["enlarge_start"] = time.get_ticks()
                                 target_obj = obj
-                                # Pour un animal, appliquer l'agrandissement de la même manière qu'en clic gauche
                                 if obj.get("is_animal", False):
                                     if not obj.get("selected", False):
                                         obj["selected"] = True
@@ -367,7 +379,6 @@ def page_jeu(niveau):
                                 selected_obj["rect"] = selected_obj["image"].get_rect(center=selected_obj["rect"].center)
                             if selected_obj.get("is_animal", False):
                                 selected_obj["selected"] = False
-                                # Rétablir l'image de base (non agrandie) pour la direction actuelle
                                 base_frame = selected_obj["frames"][selected_obj["current_direction"]][0]
                                 selected_obj["image"] = base_frame
                                 selected_obj["rect"] = base_frame.get_rect(center=selected_obj["rect"].center)
@@ -413,21 +424,19 @@ def page_jeu(niveau):
                             selected_obj["x"], selected_obj["y"] = selected_obj["rect"].center
                             objets.sort(key=lambda obj: obj["rect"].bottom)
                         selected_obj = None
-                    elif evt.type == MOUSEBUTTONUP:
-                        if evt.button == BUTTON_RIGHT:
-                            if target_obj and target_obj.get("is_animal", False):
-                                target_obj["selected"] = False
-                                # Rétablir l'image de base (non agrandie) pour la direction actuelle
-                                base_frame = target_obj["frames"][target_obj["current_direction"]][0]
-                                target_obj["image"] = base_frame
-                                target_obj["rect"] = base_frame.get_rect(center=target_obj["rect"].center)
-                                target_obj["last_move_time"] = time.get_ticks()
-                                target_obj["state"] = "idle"
+                    elif evt.button == BUTTON_RIGHT:
+                        if target_obj and target_obj.get("is_animal", False):
+                            target_obj["selected"] = False
+                            base_frame = target_obj["frames"][target_obj["current_direction"]][0]
+                            target_obj["image"] = base_frame
+                            target_obj["rect"] = base_frame.get_rect(center=target_obj["rect"].center)
+                            target_obj["last_move_time"] = time.get_ticks()
+                            target_obj["state"] = "idle"
                 elif evt.type == MOUSEMOTION and selected_obj:
                     selected_obj["rect"].move_ip(evt.rel)
-
+            
+            # Mise à jour du déplacement et de l'animation du personnage (perso)
             if moving:
-                # Calculer le déplacement à partir du centre
                 dx = target_x - x
                 dy = target_y - y
                 dist = (dx**2 + dy**2) ** 0.5
@@ -437,17 +446,19 @@ def page_jeu(niveau):
                 else:
                     x += speed * dx / dist
                     y += speed * dy / dist
-                # On met à jour le centre du perso, afin que le centre suive le mouvement
                 perso_rect.center = (x, y)
-                # Affichage de l'image animée du perso (ici on alterne les images)
-                next_img, current_image = get_next_image(current_image, walk_images)
-                ecr.blit(next_img, perso_rect.topleft)
+                # Déterminer la direction du déplacement
+                if dx != 0 or dy != 0:
+                    perso_current_direction = get_direction(dx, dy)
+                if current_time - perso_last_anim_time > perso_anim_delay:
+                    perso_anim_index = (perso_anim_index + 1) % len(perso_frames[perso_current_direction])
+                    perso_last_anim_time = current_time
+                ecr.blit(perso_frames[perso_current_direction][perso_anim_index], perso_rect.topleft)
             else:
-                # Lorsque le perso n'est pas en mouvement, on affiche l'image par défaut
-                ecr.blit(walk_images[0], perso_rect.topleft)
+                perso_rect.center = (x, y)
+                ecr.blit(perso_frames[perso_current_direction][0], perso_rect.topleft)
 
-
-            # Fusion entre le personnage et un objet cible (après l'arrêt)
+            # Fusion automatique entre le perso et un élément cible
             if target_obj and perso_rect.colliderect(target_obj["rect"]) and not moving:
                 new_id = fusionner(0, target_obj["id"])
                 if new_id and new_id not in element_decouvert:
@@ -474,7 +485,7 @@ def page_jeu(niveau):
                         print(f"Erreur lors de la fusion avec le personnage: {e}")
                 target_obj = None
 
-            # Mise à jour du mouvement et de l'animation des animaux
+            # Mise à jour du mouvement et de l'animation des animaux (identique aux versions précédentes)
             for obj in objets:
                 if obj.get("is_animal", False):
                     if not obj.get("selected", False):
@@ -562,7 +573,7 @@ def page_jeu(niveau):
                                                 obj["image"] = obj["frames"][obj["current_direction"]][0]
                             else:
                                 obj["image"] = obj["frames"][obj["current_direction"]][0]
-                    # Si l'animal est sélectionné, son animation reste gelée et son image agrandie est affichée.
+                    # Si l'animal est sélectionné, son animation reste gelée.
             
             for obj in objets:
                 ecr.blit(obj["image"], obj["rect"])
