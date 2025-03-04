@@ -281,11 +281,11 @@ def page_parametres_interne(background_image=None):
         
         # Dessiner le panneau principal avec bordure arrondie
         panel = Rect(panel_x, panel_y, panel_width, panel_height)
-        draw.rect(ecr, (20, 40, 100), panel, border_radius=20)  # Fond bleu foncé comme sur l'image
-        draw.rect(ecr, (80, 140, 240), panel, 2, border_radius=20)  # Bordure bleue claire
+        draw.rect(ecr, (30, 30, 30), panel, border_radius=20)  # Fond bleu foncé comme sur l'image
+        draw.rect(ecr, (50, 50, 50), panel, 2, border_radius=20)  # Bordure bleue claire
         
         # Titre
-        titre_surface = police_titre.render("Paramètres", True, (220, 220, 255))
+        titre_surface = police_titre.render("Paramètres", True, (255, 255, 255))
         titre_rect = titre_surface.get_rect(center=(lrg // 2, panel_y + 60))
         ecr.blit(titre_surface, titre_rect)
         
@@ -293,9 +293,9 @@ def page_parametres_interne(background_image=None):
         for btn in section_buttons:
             # Si c'est l'onglet actif, utiliser le bleu vif, sinon blanc
             if btn["text"] == section_active:
-                text_color = (50, 150, 255)  # Bleu vif pour l'actif
+                text_color = (128, 128, 128)  # Bleu vif pour l'actif
             else:
-                text_color = (210, 210, 250)  # Blanc pour les inactifs
+                text_color = (255, 255, 250)  # Blanc pour les inactifs
                 
             # Animation du texte
             text_surf, text_rect = animated_text(

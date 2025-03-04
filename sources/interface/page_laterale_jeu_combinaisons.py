@@ -43,7 +43,7 @@ def Page(ecr, all_elements=None, discovered_elements=None):
     menu_largeur = grid_width + 20  # Juste assez large pour la grille
     menu_marge_droite = 10  
     menu_y = button_pos_y - 250  # Position verticale alignée avec le bouton
-    menu_hauteur = grid_height + 90  # Hauteur = grille + espace pour titre
+    menu_hauteur = grid_height + 105  # Hauteur = grille + espace pour titre
     menu_x = lrg
     
     # Si le nombre d'éléments est faible, réduire encore la hauteur
@@ -263,7 +263,7 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         except:
             pass
         
-        # Dessiner le panneau principal (STATIQUE - sans effet de flottement)
+        # Dessiner le panneau principal (STATIQUE)
         ecr.blit(panel_surface, (menu_x, menu_y))
         
         # Dessiner une bordure avec des coins arrondis
