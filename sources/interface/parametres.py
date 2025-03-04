@@ -281,8 +281,8 @@ def page_parametres_interne(background_image=None):
         
         # Dessiner le panneau principal avec bordure arrondie
         panel = Rect(panel_x, panel_y, panel_width, panel_height)
-        draw.rect(ecr, (30, 30, 30), panel, border_radius=20)  # Fond bleu foncé comme sur l'image
-        draw.rect(ecr, (50, 50, 50), panel, 2, border_radius=20)  # Bordure bleue claire
+        draw.rect(ecr, (25, 25, 25), panel, border_radius=20)  # Fond 
+        draw.rect(ecr, (50, 50, 50), panel, 2, border_radius=20) #Bordure
         
         # Titre
         titre_surface = police_titre.render("Paramètres", True, (255, 255, 255))
