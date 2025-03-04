@@ -4,6 +4,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
+from shared.components.color_config import *
 
 def afficher_victoire_niveau(ecr, niveau, element_final=None):
     """
@@ -23,27 +24,27 @@ def afficher_victoire_niveau(ecr, niveau, element_final=None):
     
     # Création d'un calque semi-transparent
     overlay = Surface((lrg, htr), SRCALPHA)
-    overlay.fill((0, 0, 0, 180))  # Fond noir semi-transparent
+    overlay.fill(OVERLAY_SOMBRE)  # Fond noir semi-transparent
     blurred_surface.blit(overlay, (0, 0))
     
     # Titre de victoire
     victoire_font = font.Font(None, 80)
-    victoire_text = victoire_font.render(f"Niveau {niveau} terminé !", True, (255, 255, 255))
+    victoire_text = victoire_font.render(f"Niveau {niveau} terminé !", True, VICTOIRE_TEXT)
     victoire_rect = victoire_text.get_rect(center=(lrg//2, htr//3))
     
     # Instructions
     instruction_font = font.Font(None, 40)
-    instruction_text = instruction_font.render("Cliquez pour continuer", True, (200, 200, 200))
+    instruction_text = instruction_font.render("Cliquez pour continuer", True, VICTOIRE_TEXT_SECOND)
     instruction_rect = instruction_text.get_rect(center=(lrg//2, htr*2//3 + 80))
     
     # Félicitations
     bonus_font = font.Font(None, 50)
-    bonus_text = bonus_font.render("Félicitations !", True, (255, 215, 0))
+    bonus_text = bonus_font.render("Félicitations !", True, VICTOIRE_HIGHLIGHT)
     bonus_rect = bonus_text.get_rect(center=(lrg//2, htr//3 - 80))
     
     # Message personnel
     message_font = font.Font(None, 36)
-    message_text = message_font.render("Vous avez débloqué le niveau suivant", True, (220, 220, 250))
+    message_text = message_font.render("Vous avez débloqué le niveau suivant", True, VICTOIRE_TEXT_SECOND)
     message_rect = message_text.get_rect(center=(lrg//2, htr//3 + 80))
     
     # Animation

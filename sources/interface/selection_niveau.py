@@ -6,6 +6,7 @@ import json
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
+from shared.components.color_config import *  # Import des couleurs standardisées
 from interface.jeu import page_jeu
 from interface.menu import bouton
 
@@ -85,14 +86,14 @@ def afficher_confirmation(ecr, message):
     
     # Dessiner la boîte de dialogue
     dialog_rect = Rect(dialog_x, dialog_y, dialog_width, dialog_height)
-    draw.rect(ecr, (40, 40, 40), dialog_rect, border_radius=15)  # Fond
-    draw.rect(ecr, (80, 80, 80), dialog_rect, 2, border_radius=15)  # Bordure
+    draw.rect(ecr, CONFIRMATION_FOND, dialog_rect, border_radius=15)  # Fond
+    draw.rect(ecr, CONFIRMATION_BORDURE, dialog_rect, 2, border_radius=15)  # Bordure
     
     # Texte du message
     msg_font = font.Font(None, 30)
     msg_lines = message.split('\n')
     for i, line in enumerate(msg_lines):
-        text_surf = msg_font.render(line, True, (255, 255, 255))
+        text_surf = msg_font.render(line, True, TEXTE)
         text_rect = text_surf.get_rect(center=(dialog_x + dialog_width//2, dialog_y + 60 + i*30))
         ecr.blit(text_surf, text_rect)
     
@@ -115,8 +116,8 @@ def afficher_confirmation(ecr, message):
     # Gestion des événements
     while True:
         # Dessiner les boutons
-        bouton(ecr, (80, 30, 30), yes_btn, "Oui", son_survol, son_clicmenu, 10, surbrillance=(120, 40, 40))
-        bouton(ecr, (30, 80, 30), no_btn, "Non", son_survol, son_clicmenu, 10, surbrillance=(40, 120, 40))
+        bouton(ecr, BOUTON_OUI_FOND, yes_btn, "Oui", son_survol, son_clicmenu, 10, surbrillance=BOUTON_OUI_SURVOL)
+        bouton(ecr, BOUTON_NON_FOND, no_btn, "Non", son_survol, son_clicmenu, 10, surbrillance=BOUTON_NON_SURVOL)
         
         display.flip()
         
@@ -161,8 +162,8 @@ def selection_niveau():
     subtitle_font = font.Font(None, 40)
     level_font = font.Font(None, 40)
     
-    title = title_font.render("Vitanox", True, (0, 0, 0))
-    subtitle = subtitle_font.render("Sélection du niveau", True, (40, 40, 40))
+    title = title_font.render("Vitanox", True, NOM_JEU)
+    subtitle = subtitle_font.render("Sélection du niveau", True, TEXTE_INTERACTIF)
     
     title_rect = title.get_rect(center=(lrg//2, htr//8))
     subtitle_rect = subtitle.get_rect(center=(lrg//2, htr//8 + 80))
@@ -237,7 +238,7 @@ def selection_niveau():
         
         ecr.blit(background, (0, 0))
         
-        # Dessiner les connexions avec des lignes pointillées noires
+        # Dessiner les connexions avec des lignes pointillées en noir
         for conn in connections:
             try:
                 start_level = levels[conn[0]]
@@ -246,7 +247,7 @@ def selection_niveau():
                 end_pos = end_level["rect"].center
                 
                 # Ligne pointillée noire
-                draw_dashed_line(ecr, (25, 25, 25), start_pos, end_pos, dash_length=8, width=3)
+                draw_dashed_line(ecr, BORDURE, start_pos, end_pos, dash_length=8, width=3)
             except Exception as e:
                 print(f"Erreur lors du dessin des connexions: {e}")
         
@@ -278,8 +279,7 @@ def selection_niveau():
                 )
                 
                 shadow_surface = Surface((shadow_rect.width, shadow_rect.height), SRCALPHA)
-                shadow_color = (10, 10, 10, 100)
-                draw.rect(shadow_surface, shadow_color, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15)
+                draw.rect(shadow_surface, OMBRE, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15)
                 ecr.blit(shadow_surface, shadow_rect)
             except Exception as e:
                 print(f"Erreur lors du dessin de l'ombre pour le niveau {level['id']}: {e}")
@@ -293,8 +293,7 @@ def selection_niveau():
             reset_button["rect"].height
         )
         shadow_surface = Surface((shadow_rect.width, shadow_rect.height), SRCALPHA)
-        shadow_color = (10, 10, 10, 100)
-        draw.rect(shadow_surface, shadow_color, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15)
+        draw.rect(shadow_surface, OMBRE, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15)
         ecr.blit(shadow_surface, shadow_rect)
         
         # Dessiner les boutons de niveau
@@ -303,21 +302,21 @@ def selection_niveau():
                 # Animation spéciale pour le niveau nouvellement débloqué
                 is_newly_unlocked = newly_unlocked and level["id"] == newly_unlocked
                 
-                # Couleurs selon l'état du niveau
+                # Couleurs selon l'état du niveau (disponible ou bloqué)
                 if level["available"]:
-                    base_color = (35, 35, 40)
-                    hover_color = (50, 50, 60)
-                    border_color = (70, 70, 80)
-                    text_color = (255, 255, 255)
+                    base_color = NIVEAU_DEBLOQUE_FOND
+                    hover_color = NIVEAU_DEBLOQUE_SURVOL_FOND
+                    border_color = NIVEAU_DEBLOQUE_BORDURE
+                    text_color = NIVEAU_DEBLOQUE_TEXTE
                 else:
-                    base_color = (25, 25, 25)
-                    hover_color = (40, 40, 40)
-                    border_color = (60, 60, 60)
-                    text_color = (180, 180, 180)
+                    base_color = NIVEAU_BLOQUE_FOND
+                    hover_color = NIVEAU_BLOQUE_FOND  # Pas de changement pour les niveaux bloqués
+                    border_color = NIVEAU_BLOQUE_BORDURE
+                    text_color = NIVEAU_BLOQUE_TEXTE
                 
                 # Couleur selon l'état (avec animation pour niveau débloqué)
                 if is_newly_unlocked:
-                    # Animation de pulsation plus visible pour le niveau nouvellement débloqué
+                    # Animation de pulsation pour le niveau nouvellement débloqué
                     anim_progress = (current_time - unlock_anim_time) / unlock_anim_duration
                     pulse_intensity = 0.5 * (1 - anim_progress)
                     pulse_value = abs(sin(current_time / 100.0)) * pulse_intensity
@@ -328,8 +327,8 @@ def selection_niveau():
                         int(base_color[1] * (1 - pulse_value) + 215 * pulse_value),  # Vert vers 215
                         int(base_color[2] * (1 - pulse_value) + 0 * pulse_value)     # Bleu vers 0
                     )
-                    border_color = (255, 215, 0)  # Bordure dorée
-                elif level["hover"]:
+                    border_color = INDICATEUR_NOUVEAU  # Bordure dorée
+                elif level["hover"] and level["available"]:
                     color = hover_color
                 else:
                     color = base_color
@@ -383,7 +382,7 @@ def selection_niveau():
                 if level["available"]:
                     indicator_radius = 6
                     indicator_pos = (level["rect"].right - 15, level["rect"].top + 15)
-                    indicator_color = (255, 215, 0) if is_newly_unlocked else (100, 200, 100)
+                    indicator_color = INDICATEUR_NOUVEAU if is_newly_unlocked else INDICATEUR_DISPONIBLE
                     draw.circle(ecr, indicator_color, indicator_pos, indicator_radius)
                     
             except Exception as e:
@@ -391,24 +390,18 @@ def selection_niveau():
         
         # Dessiner le bouton de réinitialisation
         try:
-            # Couleurs du bouton de réinitialisation (rouge)
-            base_color = (60, 20, 20)
-            hover_color = (90, 30, 30)
-            border_color = (120, 40, 40)
-            text_color = (255, 255, 255)
-            
             # Couleur selon l'état de survol
-            color = hover_color if reset_button["hover"] else base_color
+            color = BOUTON_REINIT_SURVOL if reset_button["hover"] else BOUTON_REINIT_FOND
             
             # Surface du bouton avec coins arrondis
             button_surface = Surface((reset_button["rect"].width, reset_button["rect"].height), SRCALPHA)
             draw.rect(button_surface, color, Rect(0, 0, reset_button["rect"].width, reset_button["rect"].height), border_radius=15)
             
             # Bordure
-            draw.rect(button_surface, border_color, Rect(0, 0, reset_button["rect"].width, reset_button["rect"].height), 2, border_radius=15)
+            draw.rect(button_surface, BOUTON_REINIT_BORDURE, Rect(0, 0, reset_button["rect"].width, reset_button["rect"].height), 2, border_radius=15)
             
             # Texte du bouton
-            text_surf = level_font.render(reset_button["text"], True, text_color)
+            text_surf = level_font.render(reset_button["text"], True, TEXTE)
             text_rect = text_surf.get_rect(center=(reset_button["rect"].width//2, reset_button["rect"].height//2))
             button_surface.blit(text_surf, text_rect)
             

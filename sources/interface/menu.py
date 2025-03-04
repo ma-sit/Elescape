@@ -3,8 +3,9 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import * 
+from shared.components.color_config import *
 
-def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius , surbrillance=None):
+def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius, surbrillance=None):
     """Dessine un bouton interactif avec sons et coins arrondis"""
     rect = btn["rect"]
     survole = rect.collidepoint(mouse.get_pos())
@@ -23,7 +24,7 @@ def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius , surbrillanc
     
     else:
         draw.rect(ecr, couleur, rect, border_radius=radius)
-        txt_rendu = fnt.render(texte, True, (255, 255, 255))
+        txt_rendu = fnt.render(texte, True, TEXTE)
         ecr.blit(txt_rendu, (rect.x + (rect.width - txt_rendu.get_width()) // 2, rect.y + 10))
 
     return survole
@@ -34,9 +35,9 @@ def dessiner_menu(ecr, image):
     
     ecr.blit(image, (0, 0))
     
-    hover_jeu = bouton(ecr, NOR, btn_jeu, "Jouer", son_survol, son_clicmenu,r_menu, surbrillance=(150, 150, 150))
-    hover_cfg = bouton(ecr, NOR, btn_cfg, "Paramètres", son_survol, son_clicmenu,r_menu, surbrillance=(150, 150, 150))
-    hover_fin = bouton(ecr, NOR, btn_fin, "Quitter", son_survol, son_clicmenu,r_menu, surbrillance=(150, 150, 150))
+    hover_jeu = bouton(ecr, MENU_BOUTON, btn_jeu, "Jouer", son_survol, son_clicmenu, r_menu, surbrillance=MENU_BOUTON_SURVOL)
+    hover_cfg = bouton(ecr, MENU_BOUTON, btn_cfg, "Paramètres", son_survol, son_clicmenu, r_menu, surbrillance=MENU_BOUTON_SURVOL)
+    hover_fin = bouton(ecr, MENU_BOUTON, btn_fin, "Quitter", son_survol, son_clicmenu, r_menu, surbrillance=MENU_BOUTON_SURVOL)
     
     """Titre du jeu"""
     rect_titre = Rect(0, 0, 550, 100)
@@ -58,7 +59,7 @@ def dessiner_menu(ecr, image):
 
     # Affichage du titre
     police_titre = font.Font(None, taille_titre)
-    txt_titre = police_titre.render("Vitanox", True, (0, 0, 0))
+    txt_titre = police_titre.render("Vitanox", True, NOM_JEU)
     rect_titre = txt_titre.get_rect(center=(lrg // 2, htr // 4))
     ecr.blit(txt_titre, rect_titre)
     

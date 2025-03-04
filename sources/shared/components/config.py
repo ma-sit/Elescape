@@ -1,4 +1,5 @@
 from pygame import *
+from shared.components.color_config import *  # Import des couleurs standardisées
 
 # Initialisation
 init()
@@ -37,11 +38,6 @@ r_jeu = 30
 
 # Boutons fin de niveau
 btn_quit = {"rect": Rect(lrg//2 - 100, 300, 200, 50), "image": None, "a_joue_son": False}
-# Couleurs
-BLC = (255, 255, 255)
-NOR = (25, 25, 25)
-BLEU = (50, 50, 50)
-GRIS = (120, 120, 120)
 
 # Police
 fnt = font.Font(None, 50)
