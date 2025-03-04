@@ -1,5 +1,6 @@
 from pygame import *
 from shared.components.config import *
+from shared.components.color_config import *
 import json
 from interface.menu import bouton
 
@@ -141,7 +142,7 @@ def page_parametres_interne(background_image=None):
             fond = transform.scale(fond, (rec.right, rec.bottom))
         except:
             fond = Surface((lrg, htr))
-            fond.fill((20, 20, 30))  # Fond sombre par défaut
+            fond.fill(FOND)  # Fond par défaut
 
     # Calcul des positions des barres de volume pour symétrie
     bar_width = panel_width - 140
@@ -281,21 +282,21 @@ def page_parametres_interne(background_image=None):
         
         # Dessiner le panneau principal avec bordure arrondie
         panel = Rect(panel_x, panel_y, panel_width, panel_height)
-        draw.rect(ecr, (25, 25, 25), panel, border_radius=20)  # Fond 
-        draw.rect(ecr, (50, 50, 50), panel, 2, border_radius=20) #Bordure
+        draw.rect(ecr, PARAM_PANEL_BG, panel, border_radius=20)  # Fond
+        draw.rect(ecr, PARAM_PANEL_BORDER, panel, 2, border_radius=20)  # Bordure
         
         # Titre
-        titre_surface = police_titre.render("Paramètres", True, (255, 255, 255))
+        titre_surface = police_titre.render("Paramètres", True, TEXTE)
         titre_rect = titre_surface.get_rect(center=(lrg // 2, panel_y + 60))
         ecr.blit(titre_surface, titre_rect)
         
         # Dessiner les onglets
         for btn in section_buttons:
-            # Si c'est l'onglet actif, utiliser le bleu vif, sinon blanc
+            # Si c'est l'onglet actif, utiliser le gris, sinon blanc
             if btn["text"] == section_active:
-                text_color = (128, 128, 128)  # Bleu vif pour l'actif
+                text_color = GRIS  # Gris pour l'actif
             else:
-                text_color = (255, 255, 250)  # Blanc pour les inactifs
+                text_color = TEXTE  # Blanc pour les inactifs
                 
             # Animation du texte
             text_surf, text_rect = animated_text(
@@ -337,8 +338,8 @@ def page_parametres_interne(background_image=None):
         
         # Zone de contenu (panneau rectangulaire bleu foncé)
         content_panel = Rect(content_x, content_y, content_width, content_height)
-        draw.rect(ecr, (20, 30, 80), content_panel, border_radius=15)  # Bleu foncé
-        draw.rect(ecr, (60, 100, 200), content_panel, 2, border_radius=15)  # Bordure bleue
+        draw.rect(ecr, VOLUME_BAR_BG, content_panel, border_radius=15)  # Bleu foncé
+        draw.rect(ecr, VOLUME_BAR_BORDER, content_panel, 2, border_radius=15)  # Bordure bleue
         
         # Section Audio
         if section_active == "Audio":
@@ -349,7 +350,7 @@ def page_parametres_interne(background_image=None):
                 content_x + content_width // 2, 
                 content_y + 25, 
                 font.Font(None, 30), 
-                (200, 220, 255)
+                TEXTE
             )
             ecr.blit(section_title, title_rect)
             
@@ -366,30 +367,30 @@ def page_parametres_interne(background_image=None):
                     bar_x, 
                     y_pos - 20, 
                     police_options, 
-                    (180, 200, 255), 
+                    TEXTE, 
                     "left"
                 )
                 ecr.blit(vol_text_surf, vol_text_rect)
                 
                 # Barre de fond
                 bar_bg = Rect(bar_x, y_pos, bar_width, bar_height)
-                draw.rect(ecr, (40, 60, 120), bar_bg, border_radius=6)
+                draw.rect(ecr, VOLUME_BAR_BG, bar_bg, border_radius=6)
                 
                 # Partie remplie de la barre
                 if volume_value > 0:
                     bar_fill = Rect(bar_x, y_pos, int(bar_width * volume_value), bar_height)
-                    draw.rect(ecr, (50, 120, 250), bar_fill, border_radius=6)
+                    draw.rect(ecr, VOLUME_BAR_FILL, bar_fill, border_radius=6)
                 
                 # Contour de la barre
-                draw.rect(ecr, (80, 140, 240), bar_bg, 1, border_radius=6)
+                draw.rect(ecr, VOLUME_BAR_BORDER, bar_bg, 1, border_radius=6)
                 
                 # Poignée de la barre
                 if volume_value > 0:
                     handle_x = bar_x + int(bar_width * volume_value)
                     handle_y = y_pos + bar_height // 2
                     handle_radius = 8
-                    draw.circle(ecr, (150, 200, 255), (handle_x, handle_y), handle_radius)
-                    draw.circle(ecr, (100, 160, 240), (handle_x, handle_y), handle_radius, 1)
+                    draw.circle(ecr, VOLUME_HANDLE, (handle_x, handle_y), handle_radius)
+                    draw.circle(ecr, VOLUME_BAR_BORDER, (handle_x, handle_y), handle_radius, 1)
 
         # Section Touches
         elif section_active == "Touches":
@@ -404,7 +405,7 @@ def page_parametres_interne(background_image=None):
                 content_x + content_width // 2, 
                 content_y + 25, 
                 font.Font(None, 28), 
-                (200, 220, 255) if not remapping_active else (255, 220, 100)
+                TEXTE if not remapping_active else VICTOIRE_HIGHLIGHT
             )
             ecr.blit(section_title, title_rect)
             
@@ -414,14 +415,14 @@ def page_parametres_interne(background_image=None):
             # Dessiner la scrollbar si nécessaire
             if len(touch_buttons) > max_visible_touches:
                 # Piste de la scrollbar (fond)
-                draw.rect(ecr, (30, 50, 100), Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height), border_radius=8)
+                draw.rect(ecr, VOLUME_BAR_BG, Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height), border_radius=8)
                 
                 # Poignée (thumb) de la scrollbar
                 thumb_height = calculate_thumb_height()
                 thumb_y = calculate_thumb_y()
                 thumb_rect = Rect(scrollbar_x, thumb_y, scrollbar_width, thumb_height)
-                draw.rect(ecr, (50, 150, 250), thumb_rect, border_radius=8)
-                draw.rect(ecr, (100, 180, 255), thumb_rect, 1, border_radius=8)
+                draw.rect(ecr, VOLUME_HANDLE, thumb_rect, border_radius=8)
+                draw.rect(ecr, VOLUME_BAR_BORDER, thumb_rect, 1, border_radius=8)
             
             # Afficher les boutons de touche avec défilement
             ecr.set_clip(touch_area)
@@ -456,7 +457,7 @@ def page_parametres_interne(background_image=None):
                         btn["rect"].centerx, 
                         btn["rect"].centery, 
                         font.Font(None, 30), 
-                        (200, 220, 255), 
+                        TEXTE, 
                         "center", 
                         alpha
                     )
@@ -477,8 +478,8 @@ def page_parametres_interne(background_image=None):
             # Dessiner le bouton de réinitialisation (seulement dans la section Touches)
             if section_active == "Touches" and not remapping_active:
                 # Dessiner le fond du bouton
-                draw.rect(ecr, (50, 120, 200), reset_button["rect"], border_radius=15)
-                draw.rect(ecr, (100, 180, 255), reset_button["rect"], 2, border_radius=15)
+                draw.rect(ecr, PARAM_BUTTON_BG, reset_button["rect"], border_radius=15)
+                draw.rect(ecr, PARAM_PANEL_BORDER, reset_button["rect"], 2, border_radius=15)
                 
                 # Texte du bouton
                 reset_text, reset_text_rect = animated_text(
@@ -487,7 +488,7 @@ def page_parametres_interne(background_image=None):
                     reset_button["rect"].centerx, 
                     reset_button["rect"].centery, 
                     font.Font(None, 30), 
-                    (220, 240, 255)
+                    TEXTE
                 )
                 ecr.blit(reset_text, reset_text_rect)
                 
@@ -507,7 +508,7 @@ def page_parametres_interne(background_image=None):
                 content_x + content_width // 2, 
                 content_y + 25, 
                 font.Font(None, 30), 
-                (200, 220, 255)
+                TEXTE
             )
             ecr.blit(section_title, title_rect)
             
@@ -518,20 +519,20 @@ def page_parametres_interne(background_image=None):
                 content_x + content_width // 2, 
                 content_y + content_height // 2, 
                 font.Font(None, 24), 
-                (180, 200, 255)
+                TEXTE_INTERACTIF
             )
             ecr.blit(info_text, info_rect)
 
         # Bouton de retour
-        draw.rect(ecr, (50, 120, 250), retour_button["rect"], border_radius=15)
-        draw.rect(ecr, (100, 180, 255), retour_button["rect"], 2, border_radius=15)
+        draw.rect(ecr, PARAM_BUTTON_BG, retour_button["rect"], border_radius=15)
+        draw.rect(ecr, PARAM_PANEL_BORDER, retour_button["rect"], 2, border_radius=15)
         retour_text, retour_text_rect = animated_text(
             "retour_btn", 
             retour_button["text"], 
             retour_button["rect"].centerx, 
             retour_button["rect"].centery, 
             font.Font(None, 30), 
-            (220, 240, 255)
+            TEXTE
         )
         ecr.blit(retour_text, retour_text_rect)
         

@@ -10,11 +10,12 @@ NOM_JEU = (25, 25, 25)
 # Couleurs communes
 NOIR = (0, 0, 0)
 BLANC = (255, 255, 255)
-BLC = (255, 255, 255)
+BLC = (255, 255, 255)  # Alias pour BLANC, gardé pour compatibilité
 GRIS = (200, 200, 200)
 GRIS_FONCE = (50, 50, 50)
 GRIS_CLAIR = (220, 220, 220)
-BLEU = (0, 100, 200)
+BLEU = (50, 50, 50)  # Remplacé par gris foncé
+
 # Couleurs d'interface
 OMBRE = (10, 10, 10, 100)  # Ombre semi-transparente
 OVERLAY_SOMBRE = (0, 0, 0, 180)  # Superposition sombre semi-transparente
@@ -22,72 +23,72 @@ OVERLAY_SOMBRE = (0, 0, 0, 180)  # Superposition sombre semi-transparente
 # Menu principal
 MENU_FOND = (50, 50, 70)  # Fond de secours pour le menu
 MENU_BOUTON = (25, 25, 25)  # Boutons du menu
-MENU_BOUTON_SURVOL = (150, 150, 150)  # Boutons au survol
+MENU_BOUTON_SURVOL = (50, 50, 50)  # Boutons au survol
 
 # Sélection de niveau
 NIVEAU_DEBLOQUE_TEXTE = (250, 250, 250)
 NIVEAU_DEBLOQUE_FOND = (30, 30, 30)
 NIVEAU_DEBLOQUE_BORDURE = (55, 55, 55)
-NIVEAU_DEBLOQUE_SURVOL_FOND = (40, 40, 40)  # Version plus claire pour le survol
+NIVEAU_DEBLOQUE_SURVOL_FOND = (40, 40, 40)
 
 NIVEAU_BLOQUE_TEXTE = (220, 220, 220)
 NIVEAU_BLOQUE_FOND = (25, 25, 25)
 NIVEAU_BLOQUE_BORDURE = (50, 50, 50)
 
-INDICATEUR_DISPONIBLE = (100, 200, 100)  # Indicateur vert pour niveau disponible
-INDICATEUR_NOUVEAU = (255, 215, 0)  # Indicateur doré pour niveau nouvellement débloqué
+INDICATEUR_DISPONIBLE = (100, 100, 100)  # Remplacé par gris moyen
+INDICATEUR_NOUVEAU = (150, 150, 150)  # Remplacé par gris clair
 
 # Bouton de réinitialisation
-BOUTON_REINIT_FOND = (60, 20, 20)
-BOUTON_REINIT_SURVOL = (80, 30, 30)
-BOUTON_REINIT_BORDURE = (100, 40, 40)
+BOUTON_REINIT_FOND = (35, 35, 35)
+BOUTON_REINIT_SURVOL = (45, 45, 45)
+BOUTON_REINIT_BORDURE = (60, 60, 60)
 
 # Boîte de dialogue de confirmation
 CONFIRMATION_FOND = (40, 40, 40)
 CONFIRMATION_BORDURE = (80, 80, 80)
-BOUTON_OUI_FOND = (80, 30, 30)
-BOUTON_OUI_SURVOL = (120, 40, 40)
-BOUTON_NON_FOND = (30, 80, 30)
-BOUTON_NON_SURVOL = (40, 120, 40)
+BOUTON_OUI_FOND = (35, 35, 35)
+BOUTON_OUI_SURVOL = (50, 50, 50)
+BOUTON_NON_FOND = (30, 30, 30)
+BOUTON_NON_SURVOL = (45, 45, 45)
 
 # Interface de jeu
-JEU_FOND = (50, 50, 70)  # Fond de secours pour le jeu
+JEU_FOND = (50, 50, 50)  # Fond de secours pour le jeu
 JEU_BOUTON = (150, 150, 150)  # Boutons dans le jeu
 JEU_BOUTON_SURVOL = (255, 255, 255)  # Boutons au survol
 
 # Paramètres
-PARAM_PANEL_BG = (30, 30, 30)  # Fond du panneau des paramètres
+PARAM_PANEL_BG = (30, 30, 30)  # Fond du panneau
 PARAM_PANEL_BORDER = (50, 50, 50)  # Bordure du panneau
-PARAM_BUTTON_BG = (50, 50, 60)  # Fond des boutons
-PARAM_BUTTON_HOVER = (70, 70, 90)  # Survol des boutons
+PARAM_BUTTON_BG = (35, 35, 35)  # Fond des boutons
+PARAM_BUTTON_HOVER = (45, 45, 45)  # Survol des boutons
 PARAM_TEXT = (255, 255, 255)  # Texte
 PARAM_TEXT_DIM = (200, 200, 200)  # Texte moins important
 
-# Barre de volume
-VOLUME_BAR_BG = (40, 40, 50)  # Fond de la barre
-VOLUME_BAR_FILL = (60, 80, 120)  # Remplissage de la barre
-VOLUME_BAR_BORDER = (80, 100, 140)  # Bordure de la barre
-VOLUME_HANDLE = (150, 180, 255)  # Poignée de la barre
+# Barre de volume - remplacé les bleus par des gris
+VOLUME_BAR_BG = (35, 35, 35)  # Fond de la barre
+VOLUME_BAR_FILL = (60, 60, 60)  # Remplissage de la barre
+VOLUME_BAR_BORDER = (80, 80, 80)  # Bordure de la barre
+VOLUME_HANDLE = (120, 120, 120)  # Poignée de la barre
 
-# Menu en jeu
-MENU_JEU_PANEL = (20, 40, 100)  # Panneau de menu en jeu
-MENU_JEU_BORDER = (80, 140, 240)  # Bordure du menu
-MENU_JEU_BUTTON = (40, 80, 160)  # Boutons de menu
-MENU_JEU_BUTTON_HOVER = (60, 120, 220)  # Survol des boutons
-MENU_JEU_TEXT = (220, 220, 255)  # Texte
+# Menu en jeu - remplacé les bleus par des gris
+MENU_JEU_PANEL = (25, 25, 25)  # Panneau de menu en jeu
+MENU_JEU_BORDER = (50, 50, 50)  # Bordure du menu
+MENU_JEU_BUTTON = (35, 35, 35)  # Boutons de menu
+MENU_JEU_BUTTON_HOVER = (45, 45, 45)  # Survol des boutons
+MENU_JEU_TEXT = (220, 220, 220)  # Texte
 
-# Encyclopédie
-ENCYC_PANEL_BG = (40, 40, 50, 240)  # Fond du panneau
-ENCYC_PANEL_BORDER = (70, 70, 80)  # Bordure du panneau
-ENCYC_GRID_BG = (45, 45, 55)  # Fond de la grille
-ENCYC_ITEM_HOVER = (55, 55, 75)  # Survol d'item
-ENCYC_ITEM_SELECTED = (60, 60, 85)  # Item sélectionné
-ENCYC_CATEGORY_BASE = (80, 110, 140)  # Catégorie 1
-ENCYC_CATEGORY_PLANT = (80, 130, 80)  # Catégorie 2
-ENCYC_CATEGORY_ANIMAL = (130, 110, 80)  # Catégorie 3
-ENCYC_CATEGORY_TOOL = (130, 80, 80)  # Catégorie 4
+# Encyclopédie - remplacé les bleus par des gris
+ENCYC_PANEL_BG = (40, 40, 40, 240)  # Fond du panneau
+ENCYC_PANEL_BORDER = (70, 70, 70)  # Bordure du panneau
+ENCYC_GRID_BG = (45, 45, 45)  # Fond de la grille
+ENCYC_ITEM_HOVER = (55, 55, 55)  # Survol d'item
+ENCYC_ITEM_SELECTED = (60, 60, 60)  # Item sélectionné
+ENCYC_CATEGORY_BASE = (70, 70, 70)  # Catégorie 1
+ENCYC_CATEGORY_PLANT = (80, 80, 80)  # Catégorie 2
+ENCYC_CATEGORY_ANIMAL = (90, 90, 90)  # Catégorie 3
+ENCYC_CATEGORY_TOOL = (100, 100, 100)  # Catégorie 4
 
 # Écrans de victoire et fin
 VICTOIRE_TEXT = (255, 255, 255)  # Texte de victoire
 VICTOIRE_TEXT_SECOND = (200, 200, 200)  # Texte secondaire
-VICTOIRE_HIGHLIGHT = (255, 215, 0)  # Surbrillance dorée
+VICTOIRE_HIGHLIGHT = (170, 170, 170)  # Surbrillance (remplacé doré par gris clair)
