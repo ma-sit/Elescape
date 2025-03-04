@@ -39,6 +39,20 @@ def get_direction(dx, dy):
     else:
         return "left"
 
+def wrap_text(text, max_chars=40):
+    words = text.split()
+    lines = []
+    current_line = ""
+    for word in words:
+        if len(current_line) + len(word) + 1 <= max_chars:
+            current_line += (" " if current_line else "") + word
+        else:
+            lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+    return "\n".join(lines)
+
 # Fonction pour charger les frames d'animation du personnage depuis un dossier.
 def charger_frames_perso_from_folder(folder_path, directions=("down", "left", "right", "up"), nb_frames=4):
     frames = {}
@@ -82,11 +96,14 @@ try:
                 "Creations": [int(x) for x in row.get("Creations", "").split(',') if x],
                 "DR": int(row.get("DR", "0") or "0"),
                 "Image": row.get("Image", ""),
-                "Type": row.get("Type", "classique")  # "animal" ou "classique"
+                "Type": row.get("Type", "classique"),  # "animal", "objectif" ou "classique"
+                "Mission": row.get("Mission", "")
             }
+            if elements[int(elem_id)]["Type"].lower() == "objectif":
+                elements[int(elem_id)]["mission_seen"] = False
 except Exception as e:
     print(f"Erreur lors du chargement de l'encyclopédie: {e}")
-    elements = {0: {"Nom": "Inconnu", "Creations": [], "DR": 0, "Image": "", "Type": "classique"}}
+    elements = {0: {"Nom": "Inconnu", "Creations": [], "DR": 0, "Image": "", "Type": "classique", "Mission": ""}}
 
 def get_next_image(c, w):
     c = (c + 1) % len(w)
@@ -145,7 +162,8 @@ def afficher_elements(ecr, elements, elementsbase):
                     print(f"Erreur: Aucun chemin d'image valide pour l'élément {elem_id}")
                     continue
                 x, y = instance["x"], instance["y"]
-                if elements[elem_id].get("Type", "").lower() == "animal":
+                t = elements[elem_id].get("Type", "").lower()
+                if t == "animal":
                     try:
                         frames = charger_frames_animal_from_folder(img_paths[0])
                         obj = {
@@ -167,10 +185,28 @@ def afficher_elements(ecr, elements, elementsbase):
                         objets.append(obj)
                     except Exception as e:
                         print(f"Erreur lors du chargement de l'animal {elem_id}: {e}")
+                elif t == "objectif":
+                    try:
+                        img_choice = random.choice(img_paths)
+                        img = image.load(img_choice).convert_alpha()
+                        obj = {
+                            "id": elem_id,
+                            "is_objectif": True,
+                            "image": img,
+                            "original_image": img.copy(),
+                            "rect": img.get_rect(topleft=(x, y)),
+                            "x": x,
+                            "y": y,
+                            "selected": False,
+                            "mission_seen": False
+                        }
+                        objets.append(obj)
+                    except Exception as e:
+                        print(f"Erreur lors du chargement de l'objectif {elem_id}: {e}")
                 else:
                     try:
                         img_choice = random.choice(img_paths)
-                        img = image.load(img_choice)
+                        img = image.load(img_choice).convert_alpha()
                         obj = {
                             "id": elem_id,
                             "image": img,
@@ -219,8 +255,8 @@ def page_jeu(niveau):
     global global_volume_general, global_volume_musique, global_volume_sfx
     touches = charger_touches()
     elementsbase = {}
-    niveau_complete = False  # Flag pour suivre la complétion du niveau
-    elfinal = None  # Élément à créer pour terminer le niveau
+    niveau_complete = False
+    elfinal = None
 
     try:
         with open(f'data/csv/niveau{niveau}.csv', newline='', encoding='utf-8') as csvfile:
@@ -229,7 +265,7 @@ def page_jeu(niveau):
             for row in spamreader:
                 row = {k.strip(): v.strip() for k, v in row.items()}
                 bg = row.get("bg")
-                ef = row.get("elfinal") # Élément final à créer pour gagner
+                ef = row.get("elfinal")  # Élément final pour gagner
                 if ef:
                     elfinal = int(ef)
                 if bg and not bg_loaded:
@@ -256,26 +292,14 @@ def page_jeu(niveau):
                 fnd = Surface((lrg, htr))
                 fnd.fill((50, 50, 70))
     except FileNotFoundError:
-        print(f"Fichier du niveau {niveau} introuvable. Création d'un niveau généré.")
-        # Si le fichier n'existe pas, créer un niveau adapté selon l'ID
+        print(f"Fichier du niveau {niveau} introuvable. Génération d'un niveau par défaut.")
         fnd = Surface((lrg, htr))
-        if niveau == 2:
-            fnd.fill((30, 30, 70))  # Fond bleu foncé pour niveau 2
-            elfinal = 6  # Élément à créer pour finir le niveau 2
-        elif niveau == 3:
-            fnd.fill((30, 70, 30))  # Fond vert foncé pour niveau 3
-            elfinal = 8  # Élément à créer pour finir le niveau 3
-        else:
-            fnd.fill((70, 30, 30))  # Fond rouge foncé pour autres niveaux
-            elfinal = 11  # Élément à créer pour finir le niveau
-        
-        # Générer des éléments basiques différents selon le niveau
-        base_elements = [1, 3, 7]  # Arbre, Rocher, Puit
+        fnd.fill((70, 30, 30))
+        elfinal = 11
+        base_elements = [1, 3, 7]
         for elem_id in base_elements:
             if elem_id not in elementsbase:
                 elementsbase[elem_id] = []
-                
-            # Nombre d'instances différent selon le niveau
             num_instances = niveau * 3 + 5
             for i in range(num_instances):
                 x = random.randint(0, lrg - 100)
@@ -310,10 +334,9 @@ def page_jeu(niveau):
         perso_last_anim_time = 0
         perso_anim_delay = 150
 
-    # Initialisation de la position du perso (centre)
+    # Position initiale du perso (centre)
     x, y = lrg // 2, htr // 2
     speed = 7
-    current_image = 0  # Anciennement utilisé pour walk_images, non utilisé ici
     target_x, target_y = x, y
     moving = False
 
@@ -328,22 +351,28 @@ def page_jeu(niveau):
     target_obj = None
     offset_x, offset_y = 0, 0
 
-    # Titre du niveau en haut de l'écran
+    # Charger l'image de base de la bulle pour l'objectif
+    try:
+        bubble_img = image.load("data/images/autres/bulle.png").convert_alpha()
+    except Exception as e:
+        print(f"Erreur lors du chargement de la bulle : {e}")
+        bubble_img = Surface((100, 50))
+        bubble_img.fill((255,255,255))
+
+    # Titre du niveau
     niveau_titre_font = font.Font(None, 40)
-    niveau_titre = niveau_titre_font.render(f"Niveau {niveau}", True, (255, 255, 255))
+    niveau_titre = niveau_titre_font.render(f"Niveau {niveau}", True, (255,255,255))
     niveau_titre_rect = niveau_titre.get_rect(midtop=(lrg//2, 10))
 
     while act:
         try:
             ecr.blit(fnd, (0, 0))
+            ecr.blit(niveau_titre, niveau_titre_rect)
             current_time = time.get_ticks()
             
-            # Affichage du titre du niveau
-            ecr.blit(niveau_titre, niveau_titre_rect)
-            
-            # Affichage des éléments classiques
+            # Affichage des éléments classiques (non-animés, non-objectifs)
             for obj in objets:
-                if not obj.get("is_animal", False):
+                if not obj.get("is_animal", False) and not obj.get("is_objectif", False):
                     ecr.blit(obj["image"], (obj["rect"].x, obj["rect"].y))
                     if "enlarge_start" in obj:
                         if current_time - obj["enlarge_start"] > 100:
@@ -351,6 +380,7 @@ def page_jeu(niveau):
                             obj["rect"] = obj["original_image"].get_rect(center=obj["rect"].center)
                             del obj["enlarge_start"]
             
+            # Gestion des événements
             for evt in event.get():
                 if evt.type == QUIT:
                     return False
@@ -371,7 +401,6 @@ def page_jeu(niveau):
                             for obj in objets:
                                 if obj["rect"].collidepoint(evt.pos):
                                     selected_obj = obj
-                                    # Pour l'animal, agrandir uniquement une fois
                                     if obj.get("is_animal", False):
                                         if not obj.get("selected", False):
                                             obj["selected"] = True
@@ -388,7 +417,6 @@ def page_jeu(niveau):
                                             obj["rect"] = obj["image"].get_rect(center=obj["rect"].center)
                                     offset_x, offset_y = evt.pos[0] - obj["rect"].centerx, evt.pos[1] - obj["rect"].centery
                                     break
-
                     elif evt.button == touches.get('Déplacement', BUTTON_RIGHT):
                         target_x, target_y = mouse.get_pos()
                         moving = True
@@ -443,21 +471,28 @@ def page_jeu(niveau):
                                         if img_paths:
                                             img_path = random.choice([path.strip().strip('"') for path in img_paths])
                                             img = image.load(img_path)
-                                            if elements[closest_obj["id"]]["DR"] == 0 or elements[selected_obj["id"]]["DR"] == 0:
-                                                nouvel_objet = {
-                                                    "id": new_id,
-                                                    "image": img,
-                                                    "original_image": img.copy(),
-                                                    "rect": img.get_rect(center=closest_obj["rect"].center)
-                                                }
-                                                objets.append(nouvel_objet)
-                                            else:
-                                                objets.append(creer_objet(new_id, img, selected_obj, objets))
-                                            if elements[closest_obj["id"]]["DR"] == 0:
-                                                objets.remove(closest_obj)
-                                            if elements[selected_obj["id"]]["DR"] == 0:
-                                                if selected_obj in objets:
-                                                    objets.remove(selected_obj)
+                                            # Création de deux objets issus de la fusion :
+                                            # Le premier remplace l'élément non déplacé (closest_obj)
+                                            new_obj1 = {
+                                                "id": new_id,
+                                                "image": img,
+                                                "original_image": img.copy(),
+                                                "rect": img.get_rect(center=closest_obj["rect"].center)
+                                            }
+                                            # Le deuxième se place à côté (décalé horizontalement)
+                                            offset = new_obj1["rect"].width // 2 + 10
+                                            new_center = (closest_obj["rect"].centerx + offset, closest_obj["rect"].centery)
+                                            new_obj2 = {
+                                                "id": new_id,
+                                                "image": img,
+                                                "original_image": img.copy(),
+                                                "rect": img.get_rect(center=new_center)
+                                            }
+                                            objets.append(new_obj1)
+                                            objets.append(new_obj2)
+                                            if selected_obj in objets:
+                                                objets.remove(selected_obj)
+                                       
                                     except Exception as e:
                                         print(f"Erreur lors de la fusion d'éléments: {e}")
                             selected_obj["rect"].center = (evt.pos[0] - offset_x, evt.pos[1] - offset_y)
@@ -487,16 +522,16 @@ def page_jeu(niveau):
                     x += speed * dx / dist
                     y += speed * dy / dist
                 perso_rect.center = (x, y)
-                # Déterminer la direction du déplacement
                 if dx != 0 or dy != 0:
                     perso_current_direction = get_direction(dx, dy)
                 if current_time - perso_last_anim_time > perso_anim_delay:
                     perso_anim_index = (perso_anim_index + 1) % len(perso_frames[perso_current_direction])
                     perso_last_anim_time = current_time
-                ecr.blit(perso_frames[perso_current_direction][perso_anim_index], perso_rect.topleft)
+                # Au lieu de dessiner le perso séparément, on l'ajoute dans la liste pour le tri
+                perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index], "rect": perso_rect}
             else:
                 perso_rect.center = (x, y)
-                ecr.blit(perso_frames[perso_current_direction][0], perso_rect.topleft)
+                perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][0], "rect": perso_rect}
 
             # Fusion automatique entre le perso et un élément cible
             if target_obj and perso_rect.colliderect(target_obj["rect"]) and not moving:
@@ -525,7 +560,7 @@ def page_jeu(niveau):
                         print(f"Erreur lors de la fusion avec le personnage: {e}")
                 target_obj = None
 
-            # Mise à jour du mouvement et de l'animation des animaux (identique aux versions précédentes)
+            # Mise à jour du mouvement et de l'animation des animaux
             for obj in objets:
                 if obj.get("is_animal", False):
                     if not obj.get("selected", False):
@@ -615,44 +650,41 @@ def page_jeu(niveau):
                                 obj["image"] = obj["frames"][obj["current_direction"]][0]
                     # Si l'animal est sélectionné, son animation reste gelée.
             
+            # Pour le rendu final, combiner le perso avec les autres objets et trier selon rect.bottom
+            perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index] if moving else perso_frames[perso_current_direction][0], "rect": perso_rect}
+            all_objs = objets + [perso_obj]
+            all_objs.sort(key=lambda o: o["rect"].bottom)
+            for o in all_objs:
+                ecr.blit(o["image"], o["rect"])
+            
+            # Affichage de l'objectif : pour chaque objet objectif, afficher une bulle en haut à droite
             for obj in objets:
-                ecr.blit(obj["image"], obj["rect"])
-            
-            # Vérifier si l'élément découvert est l'élément final requis pour finir le niveau
-            if elfinal and element_discovered == elfinal:
-                # Afficher l'écran de victoire du niveau
-                niveau_complete = afficher_victoire_niveau(ecr, niveau, element_discovered)
-                return niveau_complete  # Retourner au sélecteur de niveau
-                
-                # Attendre un clic pour continuer
-                attente_clic = True
-                while attente_clic:
-                    for evt in event.get():
-                        if evt.type == QUIT:
-                            return False
-                        if evt.type == MOUSEBUTTONDOWN:
-                            attente_clic = False
-                            niveau_complete = True
-                            return True  # Retourner au sélecteur de niveau
-            
-            if element_discovered and element_discovered != elfinal:
-                blurred_bg = flouter(ecr)
-                ecr.blit(blurred_bg, (0, 0))
-                try:
-                    img_paths = elements[element_discovered]["Image"].split(',')
-                    if img_paths:
-                        img_path = random.choice([path.strip().strip('"') for path in img_paths])
-                        img = image.load(img_path)
-                        img = transform.scale(img, (int(img.get_width() * 1.5), int(img.get_height() * 1.5)))
-                        element_rect = img.get_rect(center=(lrg // 2, htr // 2 - 50))
-                        ecr.blit(img, element_rect)
-                        text = fnt.render(elements[element_discovered]["Nom"], True, (255, 255, 255))
-                        text_rect = text.get_rect(center=(lrg // 2, element_rect.bottom + 20))
-                        ecr.blit(text, text_rect)
-                except Exception as e:
-                    print(f"Erreur lors de l'affichage de l'élément découvert: {e}")
-                    element_discovered = False
-            
+                if obj.get("is_objectif", False):
+                    bubble_x = obj["rect"].right + 35
+                    bubble_y = obj["rect"].top - 20
+                    if not elements[obj["id"]].get("mission_seen", False):
+                        small_bubble = transform.scale(bubble_img, (50, 50))
+                        ecr.blit(small_bubble, (bubble_x - small_bubble.get_width(), bubble_y))
+                        exclam_text = fnt.render("!", True, (255, 0, 0))
+                        exclam_x = bubble_x - small_bubble.get_width() + (small_bubble.get_width() - exclam_text.get_width()) // 2
+                        exclam_y = bubble_y + (small_bubble.get_height() - exclam_text.get_height()) // 2
+                        ecr.blit(exclam_text, (exclam_x, exclam_y))
+                    if perso_rect.colliderect(obj["rect"]):
+                        large_bubble = transform.scale(bubble_img, (250, 200))
+                        bubble_x_final = obj["rect"].right - large_bubble.get_width() + 250
+                        bubble_y_final = obj["rect"].top - 150
+                        ecr.blit(large_bubble, (bubble_x_final, bubble_y_final))
+                        mission_text = elements[obj["id"]].get("Mission", "Objectif non défini")
+                        mission_text = wrap_text(mission_text, max_chars=12)
+                        lines = mission_text.split("\n")
+                        y_offset = 0
+                        for line in lines:
+                            text_surface = fnt.render(line, True, (0, 0, 0))
+                            ecr.blit(text_surface, (bubble_x_final + (large_bubble.get_width() - text_surface.get_width()) // 2,
+                                                     bubble_y_final + y_offset + 35))
+                            y_offset += text_surface.get_height() + 20
+                        elements[obj["id"]]["mission_seen"] = True
+
             hover_ency = bouton(ecr, (150, 150, 150), btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
             display.flip()
             clock.tick(60)
@@ -660,4 +692,4 @@ def page_jeu(niveau):
             print(f"Erreur dans la boucle principale du jeu: {e}")
             return False
     
-    return niveau_complete  # Retourne True si le niveau est terminé, False sinon
+    return niveau_complete
