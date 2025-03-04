@@ -2,7 +2,6 @@ from pygame import *
 from shared.components.config import *
 import sys
 import os
-import math
 
 def Page(ecr, all_elements=None, discovered_elements=None):
     """Affiche la page d'encyclopédie avec une liste scrollable d'éléments
@@ -21,30 +20,56 @@ def Page(ecr, all_elements=None, discovered_elements=None):
     # Capturer l'écran du jeu actuel
     game_screen = ecr.copy()
     
-    # Dimensions du menu latéral
-    menu_largeur = 550
+    # Position du bouton d'encyclopédie
+    button_pos_y = btn_ency["rect"].centery
+    
+    # Tailles optimisées pour les éléments
+    grid_cols = 4
+    element_size = 80  # Taille fixe des éléments
+    element_width = element_size
+    element_height = element_size
+    grid_spacing = 15  # Espacement entre les éléments
+    
+    # Calcul du nombre de lignes nécessaires
+    total_items = len(all_elements)
+    grid_rows = (total_items + grid_cols - 1) // grid_cols
+    visible_rows = min(grid_rows, 4)  # Au maximum 4 lignes visibles à la fois
+    
+    # Calcul de la largeur et hauteur nécessaires pour la grille
+    grid_width = (grid_cols * element_width) + ((grid_cols - 1) * grid_spacing) + 30  # +30 pour les marges
+    grid_height = (visible_rows * element_height) + ((visible_rows - 1) * grid_spacing) + 30  # +30 pour les marges
+    
+    # Dimensions et position du menu - ajusté pour être plus compact
+    menu_largeur = grid_width + 20  # Juste assez large pour la grille
+    menu_marge_droite = 10  
+    menu_y = button_pos_y - 250  # Position verticale alignée avec le bouton
+    menu_hauteur = grid_height + 90  # Hauteur = grille + espace pour titre
     menu_x = lrg
+    
+    # Si le nombre d'éléments est faible, réduire encore la hauteur
+    if grid_rows <= 2:
+        menu_hauteur = grid_height + 80
+    
+    # Ajuster la position Y si trop haute ou trop basse
+    if menu_y < 10:
+        menu_y = 10
+    if menu_y + menu_hauteur > htr - 10:
+        menu_y = max(10, htr - menu_hauteur - 10)
+    
+    # Taille de la section description (sous le rectangle principal)
+    description_height = 130  # Taille fixe pour la description
+    
     vitesse = 20
     menu_actif = True
     ouvert = True
     
-    # Paramètres pour la grille d'éléments
-    element_width = 85
-    element_height = 85
-    grid_padding = 20
-    grid_spacing = 12
-    grid_cols = 4
+    # Position de la grille (centrée dans le menu)
+    grid_padding = (menu_largeur - grid_width) // 2 + 15  # Centrage horizontal
     grid_x = menu_x + grid_padding
-    grid_y = 120  # Position y de départ pour la grille
+    grid_y = menu_y + 100  # Position Y après le titre (plus d'espace)
     
-    # Chargement des icônes et ressources - création manuelle pour éviter les erreurs de fichiers
+    # Chargement des icônes et ressources
     icons = {}
-    
-    # Icône de cadenas pour éléments verrouillés (créée manuellement)
-    lock_icon = Surface((40, 40), SRCALPHA)
-    draw.rect(lock_icon, (150, 150, 150), Rect(5, 5, 30, 25))
-    draw.rect(lock_icon, (150, 150, 150), Rect(15, 0, 10, 35))
-    icons["lock"] = lock_icon
     
     # Icône de fermeture (X)
     close_icon = Surface((25, 25), SRCALPHA)
@@ -52,30 +77,26 @@ def Page(ecr, all_elements=None, discovered_elements=None):
     draw.line(close_icon, (220, 220, 220), (5, 20), (20, 5), 2)
     icons["close"] = close_icon
     
-    # Cache pour les images des éléments (évite de recharger à chaque fois)
+    # Cache pour les images des éléments
     image_cache = {}
     
     # Paramètres pour le scroll
     scroll_offset = 0
-    scroll_target = 0  # Pour l'animation fluide
-    scroll_animation_speed = 0.2  # Vitesse d'animation
-    max_visible_rows = (htr - grid_y - grid_padding - 170) // (element_height + grid_spacing)
-    total_rows = (len(all_elements) + grid_cols - 1) // grid_cols
+    scroll_target = 0
+    scroll_animation_speed = 0.2
+    max_visible_rows = visible_rows
+    total_rows = grid_rows
     
     # Paramètres pour la scrollbar
-    scrollbar_width = 15
+    scrollbar_width = 8
     scrollbar_padding = 5
     scrollbar_x = menu_x + menu_largeur - scrollbar_width - scrollbar_padding
     scrollbar_y = grid_y
-    scrollbar_height = max_visible_rows * (element_height + grid_spacing)
+    scrollbar_height = grid_height - 30
     scrollbar_active = False
     
     # Paramètres pour l'élément sélectionné
     selected_element = None
-    
-    # Effet de flottement
-    float_offset = 0
-    float_direction = 0.05
     
     # Polices pour le texte
     title_font = font.Font(None, 42)
@@ -88,31 +109,31 @@ def Page(ecr, all_elements=None, discovered_elements=None):
     # Horloge pour le framerate
     clock = time.Clock()
     
-    # Couleurs pour l'interface
+    # Couleurs pour l'interface - palette de gris
     color_scheme = {
         "text": (255, 255, 255),
         "text_dim": (200, 200, 220),
-        "panel_bg": (25, 25, 45, 240),
-        "panel_dark": (15, 15, 35),
-        "panel_light": (40, 45, 70),
-        "grid_bg": (30, 30, 50),
-        "border_dark": (60, 65, 90),
-        "border_light": (80, 90, 130),
-        "hover": (60, 70, 120),
-        "selected": (70, 90, 150),
-        "highlight": (100, 150, 255),
-        "positive": (120, 255, 120),
-        "warning": (255, 220, 100),
-        "negative": (255, 120, 120),
-        "scrollbar_bg": (50, 50, 70),
-        "scrollbar_fg": (80, 90, 130),
-        "button_bg": (50, 60, 100),
-        "button_hover": (70, 80, 140),
-        "info_bg": (40, 50, 90),
-        "category_1": (70, 130, 180),  # Bleu - Éléments de base
-        "category_2": (70, 160, 70),   # Vert - Plantes
-        "category_3": (160, 120, 70),  # Marron - Animaux
-        "category_4": (150, 70, 70)    # Rouge - Outils
+        "panel_bg": (40, 40, 50, 240),       # Gris foncé pour le fond
+        "panel_dark": (30, 30, 35),          # Gris très foncé
+        "panel_light": (60, 60, 70),         # Gris moyen
+        "grid_bg": (45, 45, 55),             # Gris pour le fond de la grille
+        "border_dark": (70, 70, 80),         # Gris pour les bordures foncées
+        "border_light": (100, 100, 120),     # Gris clair pour les bordures
+        "hover": (55, 55, 75),               # Gris avec nuance bleue pour survol
+        "selected": (60, 60, 85),            # Gris avec nuance bleue pour sélection
+        "highlight": (120, 120, 170),        # Gris-violet clair pour surbrillance
+        "positive": (120, 200, 120),         # Vert grisé pour éléments positifs
+        "warning": (200, 190, 100),          # Jaune grisé pour avertissements
+        "negative": (200, 120, 120),         # Rouge grisé pour éléments négatifs
+        "scrollbar_bg": (50, 50, 60),        # Gris pour fond scrollbar
+        "scrollbar_fg": (80, 80, 100),       # Gris pour poignée scrollbar
+        "button_bg": (55, 55, 70),           # Gris pour fond boutons
+        "button_hover": (70, 70, 90),        # Gris pour survol boutons
+        "info_bg": (50, 50, 65),             # Gris pour panneau d'info
+        "category_1": (80, 110, 140),        # Gris-bleu pour catégorie 1
+        "category_2": (80, 130, 80),         # Gris-vert pour catégorie 2
+        "category_3": (130, 110, 80),        # Gris-marron pour catégorie 3
+        "category_4": (130, 80, 80)          # Gris-rouge pour catégorie 4
     }
     
     # Assignation des catégories aux éléments
@@ -138,18 +159,14 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                 category = 3  # Animaux
                 
             element_categories[elem_id] = category
-        except Exception as e:
-            print(f"Erreur lors de l'assignation de catégorie pour {elem_id}: {e}")
+        except:
             element_categories[elem_id] = 1  # Catégorie par défaut
     
     # Bouton de fermeture
     close_button = {
-        "rect": Rect(menu_x + menu_largeur - 40, menu_x + 20, 30, 30),
+        "rect": Rect(menu_x + menu_largeur - 40, menu_y + 20, 30, 30),
         "hover": False
     }
-    
-    # Variables pour les effets visuels et animations
-    pulse_time = 0
     
     # Variable pour les statistiques d'avancement
     try:
@@ -163,6 +180,24 @@ def Page(ecr, all_elements=None, discovered_elements=None):
             return element_categories.get(int(elem_id), 1)  # Par défaut: catégorie Base
         except:
             return 1
+    
+    # Fonction sécurisée pour charger une image (avec gestion des erreurs)
+    def safe_load_image(path, default_size=(50, 50)):
+        try:
+            if not path:
+                raise ValueError("Chemin d'image vide")
+                
+            if ',' in path:
+                paths = path.split(',')
+                path = paths[0].strip().strip('"')
+            
+            img = image.load(path)
+            return img
+        except:
+            # En cas d'erreur, créer une surface grise
+            fallback = Surface(default_size, SRCALPHA)
+            fallback.fill((80, 80, 90, 180))
+            return fallback
     
     # Variables pour le compteur d'éléments
     count_discovered = len(discovered_elements)
@@ -178,20 +213,15 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         if abs(scroll_target - scroll_offset) > 0.01:
             scroll_offset += (scroll_target - scroll_offset) * scroll_animation_speed
         
-        # Mise à jour de l'effet de flottement
-        float_offset += float_direction
-        if float_offset > 3 or float_offset < -3:
-            float_direction *= -1
-        
         # Afficher d'abord l'écran de jeu
         ecr.blit(game_screen, (0, 0))
         
         # Animation d'ouverture/fermeture du menu
-        target_x = lrg - menu_largeur if ouvert else lrg
+        target_x = lrg - menu_largeur - menu_marge_droite if ouvert else lrg
         
         if abs(menu_x - target_x) > 1:
             menu_x += (target_x - menu_x) * 0.2
-            menu_animation = abs((menu_x - lrg) / (lrg - (lrg - menu_largeur)))
+            menu_animation = abs((menu_x - lrg) / (lrg - (lrg - menu_largeur - menu_marge_droite)))
         else:
             menu_x = target_x
             if not ouvert and menu_x >= lrg - 1:
@@ -205,114 +235,73 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         # Effet de flou semi-transparent sur le jeu
         try:
             overlay = Surface((lrg, htr), SRCALPHA)
-            overlay_alpha = int(180 * min(1.0, max(0.0, menu_animation)))
-            overlay.fill((0, 0, 20, overlay_alpha))
+            overlay_alpha = int(150 * min(1.0, max(0.0, menu_animation)))
+            overlay.fill((0, 0, 0, overlay_alpha))
             ecr.blit(overlay, (0, 0))
         except:
             # En cas d'erreur, utiliser une approche plus simple
             dark_overlay = Surface((lrg, htr))
-            dark_overlay.fill((0, 0, 20))
+            dark_overlay.fill((0, 0, 0))
             dark_overlay.set_alpha(120)
             ecr.blit(dark_overlay, (0, 0))
         
-        # Dessin de l'ombre du panneau pour effet de flottement
-        shadow_panel = Surface((menu_largeur, htr), SRCALPHA)
-        shadow_panel.fill((0, 0, 0, 100))
-        ecr.blit(shadow_panel, (menu_x + 8, 8 + float_offset))
-        
-        # Dessin du panneau latéral avec coin très arrondis
-        panel_surface = Surface((menu_largeur, htr), SRCALPHA)
+        # Dessin du panneau latéral avec coins très arrondis
+        panel_surface = Surface((menu_largeur, menu_hauteur), SRCALPHA)
         panel_surface.fill(color_scheme["panel_bg"])
-        
-        # Ajouter un léger dégradé sur les bords pour le style
-        try:
-            side_fade = Surface((20, htr), SRCALPHA)
-            for i in range(20):
-                alpha = 100 - i * 5
-                draw.line(side_fade, (0, 0, 0, alpha), (i, 0), (i, htr), 1)
-            panel_surface.blit(side_fade, (0, 0))
-            panel_surface.blit(transform.flip(side_fade, True, False), (menu_largeur - 20, 0))
-        except:
-            # Ignorer les dégradés en cas d'erreur
-            pass
         
         # Appliquer un masque avec des coins très arrondis au panneau
         try:
-            mask = Surface((menu_largeur, htr), SRCALPHA)
+            mask = Surface((menu_largeur, menu_hauteur), SRCALPHA)
             mask.fill((0, 0, 0, 0))
-            radius = 30  # Rayon des coins arrondis
+            radius = 20  # Rayon des coins arrondis
             
             # Dessiner un rectangle avec des coins très arrondis
-            draw.rect(mask, (255, 255, 255, 255), Rect(0, 0, menu_largeur, htr), border_radius=radius)
+            draw.rect(mask, (255, 255, 255, 255), Rect(0, 0, menu_largeur, menu_hauteur), border_radius=radius)
             
             # Appliquer le masque
             panel_surface.blit(mask, (0, 0), special_flags=BLEND_RGBA_MULT)
         except:
-            # Si l'application du masque échoue, garder le panneau rectangulaire
             pass
         
-        # Dessiner le panneau avec l'effet de flottement
-        ecr.blit(panel_surface, (menu_x, 0 + float_offset))
+        # Dessiner le panneau principal (STATIQUE - sans effet de flottement)
+        ecr.blit(panel_surface, (menu_x, menu_y))
         
-        # Dessiner une bordure brillante avec des coins arrondis
+        # Dessiner une bordure avec des coins arrondis
         try:
             draw.rect(ecr, color_scheme["border_light"], 
-                    Rect(menu_x, 0 + float_offset, menu_largeur, htr), 
-                    2, border_radius=30)
-            
-            # Ajouter une légère lueur sur le bord supérieur pour l'effet de flottement
-            glow_rect = Rect(menu_x + 10, 10 + float_offset, menu_largeur - 20, 5)
-            draw.rect(ecr, (100, 120, 180, 100), glow_rect, border_radius=5)
+                    Rect(menu_x, menu_y, menu_largeur, menu_hauteur), 
+                    2, border_radius=20)
         except:
-            # En cas d'erreur, utiliser une bordure simple
             pass
         
-        # Dessin du titre avec effet d'ombre
+        # Dessin du titre
         try:
-            titre_shadow = title_font.render("Encyclopédie", True, (0, 0, 0))
             titre = title_font.render("Encyclopédie", True, color_scheme["text"])
-            ecr.blit(titre_shadow, (menu_x + menu_largeur//2 - titre.get_width()//2 + 2, 32 + float_offset))
-            ecr.blit(titre, (menu_x + menu_largeur//2 - titre.get_width()//2, 30 + float_offset))
+            titre_rect = titre.get_rect(center=(menu_x + menu_largeur//2, menu_y + 35))
+            ecr.blit(titre, titre_rect)
         except:
-            # En cas d'erreur, utiliser un rendu plus simple
-            titre = title_font.render("Encyclopédie", True, color_scheme["text"])
-            ecr.blit(titre, (menu_x + menu_largeur//2 - titre.get_width()//2, 30 + float_offset))
+            pass
         
         # Afficher le compteur d'éléments découverts
         try:
             counter_text = f"{count_discovered}/{count_total} éléments découverts ({int(completion_percentage)}%)"
             counter_surface = stats_font.render(counter_text, True, color_scheme["text_dim"])
-            counter_rect = counter_surface.get_rect(midtop=(menu_x + menu_largeur//2, 65 + float_offset))
+            counter_rect = counter_surface.get_rect(center=(menu_x + menu_largeur//2, menu_y + 65))
             ecr.blit(counter_surface, counter_rect)
         except:
-            # Ignorer en cas d'erreur
             pass
         
-        # Dessiner l'ombre de la zone de grille pour effet de flottement
-        grid_shadow = Rect(menu_x + grid_padding - 5 + 6, grid_y - 5 + 6 + float_offset, 
-                         menu_largeur - 2*grid_padding - scrollbar_width - 5, 
-                         max_visible_rows * (element_height + grid_spacing) + 10)
-        draw.rect(ecr, (0, 0, 0, 80), grid_shadow, border_radius=20)
-        
-        # Dessiner la zone de grille (arrière-plan) avec coins plus arrondis
-        grid_area = Rect(menu_x + grid_padding - 5, grid_y - 5 + float_offset, 
-                        menu_largeur - 2*grid_padding - scrollbar_width - 5, 
-                        max_visible_rows * (element_height + grid_spacing) + 10)
-        
-        # Créer un effet de profondeur avec un rectangle d'ombre
-        shadow_area = Rect(grid_area.x + 3, grid_area.y + 3, grid_area.width, grid_area.height)
-        draw.rect(ecr, (15, 15, 30), shadow_area, border_radius=20)
+        # Calculer le rectangle pour la grille d'éléments
+        grid_width_actual = (grid_cols * element_width) + ((grid_cols - 1) * grid_spacing)
+        grid_area = Rect(grid_x - 10, grid_y - 10, 
+                        grid_width_actual + 20, 
+                        grid_height)
         
         # Rectangle principal avec coins plus arrondis
-        draw.rect(ecr, color_scheme["grid_bg"], grid_area, border_radius=20)
+        draw.rect(ecr, color_scheme["grid_bg"], grid_area, border_radius=15)
         
         # Bordure plus fine et élégante
-        draw.rect(ecr, color_scheme["border_dark"], grid_area, 1, border_radius=20)
-        
-        # Ajouter un léger effet de brillance en haut
-        highlight = Rect(grid_area.x + 3, grid_area.y + 3, grid_area.width - 6, 15)
-        highlight_color = (40, 45, 70)
-        draw.rect(ecr, highlight_color, highlight, border_radius=10)
+        draw.rect(ecr, color_scheme["border_dark"], grid_area, 1, border_radius=15)
         
         # Calculer le nombre total de lignes nécessaires
         total_rows = (len(all_elements) + grid_cols - 1) // grid_cols
@@ -320,12 +309,6 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         
         # Limiter la position de défilement
         scroll_target = max(0, min(scroll_target, max_scroll))
-        
-        # Animations pulsatoires pour les éléments
-        try:
-            pulse_factor = 0.03 * math.sin(current_time / 300)
-        except:
-            pulse_factor = 0
         
         # Dessiner les éléments visibles
         hover_element = None
@@ -340,6 +323,22 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         # Dessiner les éléments
         element_items = sorted(all_elements.items(), key=lambda x: int(x[0]))
         
+        # Recalculer la dernière ligne pour centrage
+        total_items = len(element_items)
+        if total_items > 0:
+            remaining_items_last_row = total_items % grid_cols
+            if remaining_items_last_row == 0:
+                remaining_items_last_row = grid_cols
+            
+            if remaining_items_last_row < grid_cols:
+                # Ajuster la position X pour centrer les éléments de la dernière ligne
+                last_row_width = remaining_items_last_row * element_width + (remaining_items_last_row - 1) * grid_spacing
+                last_row_offset = (grid_width_actual - last_row_width) / 2
+            else:
+                last_row_offset = 0
+        else:
+            last_row_offset = 0
+        
         for i, (elem_id, elem_data) in enumerate(element_items):
             row = i // grid_cols
             col = i % grid_cols
@@ -347,11 +346,15 @@ def Page(ecr, all_elements=None, discovered_elements=None):
             # Ne dessiner que les éléments dans les lignes visibles
             if start_row <= row < end_row:
                 # Position de l'élément avec scroll
-                elem_x = grid_x + col * (element_width + grid_spacing)
-                elem_y = grid_y + (row - scroll_offset) * (element_height + grid_spacing) + float_offset
+                # Centrer les éléments si c'est la dernière ligne et qu'elle n'est pas complète
+                if row == total_rows - 1 and col < remaining_items_last_row and remaining_items_last_row < grid_cols:
+                    # Dernière ligne, centrer les éléments
+                    elem_x = grid_x + last_row_offset + col * (element_width + grid_spacing)
+                else:
+                    # Lignes normales, distribuer régulièrement
+                    elem_x = grid_x + col * (element_width + grid_spacing)
                 
-                # Effet de pulsation pour les éléments nouvellement découverts (simulation)
-                elem_scale = 1.0
+                elem_y = grid_y + (row - scroll_offset) * (element_height + grid_spacing)
                 
                 # Créer un rect pour l'élément
                 elem_rect = Rect(elem_x, elem_y, element_width, element_height)
@@ -360,19 +363,12 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                 is_hover = elem_rect.collidepoint(mouse_pos)
                 if is_hover and grid_area.collidepoint(mouse_pos):
                     hover_element = elem_id
-                    # Effet de survol: légère augmentation de taille
-                    elem_scale = 1.05
                 
                 # Vérifier si c'est l'élément sélectionné
                 is_selected = selected_element == elem_id
                 
                 # Couleur de fond en fonction de l'état
                 if is_selected:
-                    # Pulsation plus prononcée pour l'élément sélectionné
-                    try:
-                        elem_scale = 1.07 + pulse_factor
-                    except:
-                        elem_scale = 1.07
                     bg_color = color_scheme["selected"]
                     border_color = color_scheme["highlight"]
                 elif is_hover:
@@ -391,49 +387,17 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                         if cat_color_key in color_scheme:
                             cat_color = color_scheme[cat_color_key]
                             bg_color = (
-                                int(bg_color[0] * 0.7 + cat_color[0] * 0.3),
-                                int(bg_color[1] * 0.7 + cat_color[1] * 0.3),
-                                int(bg_color[2] * 0.7 + cat_color[2] * 0.3)
+                                int(bg_color[0] * 0.8 + cat_color[0] * 0.2),
+                                int(bg_color[1] * 0.8 + cat_color[1] * 0.2),
+                                int(bg_color[2] * 0.8 + cat_color[2] * 0.2)
                             )
                 except:
-                    # Ignorer les couleurs de catégorie en cas d'erreur
-                    pass
-                
-                # Appliquer l'effet d'échelle
-                try:
-                    if elem_scale != 1.0:
-                        center_x, center_y = elem_rect.center
-                        elem_width_scaled = int(element_width * elem_scale)
-                        elem_height_scaled = int(element_height * elem_scale)
-                        elem_rect = Rect(0, 0, elem_width_scaled, elem_height_scaled)
-                        elem_rect.center = (center_x, center_y)
-                except:
-                    # En cas d'erreur, réinitialiser le rectangle
-                    elem_rect = Rect(elem_x, elem_y, element_width, element_height)
-                
-                # Dessiner l'ombre de l'élément pour effet de flottement
-                shadow_rect = elem_rect.copy()
-                shadow_rect.x += 3
-                shadow_rect.y += 3
-                try:
-                    draw.rect(ecr, (10, 10, 20), shadow_rect, border_radius=15)
-                except:
-                    # En cas d'erreur, ignorer l'ombre
                     pass
                 
                 # Dessiner le fond de l'élément avec des coins bien arrondis
                 try:
                     draw.rect(ecr, bg_color, elem_rect, border_radius=15)
                     draw.rect(ecr, border_color, elem_rect, 2, border_radius=15)
-                    
-                    # Ajouter un léger dégradé/éclat en haut de l'élément
-                    highlight_rect = Rect(elem_rect.x + 3, elem_rect.y + 3, elem_rect.width - 6, 10)
-                    highlight_color = (
-                        min(255, bg_color[0] + 30),
-                        min(255, bg_color[1] + 30),
-                        min(255, bg_color[2] + 30),
-                    )
-                    draw.rect(ecr, highlight_color, highlight_rect, border_radius=8)
                 except:
                     # En cas d'erreur, utiliser un rectangle simple
                     draw.rect(ecr, bg_color, elem_rect)
@@ -445,23 +409,22 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                 # Si l'élément est découvert, afficher son image et son nom
                 if is_discovered:
                     try:
-                        # Utiliser le cache d'images si disponible
+                        # Charger l'image de manière sécurisée
                         if elem_id in image_cache:
                             elem_img = image_cache[elem_id]
                         else:
-                            # Si l'image est une liste, prendre la première
                             img_path = elem_data["Image"]
-                            if ',' in img_path:
-                                img_path = img_path.split(',')[0].strip().strip('"')
-                                
-                            # Charger et redimensionner l'image
-                            elem_img = image.load(img_path)
+                            elem_img = safe_load_image(img_path, (element_width - 20, element_height - 20))
                             
                             # Calculer les dimensions pour préserver le ratio
                             img_w, img_h = elem_img.get_size()
                             max_dim = min(elem_rect.width, elem_rect.height) - 25
-                            scale_factor = min(max_dim / img_w, max_dim / img_h)
+                            scale_factor = min(max_dim / max(img_w, 1), max_dim / max(img_h, 1))
                             new_w, new_h = int(img_w * scale_factor), int(img_h * scale_factor)
+                            
+                            # Éviter les dimensions trop petites
+                            new_w = max(new_w, 10)
+                            new_h = max(new_h, 10)
                             
                             elem_img = transform.scale(elem_img, (new_w, new_h))
                             
@@ -482,81 +445,28 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                         name_rect = name_text.get_rect(midbottom=(elem_rect.centerx, elem_rect.bottom - 5))
                         ecr.blit(name_text, name_rect)
                         
-                        # Indicateur de catégorie (petit cercle coloré)
-                        category = get_element_category(elem_id)
-                        if category > 0 and category < 5:  # Limiter à 4 catégories
-                            cat_color_key = f"category_{category}"
-                            if cat_color_key in color_scheme:
-                                cat_color = color_scheme[cat_color_key]
-                                draw.circle(ecr, cat_color, (elem_rect.left + 10, elem_rect.top + 10), 5)
-                        
-                    except Exception as e:
-                        # Afficher un placeholder en cas d'erreur
-                        draw.rect(ecr, (80, 40, 40), Rect(elem_rect.x + 10, elem_rect.y + 10, 
-                                                        elem_rect.width - 20, elem_rect.height - 20))
-                        error_text = small_font.render("Erreur", True, color_scheme["text"])
-                        ecr.blit(error_text, (elem_rect.centerx - error_text.get_width()//2, 
-                                            elem_rect.centery - error_text.get_height()//2))
-                
-                # Sinon, afficher un cadenas et une silhouette
-                else:
-                    try:
-                        # Utiliser un fond mystérieux avec effet de brillance, mais pas de silhouette grise
-                        
-                        # Créer un dégradé subtil pour le fond au lieu d'un rectangle gris
-                        gradient_rect = Rect(elem_rect.x + 8, elem_rect.y + 8, 
-                                          elem_rect.width - 16, elem_rect.height - 16)
-                        
-                        # Déterminer une couleur de fond basée sur la catégorie
-                        category = get_element_category(elem_id)
-                        if category == 1:  # Base
-                            gradient_color = (30, 30, 55)
-                        elif category == 2:  # Plantes
-                            gradient_color = (20, 40, 30)
-                        elif category == 3:  # Animaux
-                            gradient_color = (40, 30, 20)
-                        elif category == 4:  # Outils
-                            gradient_color = (40, 25, 25)
-                        else:
-                            gradient_color = (30, 30, 50)
-                        
-                        # Dessiner un fond élégant avec dégradé
-                        draw.rect(ecr, gradient_color, gradient_rect, border_radius=10)
-                        
-                        # Ajouter un effet de brillance subtil en haut
-                        highlight_rect = Rect(gradient_rect.x + 5, gradient_rect.y + 5, 
-                                           gradient_rect.width - 10, 8)
-                        highlight_color = (
-                            min(255, gradient_color[0] + 15),
-                            min(255, gradient_color[1] + 15),
-                            min(255, gradient_color[2] + 15)
-                        )
-                        draw.rect(ecr, highlight_color, highlight_rect, border_radius=4)
-                            
-                        # Afficher un cadenas stylisé avec effet de brillance
-                        lock_rect = icons["lock"].get_rect(center=elem_rect.center)
-                        
-                        # Ajouter un léger effet de lueur autour du cadenas
-                        glow_size = 3
-                        glow_surface = Surface((lock_rect.width + glow_size*2, lock_rect.height + glow_size*2), SRCALPHA)
-                        glow_rect = Rect(glow_size, glow_size, lock_rect.width, lock_rect.height)
-                        
-                        # Réduire l'opacité pour les éléments récemment survolés
-                        lock_alpha = 180 if elem_rect.collidepoint(mouse_pos) else 220
-                        
-                        # Appliquer l'icône du cadenas avec une légère transparence
-                        lock_copy = icons["lock"].copy()
-                        lock_copy.set_alpha(lock_alpha)
-                        ecr.blit(lock_copy, lock_rect)
-                        
-                        # Texte "???" avec style amélioré - plus petit et plus discret
-                        unknown_text = element_font.render("???", True, (180, 180, 210))
-                        unknown_rect = unknown_text.get_rect(midbottom=(elem_rect.centerx, elem_rect.bottom - 5))
-                        ecr.blit(unknown_text, unknown_rect)
                     except:
-                        # En cas d'erreur, afficher simplement un rectangle
-                        draw.rect(ecr, (40, 40, 55), Rect(elem_rect.x + 10, elem_rect.y + 10, 
-                                                     elem_rect.width - 20, elem_rect.height - 20))
+                        # Afficher un placeholder simple et propre en cas d'erreur
+                        gray_rect = Rect(elem_rect.x + 10, elem_rect.y + 10, 
+                                       elem_rect.width - 20, elem_rect.height - 25)
+                        draw.rect(ecr, (70, 70, 80), gray_rect, border_radius=10)
+                        
+                        name = elem_data.get("Nom", "???")
+                        name_text = element_font.render(name, True, color_scheme["text"])
+                        name_rect = name_text.get_rect(midbottom=(elem_rect.centerx, elem_rect.bottom - 5))
+                        ecr.blit(name_text, name_rect)
+                
+                # Sinon, afficher une ombre grise propre
+                else:
+                    # Rectangle gris foncé avec coins arrondis
+                    gray_rect = Rect(elem_rect.x + 10, elem_rect.y + 10, 
+                                    elem_rect.width - 20, elem_rect.height - 20)
+                    draw.rect(ecr, (50, 50, 60), gray_rect, border_radius=10)
+                    
+                    # Texte "???" 
+                    unknown_text = element_font.render("???", True, (170, 170, 190))
+                    unknown_rect = unknown_text.get_rect(midbottom=(elem_rect.centerx, elem_rect.bottom - 5))
+                    ecr.blit(unknown_text, unknown_rect)
         
         # Si la liste est vide
         if not all_elements:
@@ -570,265 +480,125 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         # Dessiner la scrollbar si nécessaire
         if total_rows > max_visible_rows:
             # Fond de la scrollbar
-            scrollbar_bg = Rect(scrollbar_x, scrollbar_y + float_offset, scrollbar_width, scrollbar_height)
-            draw.rect(ecr, color_scheme["scrollbar_bg"], scrollbar_bg, border_radius=8)
+            scrollbar_bg = Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height)
+            draw.rect(ecr, color_scheme["scrollbar_bg"], scrollbar_bg, border_radius=4)
             
             # Poignée (thumb) de la scrollbar
             thumb_height = max(30, scrollbar_height * (max_visible_rows / total_rows))
             thumb_position = scrollbar_y + (scroll_offset / max_scroll) * (scrollbar_height - thumb_height)
             
-            thumb_rect = Rect(scrollbar_x, thumb_position + float_offset, scrollbar_width, thumb_height)
-            draw.rect(ecr, color_scheme["scrollbar_fg"], thumb_rect, border_radius=8)
+            thumb_rect = Rect(scrollbar_x, thumb_position, scrollbar_width, thumb_height)
+            draw.rect(ecr, color_scheme["scrollbar_fg"], thumb_rect, border_radius=4)
             
             # Surbrillance si la souris est sur la scrollbar
             if thumb_rect.collidepoint(mouse_pos) or scrollbar_active:
-                draw.rect(ecr, color_scheme["highlight"], thumb_rect, 2, border_radius=8)
+                draw.rect(ecr, color_scheme["highlight"], thumb_rect, 2, border_radius=4)
         
-        # Dessiner l'ombre du panneau d'informations pour effet de flottement
+        # ===== SECTION D'INFORMATION DÉTAILLÉE - EN DESSOUS DU RECTANGLE PRINCIPAL =====
         if selected_element is not None and int(selected_element) in discovered_elements:
-            info_height = 220
-            info_shadow = Rect(menu_x + grid_padding + 6, grid_y + scrollbar_height + 20 + 6 + float_offset,
-                             menu_largeur - 2*grid_padding, info_height)
-            draw.rect(ecr, (0, 0, 0, 80), info_shadow, border_radius=25)
-        
-        # Afficher les informations de l'élément sélectionné
-        if selected_element is not None and int(selected_element) in discovered_elements:
-            # Zone d'information en bas avec design amélioré
-            info_height = 220
-            info_area = Rect(menu_x + grid_padding, grid_y + scrollbar_height + 20 + float_offset,
-                         menu_largeur - 2*grid_padding, info_height)
-            
-            # Effet d'ombre pour donner de la profondeur
-            shadow_area = Rect(info_area.x + 3, info_area.y + 3, info_area.width, info_area.height)
-            draw.rect(ecr, (25, 30, 50), shadow_area, border_radius=22)
-            
-            # Rectangle principal avec coins plus arrondis
-            draw.rect(ecr, color_scheme["info_bg"], info_area, border_radius=22)
-            
-            # Bordure plus subtile
-            draw.rect(ecr, color_scheme["border_light"], info_area, 1, border_radius=22)
-            
-            # Ajouter un effet de dégradé en haut
-            highlight = Rect(info_area.x + 4, info_area.y + 4, info_area.width - 8, 20)
-            highlight_color = (50, 60, 100)
-            draw.rect(ecr, highlight_color, highlight, border_radius=12)
-            
             try:
-                # Ajouter un léger effet de dégradé
-                gradient = Surface((info_area.width, 20), SRCALPHA)
-                for i in range(20):
-                    alpha = 80 - i * 4
-                    draw.line(gradient, (0, 0, 0, alpha), (0, i), (info_area.width, i), 1)
-                ecr.blit(gradient, (info_area.x, info_area.y))
+                # Zone d'information SOUS le panneau principal, pas dedans
+                info_panel_height = description_height
+                info_margin = 10
+                info_area = Rect(
+                    menu_x, 
+                    menu_y + menu_hauteur + 10,  # Juste en-dessous du panneau principal
+                    menu_largeur, 
+                    info_panel_height
+                )
+                
+                # Rectangle principal avec coins plus arrondis
+                draw.rect(ecr, color_scheme["info_bg"], info_area, border_radius=15)
+                
+                # Bordure plus subtile
+                draw.rect(ecr, color_scheme["border_light"], info_area, 1, border_radius=15)
+                
+                # Afficher les détails de l'élément sélectionné
+                elem_data = all_elements[selected_element]
+                
+                # Titre (nom de l'élément) au centre en haut
+                name_text = elem_data["Nom"]
+                name_font = font.Font(None, 36)
+                name_surface = name_font.render(name_text, True, color_scheme["text"])
+                name_rect = name_surface.get_rect(midtop=(info_area.centerx, info_area.y + 15))
+                ecr.blit(name_surface, name_rect)
+                
+                # Image à gauche
+                try:
+                    # Charger l'image de manière sécurisée
+                    info_img_size = min(info_area.height - 40, 80)
+                    
+                    if selected_element in image_cache:
+                        detail_img = image_cache[selected_element]
+                    else:
+                        img_path = elem_data["Image"]
+                        detail_img = safe_load_image(img_path, (info_img_size, info_img_size))
+                        
+                        # Redimensionner pour l'affichage dans les détails
+                        img_w, img_h = detail_img.get_size()
+                        max_dim = info_img_size
+                        scale_factor = min(max_dim / max(img_w, 1), max_dim / max(img_h, 1))
+                        new_w, new_h = int(img_w * scale_factor), int(img_h * scale_factor)
+                        
+                        # Éviter les dimensions trop petites
+                        new_w = max(new_w, 10)
+                        new_h = max(new_h, 10)
+                        
+                        detail_img = transform.scale(detail_img, (new_w, new_h))
+                    
+                    img_rect = detail_img.get_rect()
+                    img_rect.topleft = (info_area.x + 20, info_area.y + 50)
+                    ecr.blit(detail_img, img_rect)
+                    
+                    # Informations de l'élément
+                    # Catégorie
+                    category = get_element_category(int(selected_element))
+                    if category > 0 and category < 5:
+                        cat_names = ["Base", "Plantes", "Animaux", "Outils"]
+                        cat_name = cat_names[category-1] if category-1 < len(cat_names) else "Autre"
+                        cat_color_key = f"category_{category}"
+                        cat_color = color_scheme[cat_color_key] if cat_color_key in color_scheme else color_scheme["text"]
+                        
+                        cat_text = stats_font.render(f"Catégorie: {cat_name}", True, cat_color)
+                        cat_rect = cat_text.get_rect(topleft=(img_rect.right + 30, info_area.y + 50))
+                        ecr.blit(cat_text, cat_rect)
+                    
+                    # Consommation
+                    dr_text = "Se consomme: " + ("Oui" if elem_data["DR"] == 0 else "Non")
+                    dr_color = color_scheme["warning"] if elem_data["DR"] == 0 else color_scheme["positive"]
+                    dr_surface = description_font.render(dr_text, True, dr_color)
+                    dr_rect = dr_surface.get_rect(topleft=(img_rect.right + 30, info_area.y + 75))
+                    ecr.blit(dr_surface, dr_rect)
+                    
+                    # Nombre de combinaisons
+                    creation_count = len(elem_data["Creations"]) if elem_data["Creations"] else 0
+                    creation_text = f"Combinaisons: {creation_count}"
+                    creation_surface = description_font.render(creation_text, True, color_scheme["text"])
+                    creation_rect = creation_surface.get_rect(topleft=(img_rect.right + 30, info_area.y + 100))
+                    ecr.blit(creation_surface, creation_rect)
+                    
+                except:
+                    # En cas d'erreur, afficher juste le nom
+                    try:
+                        text_center = description_font.render("Informations non disponibles", True, color_scheme["text_dim"])
+                        text_rect = text_center.get_rect(center=(info_area.centerx, info_area.centery))
+                        ecr.blit(text_center, text_rect)
+                    except:
+                        pass
             except:
-                # Ignorer en cas d'erreur
                 pass
-            
-            # Afficher les détails de l'élément sélectionné
-            elem_data = all_elements[selected_element]
-            
-            # Côté gauche: image et nom
-            try:
-                # Charger l'image si nécessaire
-                if selected_element in image_cache:
-                    detail_img = image_cache[selected_element]
-                else:
-                    # Charger l'image
-                    img_path = elem_data["Image"]
-                    if ',' in img_path:
-                        img_path = img_path.split(',')[0].strip().strip('"')
-                    
-                    detail_img = image.load(img_path)
-                    
-                    # Redimensionner pour l'affichage dans les détails
-                    img_w, img_h = detail_img.get_size()
-                    max_dim = 100  # Taille maximale pour l'image de détail
-                    scale_factor = min(max_dim / img_w, max_dim / img_h)
-                    new_w, new_h = int(img_w * scale_factor), int(img_h * scale_factor)
-                    
-                    detail_img = transform.scale(detail_img, (new_w, new_h))
-                    
-                img_rect = detail_img.get_rect(topleft=(info_area.x + 20, info_area.y + 20))
-                ecr.blit(detail_img, img_rect)
-                
-                # Nom de l'élément avec effet d'ombre
-                detail_name_shadow = subtitle_font.render(elem_data["Nom"], True, (0, 0, 0))
-                detail_name = subtitle_font.render(elem_data["Nom"], True, color_scheme["highlight"])
-                
-                name_x = img_rect.right + 15
-                name_y = info_area.y + 30
-                ecr.blit(detail_name_shadow, (name_x + 1, name_y + 1))
-                ecr.blit(detail_name, (name_x, name_y))
-                
-                # Type (catégorie)
-                category = get_element_category(int(selected_element))
-                if category > 0 and category < 5:  # Limiter à 4 catégories
-                    cat_names = ["Base", "Plantes", "Animaux", "Outils"]
-                    cat_name = cat_names[category-1] if category-1 < len(cat_names) else "Autre"
-                    cat_color_key = f"category_{category}"
-                    cat_color = color_scheme[cat_color_key] if cat_color_key in color_scheme else color_scheme["text"]
-                    
-                    type_text = small_font.render(f"Catégorie: {cat_name}", True, cat_color)
-                    ecr.blit(type_text, (name_x, name_y + 35))
-                
-                # Côté droit: propriétés et informations
-                right_x = info_area.centerx + 20
-                
-                # Propriétés principales
-                props_y = info_area.y + 25
-                props_spacing = 25
-                
-                # Est-ce que l'élément disparaît après fusion
-                dr_text = "Se consomme: " + ("Oui" if elem_data["DR"] == 0 else "Non")
-                dr_surface = description_font.render(dr_text, True, 
-                                                  color_scheme["warning"] if elem_data["DR"] == 0 else color_scheme["positive"])
-                ecr.blit(dr_surface, (right_x, props_y))
-                
-                # Nombre de créations possibles
-                creation_count = len(elem_data["Creations"]) if elem_data["Creations"] else 0
-                creation_text = f"Combinaisons: {creation_count}"
-                creation_surface = description_font.render(creation_text, True, color_scheme["text"])
-                ecr.blit(creation_surface, (right_x, props_y + props_spacing))
-                
-                # Section du bas: créations possibles
-                bottom_y = info_area.y + 120
-                
-                # Ligne de séparation
-                separator_y = bottom_y - 15
-                draw.line(ecr, color_scheme["border_dark"], 
-                        (info_area.x + 15, separator_y), 
-                        (info_area.right - 15, separator_y), 1)
-                
-                # Titre "Combinaisons possibles"
-                title_y = bottom_y
-                if elem_data["Creations"]:
-                    recipe_title = description_font.render("Peut créer:", True, color_scheme["text"])
-                    ecr.blit(recipe_title, (info_area.x + 20, title_y))
-                    
-                    # Afficher les combinaisons sous forme d'icônes avec texte
-                    recipe_x = info_area.x + 20
-                    recipe_y = title_y + 30
-                    recipe_spacing = 75
-                    
-                    for i, creation_id in enumerate(elem_data["Creations"][:4]):  # Limiter à 4 pour l'espace
-                        if i >= 4:  # Limiter à 4 pour ne pas déborder
-                            # Indiquer qu'il y en a plus
-                            more_text = small_font.render("+ d'autres...", True, color_scheme["text_dim"])
-                            ecr.blit(more_text, (recipe_x, recipe_y + 15))
-                            break
-                            
-                        # Dessiner chaque recette comme miniature + texte
-                        if str(creation_id) in all_elements:
-                            creation_data = all_elements[str(creation_id)]
-                            
-                            # Position de cette recette
-                            this_x = recipe_x + i * recipe_spacing
-                            
-                            # Cadre de la recette
-                            recipe_frame = Rect(this_x, recipe_y, 65, 65)
-                            
-                            # Effet d'ombre pour effet de flottement
-                            recipe_shadow = Rect(this_x + 2, recipe_y + 2, 65, 65)
-                            draw.rect(ecr, (20, 20, 30), recipe_shadow, border_radius=12)
-                            
-                            if int(creation_id) in discovered_elements:
-                                # Élément découvert: montrer l'image et le nom
-                                try:
-                                    # Charger l'image si nécessaire
-                                    if creation_id in image_cache:
-                                        recipe_img = image_cache[creation_id]
-                                    else:
-                                        img_path = creation_data["Image"]
-                                        if ',' in img_path:
-                                            img_path = img_path.split(',')[0].strip().strip('"')
-                                        
-                                        recipe_img = image.load(img_path)
-                                        
-                                        # Redimensionner pour l'icône
-                                        img_w, img_h = recipe_img.get_size()
-                                        max_dim = 45
-                                        scale_factor = min(max_dim / img_w, max_dim / img_h)
-                                        new_w, new_h = int(img_w * scale_factor), int(img_h * scale_factor)
-                                        
-                                        recipe_img = transform.scale(recipe_img, (new_w, new_h))
-                                        image_cache[creation_id] = recipe_img
-                                    
-                                    # Dessiner le fond avec la couleur de la catégorie
-                                    cat = get_element_category(creation_id)
-                                    cat_color_key = f"category_{cat}"
-                                    cat_color = color_scheme[cat_color_key] if cat_color_key in color_scheme else color_scheme["border_light"]
-                                    
-                                    # Cadre arrondi avec couleur de catégorie
-                                    draw.rect(ecr, (50, 50, 70), recipe_frame, border_radius=12)
-                                    draw.rect(ecr, cat_color, recipe_frame, 1, border_radius=12)
-                                    
-                                    # Effet de brillance en haut
-                                    recipe_highlight = Rect(recipe_frame.x + 3, recipe_frame.y + 3, 
-                                                           recipe_frame.width - 6, 6)
-                                    draw.rect(ecr, (70, 70, 90), recipe_highlight, border_radius=3)
-                                    
-                                    # Image au centre
-                                    img_rect = recipe_img.get_rect(center=recipe_frame.center)
-                                    ecr.blit(recipe_img, img_rect)
-                                    
-                                    # Nom en dessous
-                                    name = creation_data["Nom"]
-                                    if len(name) > 10:
-                                        name = name[:8] + "..."
-                                    
-                                    name_text = small_font.render(name, True, color_scheme["text"])
-                                    name_rect = name_text.get_rect(midtop=(recipe_frame.centerx, recipe_frame.bottom + 5))
-                                    ecr.blit(name_text, name_rect)
-                                    
-                                except Exception as e:
-                                    # En cas d'erreur, afficher un rectangle simple
-                                    draw.rect(ecr, (80, 50, 50), recipe_frame)
-                            else:
-                                # Élément non découvert: montrer un cadenas
-                                draw.rect(ecr, (40, 40, 55), recipe_frame, border_radius=12)
-                                
-                                # Afficher le cadenas
-                                lock_small = transform.scale(icons["lock"], (30, 30))
-                                lock_rect = lock_small.get_rect(center=recipe_frame.center)
-                                ecr.blit(lock_small, lock_rect)
-                                
-                                # Texte "???"
-                                unknown_text = small_font.render("???", True, color_scheme["text_dim"])
-                                unknown_rect = unknown_text.get_rect(midtop=(recipe_frame.centerx, recipe_frame.bottom + 5))
-                                ecr.blit(unknown_text, unknown_rect)
-                else:
-                    # Message si aucune création possible
-                    no_recipe_text = description_font.render("Aucune combinaison connue", True, color_scheme["text_dim"])
-                    ecr.blit(no_recipe_text, (info_area.x + 20, title_y))
-                    
-                    # Suggestion
-                    tip_text = small_font.render("Essayez de combiner cet élément avec d'autres!", True, color_scheme["text_dim"])
-                    ecr.blit(tip_text, (info_area.x + 20, title_y + 30))
-                
-            except Exception as e:
-                # En cas d'erreur, afficher un message simple
-                error_text = description_font.render("Erreur d'affichage des détails", True, color_scheme["text"])
-                ecr.blit(error_text, (info_area.x + 20, info_area.centery))
         
         # Dessiner le bouton de fermeture
         close_button["rect"].x = menu_x + menu_largeur - 40
-        close_button["rect"].y = 20 + float_offset
+        close_button["rect"].y = menu_y + 20
         close_button["hover"] = close_button["rect"].collidepoint(mouse_pos)
         
         # Ombre du bouton de fermeture
         if close_button["hover"]:
-            shadow_close = Rect(close_button["rect"].x + 2, close_button["rect"].y + 2, 
-                              close_button["rect"].width, close_button["rect"].height)
-            draw.rect(ecr, (0, 0, 0, 50), shadow_close, border_radius=15)
             draw.rect(ecr, color_scheme["button_hover"], close_button["rect"], border_radius=15)
         
         # Dessiner l'icône X
         ecr.blit(icons["close"], (close_button["rect"].x + 2, close_button["rect"].y + 2))
-        
-        # Afficher conseils clavier
-        keyboard_tip = small_font.render("Échap: fermer", True, color_scheme["text_dim"])
-        keyboard_rect = keyboard_tip.get_rect(midbottom=(menu_x + menu_largeur//2, htr - 15 + float_offset))
-        ecr.blit(keyboard_tip, keyboard_rect)
         
         # Mise à jour de l'écran
         display.flip()
@@ -868,11 +638,11 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                     
                     # Gestion du clic sur la scrollbar
                     if total_rows > max_visible_rows:
-                        scrollbar_area = Rect(scrollbar_x, scrollbar_y + float_offset, scrollbar_width, scrollbar_height)
+                        scrollbar_area = Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height)
                         if scrollbar_area.collidepoint(evt.pos):
                             scrollbar_active = True
                             # Déplacer directement la scrollbar à la position du clic
-                            y_rel = evt.pos[1] - scrollbar_y - float_offset
+                            y_rel = evt.pos[1] - scrollbar_y
                             scroll_ratio = y_rel / scrollbar_height
                             scroll_target = min(max_scroll, max(0, scroll_ratio * max_scroll))
                 
@@ -884,7 +654,7 @@ def Page(ecr, all_elements=None, discovered_elements=None):
             # Gestion du déplacement de la scrollbar
             elif evt.type == MOUSEMOTION and scrollbar_active:
                 # Calculer la nouvelle position du scroll
-                y_rel = evt.pos[1] - scrollbar_y - float_offset
+                y_rel = evt.pos[1] - scrollbar_y
                 scroll_ratio = y_rel / scrollbar_height
                 scroll_target = min(max_scroll, max(0, scroll_ratio * max_scroll))
     
