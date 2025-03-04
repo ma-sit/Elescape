@@ -4,7 +4,7 @@ import os
 import csv
 import random
 import json
-import math as m  # Pour utiliser m.pi, m.cos, etc.
+from math import *  # Utilisation de from math import * comme demandé
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
@@ -12,6 +12,7 @@ from interface.menu_interf_jeu import menu_parametres
 from interface.menu import bouton
 from interface.page_laterale_jeu_combinaisons import Page
 from interface.parametres import TOUCHES_DEFAUT
+from interface.fin_niveau_victoire import afficher_victoire_niveau
 
 # Variables pour le paramètre de volume global
 global_volume_general = 1.0
@@ -28,7 +29,7 @@ EXTRA_ANIM_SEQUENCES = {
 
 # Fonction pour déterminer la direction (cardinale) la plus proche d'un vecteur (dx, dy)
 def get_direction(dx, dy):
-    angle = m.degrees(m.atan2(dy, dx))
+    angle = degrees(atan2(dy, dx))
     if -45 <= angle < 45:
         return "right"
     elif 45 <= angle < 135:
@@ -218,6 +219,8 @@ def page_jeu(niveau):
     global global_volume_general, global_volume_musique, global_volume_sfx
     touches = charger_touches()
     elementsbase = {}
+    niveau_complete = False  # Flag pour suivre la complétion du niveau
+    elfinal = None  # Élément à créer pour terminer le niveau
 
     try:
         with open(f'data/csv/niveau{niveau}.csv', newline='', encoding='utf-8') as csvfile:
@@ -226,6 +229,9 @@ def page_jeu(niveau):
             for row in spamreader:
                 row = {k.strip(): v.strip() for k, v in row.items()}
                 bg = row.get("bg")
+                ef = row.get("elfinal") # Élément final à créer pour gagner
+                if ef:
+                    elfinal = int(ef)
                 if bg and not bg_loaded:
                     try:
                         fnd = image.load(bg).convert()
@@ -249,6 +255,32 @@ def page_jeu(niveau):
                 print("Aucun fond trouvé, utilisation d'un fond par défaut")
                 fnd = Surface((lrg, htr))
                 fnd.fill((50, 50, 70))
+    except FileNotFoundError:
+        print(f"Fichier du niveau {niveau} introuvable. Création d'un niveau généré.")
+        # Si le fichier n'existe pas, créer un niveau adapté selon l'ID
+        fnd = Surface((lrg, htr))
+        if niveau == 2:
+            fnd.fill((30, 30, 70))  # Fond bleu foncé pour niveau 2
+            elfinal = 6  # Élément à créer pour finir le niveau 2
+        elif niveau == 3:
+            fnd.fill((30, 70, 30))  # Fond vert foncé pour niveau 3
+            elfinal = 8  # Élément à créer pour finir le niveau 3
+        else:
+            fnd.fill((70, 30, 30))  # Fond rouge foncé pour autres niveaux
+            elfinal = 11  # Élément à créer pour finir le niveau
+        
+        # Générer des éléments basiques différents selon le niveau
+        base_elements = [1, 3, 7]  # Arbre, Rocher, Puit
+        for elem_id in base_elements:
+            if elem_id not in elementsbase:
+                elementsbase[elem_id] = []
+                
+            # Nombre d'instances différent selon le niveau
+            num_instances = niveau * 3 + 5
+            for i in range(num_instances):
+                x = random.randint(0, lrg - 100)
+                y = random.randint(0, htr - 100)
+                elementsbase[elem_id].append({"x": x, "y": y})
     except Exception as e:
         print(f"Erreur lors du chargement du niveau {niveau}: {e}")
         fnd = Surface((lrg, htr))
@@ -296,10 +328,18 @@ def page_jeu(niveau):
     target_obj = None
     offset_x, offset_y = 0, 0
 
+    # Titre du niveau en haut de l'écran
+    niveau_titre_font = font.Font(None, 40)
+    niveau_titre = niveau_titre_font.render(f"Niveau {niveau}", True, (255, 255, 255))
+    niveau_titre_rect = niveau_titre.get_rect(midtop=(lrg//2, 10))
+
     while act:
         try:
             ecr.blit(fnd, (0, 0))
             current_time = time.get_ticks()
+            
+            # Affichage du titre du niveau
+            ecr.blit(niveau_titre, niveau_titre_rect)
             
             # Affichage des éléments classiques
             for obj in objets:
@@ -497,10 +537,10 @@ def page_jeu(niveau):
                                     obj["state"] = "moving"
                                     obj["state_start_time"] = current_time
                                     cx, cy = obj["rect"].center
-                                    angle = random.uniform(0, 2 * m.pi)
+                                    angle = random.uniform(0, 2 * pi)
                                     offset = random.randint(120, 200)
-                                    tg_x = cx + offset * m.cos(angle)
-                                    tg_y = cy + offset * m.sin(angle)
+                                    tg_x = cx + offset * cos(angle)
+                                    tg_y = cy + offset * sin(angle)
                                     tg_x = max(0, min(tg_x, lrg))
                                     tg_y = max(0, min(tg_y, htr))
                                     obj["animal_target_pos"] = (tg_x, tg_y)
@@ -578,7 +618,24 @@ def page_jeu(niveau):
             for obj in objets:
                 ecr.blit(obj["image"], obj["rect"])
             
-            if element_discovered:
+            # Vérifier si l'élément découvert est l'élément final requis pour finir le niveau
+            if elfinal and element_discovered == elfinal:
+                # Afficher l'écran de victoire du niveau
+                niveau_complete = afficher_victoire_niveau(ecr, niveau, element_discovered)
+                return niveau_complete  # Retourner au sélecteur de niveau
+                
+                # Attendre un clic pour continuer
+                attente_clic = True
+                while attente_clic:
+                    for evt in event.get():
+                        if evt.type == QUIT:
+                            return False
+                        if evt.type == MOUSEBUTTONDOWN:
+                            attente_clic = False
+                            niveau_complete = True
+                            return True  # Retourner au sélecteur de niveau
+            
+            if element_discovered and element_discovered != elfinal:
                 blurred_bg = flouter(ecr)
                 ecr.blit(blurred_bg, (0, 0))
                 try:
@@ -603,4 +660,4 @@ def page_jeu(niveau):
             print(f"Erreur dans la boucle principale du jeu: {e}")
             return False
     
-    return True
+    return niveau_complete  # Retourne True si le niveau est terminé, False sinon
