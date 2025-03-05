@@ -374,7 +374,7 @@ def page_parametres_interne(background_image=None):
                 
                 # Barre de fond
                 bar_bg = Rect(bar_x, y_pos, bar_width, bar_height)
-                draw.rect(ecr, VOLUME_BAR_BG, bar_bg, border_radius=6)
+                draw.rect(ecr, BARRE_FOND_BLANC, bar_bg, border_radius=6)  # Fond blanc pour les barres
                 
                 # Partie remplie de la barre
                 if volume_value > 0:
@@ -415,7 +415,7 @@ def page_parametres_interne(background_image=None):
             # Dessiner la scrollbar si nécessaire
             if len(touch_buttons) > max_visible_touches:
                 # Piste de la scrollbar (fond)
-                draw.rect(ecr, VOLUME_BAR_BG, Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height), border_radius=8)
+                draw.rect(ecr, BARRE_FOND_BLANC, Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height), border_radius=8)
                 
                 # Poignée (thumb) de la scrollbar
                 thumb_height = calculate_thumb_height()

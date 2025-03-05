@@ -202,6 +202,7 @@ def selection_niveau():
         level["image"] = None
         level["hover"] = False
         level["shadow_offset"] = 4
+        level["scale"] = 1.0  # Facteur d'échelle pour l'animation
     
     # Connexions linéaires entre les niveaux
     connections = [
@@ -255,46 +256,24 @@ def selection_niveau():
         ecr.blit(title, title_rect)
         ecr.blit(subtitle, subtitle_rect)
         
-        # Mettre à jour l'état de survol
+        # Mettre à jour l'état de survol et l'échelle de chaque niveau
         mouse_pos = mouse.get_pos()
         for level in levels:
             level["hover"] = level["rect"].collidepoint(mouse_pos)
+            
+            # Animer l'échelle en fonction du survol
+            target_scale = 1.08 if level["hover"] and level["available"] else 1.0
+            
+            # Animation spéciale pour le niveau nouvellement débloqué
+            if newly_unlocked and level["id"] == newly_unlocked:
+                target_scale = 1.12 + sin(current_time / 150.0) * 0.05  # Animation de pulsation plus prononcée
+                
+            # Transition fluide de l'échelle
+            level["scale"] += (target_scale - level["scale"]) * 0.2
         
         # Vérifier le survol du bouton de réinitialisation
         reset_button["hover"] = reset_button["rect"].collidepoint(mouse_pos)
-        
-        # Dessiner d'abord les ombres des boutons
-        for level in levels:
-            try:
-                if level["hover"] or (newly_unlocked and level["id"] == newly_unlocked):
-                    shadow_offset = level["shadow_offset"] + 2
-                else:
-                    shadow_offset = level["shadow_offset"]
-                
-                shadow_rect = Rect(
-                    level["rect"].x + shadow_offset,
-                    level["rect"].y + shadow_offset,
-                    level["rect"].width,
-                    level["rect"].height
-                )
-                
-                shadow_surface = Surface((shadow_rect.width, shadow_rect.height), SRCALPHA)
-                draw.rect(shadow_surface, OMBRE, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15)
-                ecr.blit(shadow_surface, shadow_rect)
-            except Exception as e:
-                print(f"Erreur lors du dessin de l'ombre pour le niveau {level['id']}: {e}")
-        
-        # Dessiner l'ombre du bouton de réinitialisation
-        shadow_offset = reset_button["shadow_offset"] + (2 if reset_button["hover"] else 0)
-        shadow_rect = Rect(
-            reset_button["rect"].x + shadow_offset,
-            reset_button["rect"].y + shadow_offset,
-            reset_button["rect"].width,
-            reset_button["rect"].height
-        )
-        shadow_surface = Surface((shadow_rect.width, shadow_rect.height), SRCALPHA)
-        draw.rect(shadow_surface, OMBRE, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15)
-        ecr.blit(shadow_surface, shadow_rect)
+        reset_scale = 1.05 if reset_button["hover"] else 1.0
         
         # Dessiner les boutons de niveau
         for level in levels:
@@ -333,95 +312,130 @@ def selection_niveau():
                 else:
                     color = base_color
                 
+                # Calculer les dimensions et position du bouton avec l'échelle
+                scaled_width = level["rect"].width * level["scale"]
+                scaled_height = level["rect"].height * level["scale"]
+                center_x, center_y = level["rect"].center
+                
+                # Créer un rectangle mis à l'échelle
+                scaled_rect = Rect(
+                    center_x - scaled_width/2,
+                    center_y - scaled_height/2,
+                    scaled_width,
+                    scaled_height
+                )
+                
+                # Dessiner l'ombre (qui bouge avec le bouton)
+                shadow_offset = level["shadow_offset"] + (2 if level["hover"] and level["available"] else 0)
+                shadow_rect = Rect(
+                    scaled_rect.x + shadow_offset,
+                    scaled_rect.y + shadow_offset,
+                    scaled_rect.width,
+                    scaled_rect.height
+                )
+                shadow_surface = Surface((shadow_rect.width, shadow_rect.height), SRCALPHA)
+                draw_rect_alpha = lambda surface, color, rect, border_radius=0: draw.rect(surface, color, rect, border_radius=border_radius)
+                draw_rect_alpha(shadow_surface, OMBRE, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15)
+                ecr.blit(shadow_surface, shadow_rect)
+                
                 # Surface du bouton avec coins arrondis
-                button_surface = Surface((level["rect"].width, level["rect"].height), SRCALPHA)
-                draw.rect(button_surface, color, Rect(0, 0, level["rect"].width, level["rect"].height), border_radius=15)
+                button_surface = Surface((scaled_rect.width, scaled_rect.height), SRCALPHA)
+                draw.rect(button_surface, color, Rect(0, 0, scaled_rect.width, scaled_rect.height), border_radius=15)
                 
                 # Bordure (plus visible pour niveau nouvellement débloqué)
                 border_width = 3 if is_newly_unlocked else 2
-                draw.rect(button_surface, border_color, Rect(0, 0, level["rect"].width, level["rect"].height), border_width, border_radius=15)
+                draw.rect(button_surface, border_color, Rect(0, 0, scaled_rect.width, scaled_rect.height), border_width, border_radius=15)
                 
-                # Texte du niveau
-                text_surf = level_font.render(level["text"], True, text_color)
-                text_rect = text_surf.get_rect(center=(level["rect"].width//2, level["rect"].height//2))
+                # Texte du niveau (mis à l'échelle)
+                text_scale = 1.0 + (level["scale"] - 1.0) * 0.6  # Échelle légèrement atténuée pour le texte
+                font_size = int(38 * text_scale)  # Taille de base 38 avec mise à l'échelle
+                level_text_font = font.Font(None, font_size)
+                text_surf = level_text_font.render(level["text"], True, text_color)
+                text_rect = text_surf.get_rect(center=(scaled_rect.width//2, scaled_rect.height//2))
                 button_surface.blit(text_surf, text_rect)
                 
-                # Appliquer effet d'animation et de survol
-                if level["hover"] and level["available"]:
-                    hover_scale = 1.0 + sin(current_time / 200.0) * 0.03
-                    scaled_surface = transform.scale(
-                        button_surface, 
-                        (int(button_surface.get_width() * hover_scale), 
-                         int(button_surface.get_height() * hover_scale))
-                    )
-                    scaled_rect = scaled_surface.get_rect(center=level["rect"].center)
-                    ecr.blit(scaled_surface, scaled_rect)
-                    
-                    if not level["a_joue_son"]:
-                        son_survol.play()
-                        level["a_joue_son"] = True
-                elif is_newly_unlocked:
-                    # Animation plus prononcée pour niveau débloqué
-                    unlock_scale = 1.0 + sin(current_time / 150.0) * 0.08
-                    scaled_surface = transform.scale(
-                        button_surface, 
-                        (int(button_surface.get_width() * unlock_scale), 
-                         int(button_surface.get_height() * unlock_scale))
-                    )
-                    scaled_rect = scaled_surface.get_rect(center=level["rect"].center)
-                    ecr.blit(scaled_surface, scaled_rect)
-                    
-                    # Arrêter l'animation après sa durée
-                    if current_time - unlock_anim_time > unlock_anim_duration:
-                        newly_unlocked = None
-                else:
-                    ecr.blit(button_surface, level["rect"])
-                    level["a_joue_son"] = False
+                # Appliquer le bouton sur l'écran
+                ecr.blit(button_surface, scaled_rect)
                 
-                # Indicateur visuel pour le niveau disponible
+                # Indicateur visuel pour le niveau disponible - se déplace avec le bouton
                 if level["available"]:
                     indicator_radius = 6
-                    indicator_pos = (level["rect"].right - 15, level["rect"].top + 15)
+                    # Position relative par rapport au coin supérieur droit du bouton mis à l'échelle
+                    indicator_pos = (scaled_rect.right - 15, scaled_rect.top + 15)
                     indicator_color = INDICATEUR_NOUVEAU if is_newly_unlocked else INDICATEUR_DISPONIBLE
+                    
+                    # Effet de pulsation sur l'indicateur en survol
+                    if level["hover"] or is_newly_unlocked:
+                        pulse = 1.0 + sin(current_time / 200.0) * 0.2
+                        indicator_radius = int(6 * pulse)
+                    
                     draw.circle(ecr, indicator_color, indicator_pos, indicator_radius)
+                    
+                # Son de survol
+                if level["hover"] and level["available"] and not level["a_joue_son"]:
+                    son_survol.play()
+                    level["a_joue_son"] = True
+                elif not level["hover"]:
+                    level["a_joue_son"] = False
                     
             except Exception as e:
                 print(f"Erreur lors du dessin du niveau {level['id']}: {e}")
         
-        # Dessiner le bouton de réinitialisation
+        # Dessiner le bouton de réinitialisation avec effet de survol
         try:
             # Couleur selon l'état de survol
             color = BOUTON_REINIT_SURVOL if reset_button["hover"] else BOUTON_REINIT_FOND
             
+            # Calculer les dimensions et position avec échelle
+            scaled_width = reset_button["rect"].width * reset_scale
+            scaled_height = reset_button["rect"].height * reset_scale
+            center_x, center_y = reset_button["rect"].center
+            
+            # Créer un rectangle mis à l'échelle
+            scaled_reset_rect = Rect(
+                center_x - scaled_width/2,
+                center_y - scaled_height/2,
+                scaled_width,
+                scaled_height
+            )
+            
+            # Dessiner l'ombre du bouton de réinitialisation
+            shadow_offset = reset_button["shadow_offset"] + (2 if reset_button["hover"] else 0)
+            shadow_rect = Rect(
+                scaled_reset_rect.x + shadow_offset,
+                scaled_reset_rect.y + shadow_offset,
+                scaled_reset_rect.width,
+                scaled_reset_rect.height
+            )
+            shadow_surface = Surface((shadow_rect.width, shadow_rect.height), SRCALPHA)
+            draw.rect(shadow_surface, OMBRE, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15)
+            ecr.blit(shadow_surface, shadow_rect)
+            
             # Surface du bouton avec coins arrondis
-            button_surface = Surface((reset_button["rect"].width, reset_button["rect"].height), SRCALPHA)
-            draw.rect(button_surface, color, Rect(0, 0, reset_button["rect"].width, reset_button["rect"].height), border_radius=15)
+            button_surface = Surface((scaled_reset_rect.width, scaled_reset_rect.height), SRCALPHA)
+            draw.rect(button_surface, color, Rect(0, 0, scaled_reset_rect.width, scaled_reset_rect.height), border_radius=15)
             
             # Bordure
-            draw.rect(button_surface, BOUTON_REINIT_BORDURE, Rect(0, 0, reset_button["rect"].width, reset_button["rect"].height), 2, border_radius=15)
+            draw.rect(button_surface, BOUTON_REINIT_BORDURE, Rect(0, 0, scaled_reset_rect.width, scaled_reset_rect.height), 2, border_radius=15)
             
-            # Texte du bouton
-            text_surf = level_font.render(reset_button["text"], True, TEXTE)
-            text_rect = text_surf.get_rect(center=(reset_button["rect"].width//2, reset_button["rect"].height//2))
+            # Texte du bouton (mis à l'échelle)
+            text_scale = reset_scale
+            font_size = int(38 * text_scale)
+            reset_text_font = font.Font(None, font_size)
+            text_surf = reset_text_font.render(reset_button["text"], True, TEXTE)
+            text_rect = text_surf.get_rect(center=(scaled_reset_rect.width//2, scaled_reset_rect.height//2))
             button_surface.blit(text_surf, text_rect)
             
-            # Appliquer effet de survol
-            if reset_button["hover"]:
-                hover_scale = 1.0 + sin(current_time / 200.0) * 0.03
-                scaled_surface = transform.scale(
-                    button_surface, 
-                    (int(button_surface.get_width() * hover_scale), 
-                     int(button_surface.get_height() * hover_scale))
-                )
-                scaled_rect = scaled_surface.get_rect(center=reset_button["rect"].center)
-                ecr.blit(scaled_surface, scaled_rect)
-                
-                if not reset_button["a_joue_son"]:
-                    son_survol.play()
-                    reset_button["a_joue_son"] = True
-            else:
-                ecr.blit(button_surface, reset_button["rect"])
+            # Appliquer le bouton sur l'écran
+            ecr.blit(button_surface, scaled_reset_rect)
+            
+            # Son de survol
+            if reset_button["hover"] and not reset_button["a_joue_son"]:
+                son_survol.play()
+                reset_button["a_joue_son"] = True
+            elif not reset_button["hover"]:
                 reset_button["a_joue_son"] = False
+                
         except Exception as e:
             print(f"Erreur lors du dessin du bouton de réinitialisation: {e}")
             
@@ -452,7 +466,18 @@ def selection_niveau():
                             
                 # Vérifier si clic sur un niveau
                 for level in levels:
-                    if level["rect"].collidepoint(mouse_pos):
+                    # Utiliser le rectangle mis à l'échelle pour la détection de collision
+                    scaled_width = level["rect"].width * level["scale"]
+                    scaled_height = level["rect"].height * level["scale"]
+                    center_x, center_y = level["rect"].center
+                    scaled_rect = Rect(
+                        center_x - scaled_width/2,
+                        center_y - scaled_height/2,
+                        scaled_width,
+                        scaled_height
+                    )
+                    
+                    if scaled_rect.collidepoint(mouse_pos):
                         son_clicmenu.play()
                         if level["available"]:
                             # Lancer le niveau correspondant

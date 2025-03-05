@@ -1,4 +1,3 @@
-# Fichier: shared/components/color_config.py
 
 # Couleurs générales
 BORDURE = (50, 50, 50)
@@ -35,26 +34,26 @@ NIVEAU_BLOQUE_TEXTE = (220, 220, 220)
 NIVEAU_BLOQUE_FOND = (25, 25, 25)
 NIVEAU_BLOQUE_BORDURE = (50, 50, 50)
 
-INDICATEUR_DISPONIBLE = (100, 100, 100)  # Remplacé par gris moyen
-INDICATEUR_NOUVEAU = (150, 150, 150)  # Remplacé par gris clair
+INDICATEUR_DISPONIBLE = (59, 255, 48)  
+INDICATEUR_NOUVEAU = (255, 246, 150)  
 
 # Bouton de réinitialisation
-BOUTON_REINIT_FOND = (35, 35, 35)
-BOUTON_REINIT_SURVOL = (45, 45, 45)
-BOUTON_REINIT_BORDURE = (60, 60, 60)
+BOUTON_REINIT_FOND = (255, 26, 7, 170)
+BOUTON_REINIT_SURVOL = (255, 26, 7, 200)
+BOUTON_REINIT_BORDURE = (255, 26, 7, 100)
 
 # Boîte de dialogue de confirmation
 CONFIRMATION_FOND = (40, 40, 40)
 CONFIRMATION_BORDURE = (80, 80, 80)
-BOUTON_OUI_FOND = (35, 35, 35)
-BOUTON_OUI_SURVOL = (50, 50, 50)
-BOUTON_NON_FOND = (30, 30, 30)
-BOUTON_NON_SURVOL = (45, 45, 45)
+BOUTON_OUI_FOND = (50, 138, 90)
+BOUTON_OUI_SURVOL = (50, 138, 85, 100)
+BOUTON_NON_FOND = (255, 26, 7)
+BOUTON_NON_SURVOL = (255, 26, 7, 100)
 
 # Interface de jeu
 JEU_FOND = (50, 50, 50)  # Fond de secours pour le jeu
 JEU_BOUTON = (150, 150, 150)  # Boutons dans le jeu
-JEU_BOUTON_SURVOL = (255, 255, 255)  # Boutons au survol
+JEU_BOUTON_SURVOL = (40, 40, 40, 240)  # Boutons au survol
 
 # Paramètres
 PARAM_PANEL_BG = (30, 30, 30)  # Fond du panneau
@@ -64,20 +63,21 @@ PARAM_BUTTON_HOVER = (45, 45, 45)  # Survol des boutons
 PARAM_TEXT = (255, 255, 255)  # Texte
 PARAM_TEXT_DIM = (200, 200, 200)  # Texte moins important
 
-# Barre de volume - remplacé les bleus par des gris
-VOLUME_BAR_BG = (35, 35, 35)  # Fond de la barre
+# Barre de volume
+VOLUME_BAR_BG = (35, 35, 35)  # Fond original pour les éléments d'interface
+BARRE_FOND_BLANC = (255, 255, 255)  # Fond blanc spécifique pour les barres
 VOLUME_BAR_FILL = (60, 60, 60)  # Remplissage de la barre
 VOLUME_BAR_BORDER = (80, 80, 80)  # Bordure de la barre
 VOLUME_HANDLE = (120, 120, 120)  # Poignée de la barre
 
-# Menu en jeu - remplacé les bleus par des gris
+# Menu en jeu 
 MENU_JEU_PANEL = (25, 25, 25)  # Panneau de menu en jeu
 MENU_JEU_BORDER = (50, 50, 50)  # Bordure du menu
 MENU_JEU_BUTTON = (35, 35, 35)  # Boutons de menu
 MENU_JEU_BUTTON_HOVER = (45, 45, 45)  # Survol des boutons
 MENU_JEU_TEXT = (220, 220, 220)  # Texte
 
-# Encyclopédie - remplacé les bleus par des gris
+# Encyclopédie 
 ENCYC_PANEL_BG = (40, 40, 40, 240)  # Fond du panneau
 ENCYC_PANEL_BORDER = (70, 70, 70)  # Bordure du panneau
 ENCYC_GRID_BG = (45, 45, 45)  # Fond de la grille
