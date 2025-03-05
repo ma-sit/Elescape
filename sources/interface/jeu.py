@@ -53,8 +53,8 @@ def wrap_text(text, max_chars=40):
         lines.append(current_line)
     return "\n".join(lines)
 
-# Fonction pour charger les frames d'animation du personnage depuis un dossier.
-def charger_frames_perso_from_folder(folder_path, directions=("down", "left", "right", "up"), nb_frames=4):
+# Charger les frames du personnage depuis un dossier en appliquant un facteur d'échelle
+def charger_frames_perso_from_folder(folder_path, directions=("down", "left", "right", "up"), nb_frames=4, scale=1.0):
     frames = {}
     for direction in directions:
         frames[direction] = []
@@ -63,6 +63,10 @@ def charger_frames_perso_from_folder(folder_path, directions=("down", "left", "r
             full_path = os.path.join(folder_path, file_name)
             try:
                 frame = image.load(full_path).convert_alpha()
+                if scale != 1.0:
+                    new_width = int(frame.get_width() * scale)
+                    new_height = int(frame.get_height() * scale)
+                    frame = transform.scale(frame, (new_width, new_height))
                 frames[direction].append(frame)
             except Exception as e:
                 print(f"Erreur lors du chargement de {full_path}: {e}")
@@ -105,21 +109,31 @@ except Exception as e:
     print(f"Erreur lors du chargement de l'encyclopédie: {e}")
     elements = {0: {"Nom": "Inconnu", "Creations": [], "DR": 0, "Image": "", "Type": "classique", "Mission": ""}}
 
+# Fonction qui renvoie la liste des identifiants communs (sans doublon) entre les "Créations" des deux éléments.
+def fusionner_ids(element1, element2):
+    common = []
+    if element1 not in elements or element2 not in elements:
+        return common
+    # Ne fusionner que si les noms diffèrent
+    if elements[element1]["Nom"] != elements[element2]["Nom"]:
+        for cid in elements[element1]["Creations"]:
+            if cid in elements[element2]["Creations"] and cid not in common:
+                common.append(cid)
+    return common
+
+# Pour compatibilité, fusionner() retourne le premier id commun s'il existe
+def fusionner(element1, element2):
+    common = fusionner_ids(element1, element2)
+    if common:
+        return common[0]
+    return None
+
 def get_next_image(c, w):
     c = (c + 1) % len(w)
     return w[c], c
 
-def fusionner(element1, element2):
-    if element1 not in elements or element2 not in elements:
-        return None
-    if elements[element1]["Nom"] != elements[element2]["Nom"]:
-        for element in elements[element1]["Creations"]:
-            if element in elements[element2]["Creations"]:
-                return int(element)
-    return None
-
-# Charger les frames d'un animal depuis un dossier
-def charger_frames_animal_from_folder(folder_path, nb_frames=4, directions=("down", "left", "right", "up"), extras=("sleep", "eat")):
+# Charger les frames d'un animal depuis un dossier en appliquant un facteur d'échelle
+def charger_frames_animal_from_folder(folder_path, nb_frames=4, directions=("down", "left", "right", "up"), extras=("sleep", "eat"), scale=1.0):
     frames = {}
     for direction in directions:
         frames[direction] = []
@@ -128,6 +142,10 @@ def charger_frames_animal_from_folder(folder_path, nb_frames=4, directions=("dow
             full_path = os.path.join(folder_path, file_name)
             try:
                 frame = image.load(full_path).convert_alpha()
+                if scale != 1.0:
+                    new_width = int(frame.get_width() * scale)
+                    new_height = int(frame.get_height() * scale)
+                    frame = transform.scale(frame, (new_width, new_height))
                 frames[direction].append(frame)
             except Exception as e:
                 print(f"Erreur lors du chargement de {full_path}: {e}")
@@ -138,12 +156,17 @@ def charger_frames_animal_from_folder(folder_path, nb_frames=4, directions=("dow
             full_path = os.path.join(folder_path, file_name)
             try:
                 frame = image.load(full_path).convert_alpha()
+                if scale != 1.0:
+                    new_width = int(frame.get_width() * scale)
+                    new_height = int(frame.get_height() * scale)
+                    frame = transform.scale(frame, (new_width, new_height))
                 frames[extra].append(frame)
             except Exception as e:
                 print(f"Erreur lors du chargement de {full_path}: {e}")
     return frames
 
-def afficher_elements(ecr, elements, elementsbase):
+# Afficher les éléments en appliquant une échelle aux images
+def afficher_elements(ecr, elements, elementsbase, scale=1.0):
     objets = []
     for elem_id, instances in elementsbase.items():
         if elem_id == 0:
@@ -155,7 +178,7 @@ def afficher_elements(ecr, elements, elementsbase):
                     print(f"Erreur: Chemin d'image vide pour l'élément {elem_id}")
                     continue
                 if isinstance(img_path, str):
-                    img_paths = [path.strip().strip('"') for path in img_path.split(',')]
+                    img_paths = [p.strip().strip('"') for p in img_path.split(',')]
                 else:
                     img_paths = [img_path]
                 if not img_paths:
@@ -165,7 +188,7 @@ def afficher_elements(ecr, elements, elementsbase):
                 t = elements[elem_id].get("Type", "").lower()
                 if t == "animal":
                     try:
-                        frames = charger_frames_animal_from_folder(img_paths[0])
+                        frames = charger_frames_animal_from_folder(img_paths[0], scale=scale)
                         obj = {
                             "id": elem_id,
                             "is_animal": True,
@@ -189,6 +212,9 @@ def afficher_elements(ecr, elements, elementsbase):
                     try:
                         img_choice = random.choice(img_paths)
                         img = image.load(img_choice).convert_alpha()
+                        # Redimensionnement de l'image selon le facteur scale
+                        orig_w, orig_h = img.get_size()
+                        img = transform.scale(img, (int(orig_w * scale), int(orig_h * scale)))
                         obj = {
                             "id": elem_id,
                             "is_objectif": True,
@@ -207,6 +233,8 @@ def afficher_elements(ecr, elements, elementsbase):
                     try:
                         img_choice = random.choice(img_paths)
                         img = image.load(img_choice).convert_alpha()
+                        orig_w, orig_h = img.get_size()
+                        img = transform.scale(img, (int(orig_w * scale), int(orig_h * scale)))
                         obj = {
                             "id": elem_id,
                             "image": img,
@@ -219,6 +247,7 @@ def afficher_elements(ecr, elements, elementsbase):
                         objets.append(obj)
                     except Exception as e:
                         print(f"Erreur lors du chargement de l'image {img_path} pour l'élément {elem_id}: {e}")
+    # On trie par rect.bottom pour l'ordre d'affichage
     objets.sort(key=lambda obj: obj["rect"].bottom)
     return objets
 
@@ -258,6 +287,15 @@ def page_jeu(niveau):
     niveau_complete = False
     elfinal = None
 
+    # Définir la résolution de référence et calculer les facteurs d'échelle
+    reference_width, reference_height = 1920, 1080
+    # rec est supposé définir la taille de l'écran (par exemple via rec.right et rec.bottom)
+    current_width, current_height = rec.right, rec.bottom
+    scale_x = current_width / reference_width
+    scale_y = current_height / reference_height
+    # Pour les images, on utilise un facteur commun pour préserver les proportions
+    scale_common = min(scale_x, scale_y)
+
     try:
         with open(f'data/csv/niveau{niveau}.csv', newline='', encoding='utf-8') as csvfile:
             spamreader = csv.DictReader(csvfile, delimiter=';')
@@ -281,7 +319,10 @@ def page_jeu(niveau):
                 if elem_id and emplacement:
                     try:
                         elem_id = int(elem_id)
-                        x, y = map(int, emplacement.split(','))
+                        # On attend ici des coordonnées normalisées entre 0 et 1
+                        x_norm, y_norm = map(float, emplacement.split(','))
+                        x = int(x_norm * current_width)
+                        y = int(y_norm * current_height)
                         if elem_id not in elementsbase:
                             elementsbase[elem_id] = []
                         elementsbase[elem_id].append({"x": x, "y": y})
@@ -302,8 +343,9 @@ def page_jeu(niveau):
                 elementsbase[elem_id] = []
             num_instances = niveau * 3 + 5
             for i in range(num_instances):
-                x = random.randint(0, lrg - 100)
-                y = random.randint(0, htr - 100)
+                # Ici on utilise des positions normalisées aléatoires
+                x = int(random.random() * current_width)
+                y = int(random.random() * current_height)
                 elementsbase[elem_id].append({"x": x, "y": y})
     except Exception as e:
         print(f"Erreur lors du chargement du niveau {niveau}: {e}")
@@ -317,9 +359,9 @@ def page_jeu(niveau):
     element_decouvert = [1, 3]
     element_discovered = False
 
-    # Charger les frames du personnage (perso) – 4 frames par direction
+    # Charger les frames du personnage (perso) – 4 frames par direction avec échelle
     try:
-        perso_frames = charger_frames_perso_from_folder("data/images/perso")
+        perso_frames = charger_frames_perso_from_folder("data/images/perso", scale=scale_common)
         perso_current_direction = "down"
         perso_anim_index = 0
         perso_last_anim_time = 0
@@ -335,19 +377,19 @@ def page_jeu(niveau):
         perso_anim_delay = 150
 
     # Position initiale du perso (centre)
-    x, y = lrg // 2, htr // 2
-    speed = 7
+    x, y = current_width // 2, current_height // 2
+    speed = 5
     target_x, target_y = x, y
     moving = False
 
     try:
-        objets = afficher_elements(ecr, elements, elementsbase)
+        objets = afficher_elements(ecr, elements, elementsbase, scale=scale_common)
     except Exception as e:
         print(f"Erreur lors de l'affichage des éléments: {e}")
         objets = []
         
     perso_rect = perso_frames["down"][0].get_rect(center=(x, y))
-    fnd = transform.scale(fnd, (rec.right, rec.bottom))
+    fnd = transform.scale(fnd, (current_width, current_height))
     target_obj = None
     offset_x, offset_y = 0, 0
 
@@ -362,7 +404,7 @@ def page_jeu(niveau):
     # Titre du niveau
     niveau_titre_font = font.Font(None, 40)
     niveau_titre = niveau_titre_font.render(f"Niveau {niveau}", True, (255,255,255))
-    niveau_titre_rect = niveau_titre.get_rect(midtop=(lrg//2, 10))
+    niveau_titre_rect = niveau_titre.get_rect(midtop=(current_width//2, 10))
 
     while act:
         try:
@@ -394,11 +436,12 @@ def page_jeu(niveau):
                     if element_discovered:
                         element_discovered = False
                     elif evt.button == 1:
+                        # Utilisation de reversed(objets) pour sélectionner l'objet affiché par-dessus
                         if btn_ency["rect"].collidepoint(evt.pos):
-                            son_clicmenu.play()
+                            son_survol.play()
                             Page(ecr, elements, element_decouvert)
                         else:
-                            for obj in objets:
+                            for obj in reversed(objets):
                                 if obj["rect"].collidepoint(evt.pos):
                                     selected_obj = obj
                                     if obj.get("is_animal", False):
@@ -420,7 +463,7 @@ def page_jeu(niveau):
                     elif evt.button == touches.get('Déplacement', BUTTON_RIGHT):
                         target_x, target_y = mouse.get_pos()
                         moving = True
-                        for obj in objets:
+                        for obj in reversed(objets):
                             if obj["rect"].collidepoint(evt.pos):
                                 obj["enlarge_start"] = time.get_ticks()
                                 target_obj = obj
@@ -457,44 +500,43 @@ def page_jeu(niveau):
                             closest_obj = None
                             for obj in objets:
                                 if obj != selected_obj and obj["rect"].colliderect(selected_obj["rect"]):
-                                    if fusionner(obj["id"], selected_obj["id"]) is not None:
+                                    common_ids = fusionner_ids(obj["id"], selected_obj["id"])
+                                    if common_ids:
                                         closest_obj = obj
                                         break
                             if closest_obj:
-                                new_id = fusionner(closest_obj["id"], selected_obj["id"])
-                                if new_id and new_id not in element_decouvert:
-                                    element_discovered = new_id
-                                    element_decouvert.append(new_id)
-                                if new_id:
-                                    try:
-                                        img_paths = elements[new_id]["Image"].split(',')
-                                        if img_paths:
-                                            img_path = random.choice([path.strip().strip('"') for path in img_paths])
-                                            img = image.load(img_path)
-                                            # Création de deux objets issus de la fusion :
-                                            # Le premier remplace l'élément non déplacé (closest_obj)
-                                            new_obj1 = {
-                                                "id": new_id,
-                                                "image": img,
-                                                "original_image": img.copy(),
-                                                "rect": img.get_rect(center=closest_obj["rect"].center)
-                                            }
-                                            # Le deuxième se place à côté (décalé horizontalement)
-                                            offset = new_obj1["rect"].width // 2 + 10
-                                            new_center = (closest_obj["rect"].centerx + offset, closest_obj["rect"].centery)
-                                            new_obj2 = {
-                                                "id": new_id,
-                                                "image": img,
-                                                "original_image": img.copy(),
-                                                "rect": img.get_rect(center=new_center)
-                                            }
-                                            objets.append(new_obj1)
-                                            objets.append(new_obj2)
-                                            if selected_obj in objets:
-                                                objets.remove(selected_obj)
-                                       
-                                    except Exception as e:
-                                        print(f"Erreur lors de la fusion d'éléments: {e}")
+                                common_ids = fusionner_ids(closest_obj["id"], selected_obj["id"])
+                                if common_ids:
+                                    center = closest_obj["rect"].center
+                                    for cid in common_ids:
+                                        if cid not in element_decouvert:
+                                            element_discovered = cid
+                                            element_decouvert.append(cid)
+                                        try:
+                                            img_paths = elements[cid]["Image"].split(',')
+                                            if img_paths:
+                                                img_path = random.choice([p.strip().strip('"') for p in img_paths])
+                                                # Charger et mettre à l'échelle l'image du nouvel objet
+                                                img = image.load(img_path).convert_alpha()
+                                                orig_w, orig_h = img.get_size()
+                                                img = transform.scale(img, (int(orig_w * scale_common), int(orig_h * scale_common)))
+                                                new_obj = {
+                                                    "id": cid,
+                                                    "image": img,
+                                                    "original_image": img.copy(),
+                                                    "rect": img.get_rect(center=center)
+                                                }
+                                                # Appliquer un décalage pour le deuxième objet
+                                                offset = new_obj["rect"].width // 2 + 10
+                                                center = (closest_obj["rect"].centerx + offset, closest_obj["rect"].centery)
+                                                objets.append(new_obj)
+                                                # Retirer les éléments fusionnés selon DR
+                                                if elements[selected_obj["id"]]["DR"] == 0 and selected_obj in objets:
+                                                    objets.remove(selected_obj)
+                                                if elements[closest_obj["id"]]["DR"] == 0 and closest_obj in objets:
+                                                    objets.remove(closest_obj)
+                                        except Exception as e:
+                                            print(f"Erreur lors de la fusion d'éléments: {e}")
                             selected_obj["rect"].center = (evt.pos[0] - offset_x, evt.pos[1] - offset_y)
                             selected_obj["x"], selected_obj["y"] = selected_obj["rect"].center
                             objets.sort(key=lambda obj: obj["rect"].bottom)
@@ -527,37 +569,42 @@ def page_jeu(niveau):
                 if current_time - perso_last_anim_time > perso_anim_delay:
                     perso_anim_index = (perso_anim_index + 1) % len(perso_frames[perso_current_direction])
                     perso_last_anim_time = current_time
-                # Au lieu de dessiner le perso séparément, on l'ajoute dans la liste pour le tri
-                perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index], "rect": perso_rect}
+                perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index], "rect": perso_rect.copy()}
             else:
                 perso_rect.center = (x, y)
-                perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][0], "rect": perso_rect}
-
+                perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][0], "rect": perso_rect.copy()}
+            
             # Fusion automatique entre le perso et un élément cible
             if target_obj and perso_rect.colliderect(target_obj["rect"]) and not moving:
-                new_id = fusionner(0, target_obj["id"])
-                if new_id and new_id not in element_decouvert:
-                    element_discovered = new_id
-                    element_decouvert.append(new_id)
-                if new_id:
-                    try:
-                        img_paths = elements[new_id]["Image"].split(',')
-                        if img_paths:
-                            img_path = random.choice([path.strip().strip('"') for path in img_paths])
-                            img = image.load(img_path)
-                            if elements[target_obj["id"]]["DR"] == 0:
-                                nouvel_objet = {
-                                    "id": new_id,
+                common_ids = fusionner_ids(0, target_obj["id"])
+                if common_ids:
+                    center = target_obj["rect"].center
+                    for cid in common_ids:
+                        if cid not in element_decouvert:
+                            element_discovered = cid
+                            element_decouvert.append(cid)
+                        try:
+                            img_paths = elements[cid]["Image"].split(',')
+                            if img_paths:
+                                img_path = random.choice([p.strip().strip('"') for p in img_paths])
+                                # Charger et mettre à l'échelle l'image
+                                img = image.load(img_path).convert_alpha()
+                                orig_w, orig_h = img.get_size()
+                                img = transform.scale(img, (int(orig_w * scale_common), int(orig_h * scale_common)))
+                                new_obj = {
+                                    "id": cid,
                                     "image": img,
                                     "original_image": img.copy(),
-                                    "rect": img.get_rect(center=target_obj["rect"].center)
+                                    "rect": img.get_rect(center=center)
                                 }
-                                objets.append(nouvel_objet)
-                                objets.remove(target_obj)
-                            else:
-                                objets.append(creer_objet(new_id, img, target_obj, objets))
-                    except Exception as e:
-                        print(f"Erreur lors de la fusion avec le personnage: {e}")
+                                offset = new_obj["rect"].width // 2 + 10
+                                center = (target_obj["rect"].centerx + offset, target_obj["rect"].centery)
+                                objets.append(new_obj)
+                                if elements[target_obj["id"]]["DR"] == 0:
+                                    if target_obj in objets:
+                                        objets.remove(target_obj)
+                        except Exception as e:
+                            print(f"Erreur lors de la fusion avec le personnage: {e}")
                 target_obj = None
 
             # Mise à jour du mouvement et de l'animation des animaux
@@ -576,8 +623,8 @@ def page_jeu(niveau):
                                     offset = random.randint(120, 200)
                                     tg_x = cx + offset * cos(angle)
                                     tg_y = cy + offset * sin(angle)
-                                    tg_x = max(0, min(tg_x, lrg))
-                                    tg_y = max(0, min(tg_y, htr))
+                                    tg_x = max(0, min(tg_x, current_width))
+                                    tg_y = max(0, min(tg_y, current_height))
                                     obj["animal_target_pos"] = (tg_x, tg_y)
                                     dx = tg_x - cx
                                     dy = tg_y - cy
@@ -608,8 +655,8 @@ def page_jeu(niveau):
                                 else:
                                     new_cx = cx + speed_animal * dx / dist
                                     new_cy = cy + speed_animal * dy / dist
-                                    new_cx = max(0, min(new_cx, lrg))
-                                    new_cy = max(0, min(new_cy, htr))
+                                    new_cx = max(0, min(new_cx, current_width))
+                                    new_cy = max(0, min(new_cy, current_height))
                                     obj["rect"].center = (new_cx, new_cy)
                                 anim_delay = 200
                                 if current_time - obj.get("last_anim_time", 0) > anim_delay:
@@ -650,8 +697,8 @@ def page_jeu(niveau):
                                 obj["image"] = obj["frames"][obj["current_direction"]][0]
                     # Si l'animal est sélectionné, son animation reste gelée.
             
-            # Pour le rendu final, combiner le perso avec les autres objets et trier selon rect.bottom
-            perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index] if moving else perso_frames[perso_current_direction][0], "rect": perso_rect}
+            # Pour le rendu final, combiner le perso avec les autres objets et trier par rect.bottom
+            perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index] if moving else perso_frames[perso_current_direction][0], "rect": perso_rect.copy()}
             all_objs = objets + [perso_obj]
             all_objs.sort(key=lambda o: o["rect"].bottom)
             for o in all_objs:
@@ -670,19 +717,19 @@ def page_jeu(niveau):
                         exclam_y = bubble_y + (small_bubble.get_height() - exclam_text.get_height()) // 2
                         ecr.blit(exclam_text, (exclam_x, exclam_y))
                     if perso_rect.colliderect(obj["rect"]):
-                        large_bubble = transform.scale(bubble_img, (250, 200))
-                        bubble_x_final = obj["rect"].right - large_bubble.get_width() + 250
+                        large_bubble = transform.scale(bubble_img, (200, 200))
+                        bubble_x_final = obj["rect"].right - large_bubble.get_width() + 200
                         bubble_y_final = obj["rect"].top - 150
                         ecr.blit(large_bubble, (bubble_x_final, bubble_y_final))
                         mission_text = elements[obj["id"]].get("Mission", "Objectif non défini")
-                        mission_text = wrap_text(mission_text, max_chars=12)
+                        mission_text = wrap_text(mission_text, max_chars=10)
                         lines = mission_text.split("\n")
                         y_offset = 0
                         for line in lines:
                             text_surface = fnt.render(line, True, (0, 0, 0))
                             ecr.blit(text_surface, (bubble_x_final + (large_bubble.get_width() - text_surface.get_width()) // 2,
                                                      bubble_y_final + y_offset + 35))
-                            y_offset += text_surface.get_height() + 20
+                            y_offset += text_surface.get_height() + 2
                         elements[obj["id"]]["mission_seen"] = True
 
             hover_ency = bouton(ecr, (150, 150, 150), btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
