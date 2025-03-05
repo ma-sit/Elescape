@@ -1,5 +1,6 @@
 from pygame import *
 from shared.components.config import *
+from shared.components.color_config import *
 import sys
 import os
 
@@ -73,8 +74,8 @@ def Page(ecr, all_elements=None, discovered_elements=None):
     
     # Icône de fermeture (X)
     close_icon = Surface((25, 25), SRCALPHA)
-    draw.line(close_icon, (220, 220, 220), (5, 5), (20, 20), 2)
-    draw.line(close_icon, (220, 220, 220), (5, 20), (20, 5), 2)
+    draw.line(close_icon, GRIS_CLAIR, (5, 5), (20, 20), 2)
+    draw.line(close_icon, GRIS_CLAIR, (5, 20), (20, 5), 2)
     icons["close"] = close_icon
     
     # Cache pour les images des éléments
@@ -108,33 +109,6 @@ def Page(ecr, all_elements=None, discovered_elements=None):
     
     # Horloge pour le framerate
     clock = time.Clock()
-    
-    # Couleurs pour l'interface - palette de gris
-    color_scheme = {
-        "text": (255, 255, 255),
-        "text_dim": (200, 200, 220),
-        "panel_bg": (40, 40, 50, 240),       # Gris foncé pour le fond
-        "panel_dark": (30, 30, 35),          # Gris très foncé
-        "panel_light": (60, 60, 70),         # Gris moyen
-        "grid_bg": (45, 45, 55),             # Gris pour le fond de la grille
-        "border_dark": (70, 70, 80),         # Gris pour les bordures foncées
-        "border_light": (100, 100, 120),     # Gris clair pour les bordures
-        "hover": (55, 55, 75),               # Gris avec nuance bleue pour survol
-        "selected": (60, 60, 85),            # Gris avec nuance bleue pour sélection
-        "highlight": (120, 120, 170),        # Gris-violet clair pour surbrillance
-        "positive": (120, 200, 120),         # Vert grisé pour éléments positifs
-        "warning": (200, 190, 100),          # Jaune grisé pour avertissements
-        "negative": (200, 120, 120),         # Rouge grisé pour éléments négatifs
-        "scrollbar_bg": (50, 50, 60),        # Gris pour fond scrollbar
-        "scrollbar_fg": (80, 80, 100),       # Gris pour poignée scrollbar
-        "button_bg": (55, 55, 70),           # Gris pour fond boutons
-        "button_hover": (70, 70, 90),        # Gris pour survol boutons
-        "info_bg": (50, 50, 65),             # Gris pour panneau d'info
-        "category_1": (80, 110, 140),        # Gris-bleu pour catégorie 1
-        "category_2": (80, 130, 80),         # Gris-vert pour catégorie 2
-        "category_3": (130, 110, 80),        # Gris-marron pour catégorie 3
-        "category_4": (130, 80, 80)          # Gris-rouge pour catégorie 4
-    }
     
     # Assignation des catégories aux éléments
     element_categories = {}
@@ -241,13 +215,13 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         except:
             # En cas d'erreur, utiliser une approche plus simple
             dark_overlay = Surface((lrg, htr))
-            dark_overlay.fill((0, 0, 0))
+            dark_overlay.fill(NOIR)
             dark_overlay.set_alpha(120)
             ecr.blit(dark_overlay, (0, 0))
         
         # Dessin du panneau latéral avec coins très arrondis
         panel_surface = Surface((menu_largeur, menu_hauteur), SRCALPHA)
-        panel_surface.fill(color_scheme["panel_bg"])
+        panel_surface.fill(ENCYC_PANEL_BG)
         
         # Appliquer un masque avec des coins très arrondis au panneau
         try:
@@ -268,7 +242,7 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         
         # Dessiner une bordure avec des coins arrondis
         try:
-            draw.rect(ecr, color_scheme["border_light"], 
+            draw.rect(ecr, ENCYC_PANEL_BORDER, 
                     Rect(menu_x, menu_y, menu_largeur, menu_hauteur), 
                     2, border_radius=20)
         except:
@@ -276,7 +250,7 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         
         # Dessin du titre
         try:
-            titre = title_font.render("Encyclopédie", True, color_scheme["text"])
+            titre = title_font.render("Encyclopédie", True, TEXTE)
             titre_rect = titre.get_rect(center=(menu_x + menu_largeur//2, menu_y + 35))
             ecr.blit(titre, titre_rect)
         except:
@@ -285,7 +259,7 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         # Afficher le compteur d'éléments découverts
         try:
             counter_text = f"{count_discovered}/{count_total} éléments découverts ({int(completion_percentage)}%)"
-            counter_surface = stats_font.render(counter_text, True, color_scheme["text_dim"])
+            counter_surface = stats_font.render(counter_text, True, TEXTE_INTERACTIF)
             counter_rect = counter_surface.get_rect(center=(menu_x + menu_largeur//2, menu_y + 65))
             ecr.blit(counter_surface, counter_rect)
         except:
@@ -298,10 +272,10 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                         grid_height)
         
         # Rectangle principal avec coins plus arrondis
-        draw.rect(ecr, color_scheme["grid_bg"], grid_area, border_radius=15)
+        draw.rect(ecr, ENCYC_GRID_BG, grid_area, border_radius=15)
         
         # Bordure plus fine et élégante
-        draw.rect(ecr, color_scheme["border_dark"], grid_area, 1, border_radius=15)
+        draw.rect(ecr, ENCYC_PANEL_BORDER, grid_area, 1, border_radius=15)
         
         # Calculer le nombre total de lignes nécessaires
         total_rows = (len(all_elements) + grid_cols - 1) // grid_cols
@@ -369,28 +343,35 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                 
                 # Couleur de fond en fonction de l'état
                 if is_selected:
-                    bg_color = color_scheme["selected"]
-                    border_color = color_scheme["highlight"]
+                    bg_color = ENCYC_ITEM_SELECTED
+                    border_color = INDICATEUR_NOUVEAU
                 elif is_hover:
-                    bg_color = color_scheme["hover"]
-                    border_color = color_scheme["border_light"]
+                    bg_color = ENCYC_ITEM_HOVER
+                    border_color = PARAM_PANEL_BORDER
                 else:
-                    bg_color = color_scheme["grid_bg"]
-                    border_color = color_scheme["border_dark"]
+                    bg_color = ENCYC_GRID_BG
+                    border_color = ENCYC_PANEL_BORDER
                 
                 # Appliquer une couleur subtile selon la catégorie
                 try:
                     category = get_element_category(elem_id)
-                    if category > 0 and category < 5:  # Limiter à 4 catégories
-                        # Mélanger la couleur de catégorie avec la couleur de fond
-                        cat_color_key = f"category_{category}"
-                        if cat_color_key in color_scheme:
-                            cat_color = color_scheme[cat_color_key]
-                            bg_color = (
-                                int(bg_color[0] * 0.8 + cat_color[0] * 0.2),
-                                int(bg_color[1] * 0.8 + cat_color[1] * 0.2),
-                                int(bg_color[2] * 0.8 + cat_color[2] * 0.2)
-                            )
+                    if category == 1:
+                        cat_color = ENCYC_CATEGORY_BASE
+                    elif category == 2:
+                        cat_color = ENCYC_CATEGORY_PLANT
+                    elif category == 3:
+                        cat_color = ENCYC_CATEGORY_ANIMAL
+                    elif category == 4:
+                        cat_color = ENCYC_CATEGORY_TOOL
+                    else:
+                        cat_color = bg_color
+                        
+                    # Mélanger la couleur de catégorie avec la couleur de fond
+                    bg_color = (
+                        int(bg_color[0] * 0.8 + cat_color[0] * 0.2),
+                        int(bg_color[1] * 0.8 + cat_color[1] * 0.2),
+                        int(bg_color[2] * 0.8 + cat_color[2] * 0.2)
+                    )
                 except:
                     pass
                 
@@ -441,7 +422,7 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                         if len(name) > 12:
                             name = name[:10] + "..."
                             
-                        name_text = element_font.render(name, True, color_scheme["text"])
+                        name_text = element_font.render(name, True, TEXTE)
                         name_rect = name_text.get_rect(midbottom=(elem_rect.centerx, elem_rect.bottom - 5))
                         ecr.blit(name_text, name_rect)
                         
@@ -449,10 +430,10 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                         # Afficher un placeholder simple et propre en cas d'erreur
                         gray_rect = Rect(elem_rect.x + 10, elem_rect.y + 10, 
                                        elem_rect.width - 20, elem_rect.height - 25)
-                        draw.rect(ecr, (70, 70, 80), gray_rect, border_radius=10)
+                        draw.rect(ecr, GRIS_FONCE, gray_rect, border_radius=10)
                         
                         name = elem_data.get("Nom", "???")
-                        name_text = element_font.render(name, True, color_scheme["text"])
+                        name_text = element_font.render(name, True, TEXTE)
                         name_rect = name_text.get_rect(midbottom=(elem_rect.centerx, elem_rect.bottom - 5))
                         ecr.blit(name_text, name_rect)
                 
@@ -461,16 +442,16 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                     # Rectangle gris foncé avec coins arrondis
                     gray_rect = Rect(elem_rect.x + 10, elem_rect.y + 10, 
                                     elem_rect.width - 20, elem_rect.height - 20)
-                    draw.rect(ecr, (50, 50, 60), gray_rect, border_radius=10)
+                    draw.rect(ecr, FOND, gray_rect, border_radius=10)
                     
                     # Texte "???" 
-                    unknown_text = element_font.render("???", True, (170, 170, 190))
+                    unknown_text = element_font.render("???", True, GRIS_CLAIR)
                     unknown_rect = unknown_text.get_rect(midbottom=(elem_rect.centerx, elem_rect.bottom - 5))
                     ecr.blit(unknown_text, unknown_rect)
         
         # Si la liste est vide
         if not all_elements:
-            no_result_text = description_font.render("Aucun élément trouvé", True, color_scheme["text_dim"])
+            no_result_text = description_font.render("Aucun élément trouvé", True, TEXTE_INTERACTIF)
             no_result_rect = no_result_text.get_rect(center=(grid_area.centerx, grid_area.centery))
             ecr.blit(no_result_text, no_result_rect)
         
@@ -481,18 +462,19 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         if total_rows > max_visible_rows:
             # Fond de la scrollbar
             scrollbar_bg = Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height)
-            draw.rect(ecr, color_scheme["scrollbar_bg"], scrollbar_bg, border_radius=4)
+            draw.rect(ecr, VOLUME_BAR_BG, scrollbar_bg, border_radius=4)
             
             # Poignée (thumb) de la scrollbar
             thumb_height = max(30, scrollbar_height * (max_visible_rows / total_rows))
             thumb_position = scrollbar_y + (scroll_offset / max_scroll) * (scrollbar_height - thumb_height)
             
             thumb_rect = Rect(scrollbar_x, thumb_position, scrollbar_width, thumb_height)
-            draw.rect(ecr, color_scheme["scrollbar_fg"], thumb_rect, border_radius=4)
+            draw.rect(ecr, VOLUME_HANDLE, thumb_rect, border_radius=4)
+            draw.rect(ecr, VOLUME_BAR_BORDER, thumb_rect, 1, border_radius=4)
             
             # Surbrillance si la souris est sur la scrollbar
             if thumb_rect.collidepoint(mouse_pos) or scrollbar_active:
-                draw.rect(ecr, color_scheme["highlight"], thumb_rect, 2, border_radius=4)
+                draw.rect(ecr, INDICATEUR_NOUVEAU, thumb_rect, 2, border_radius=4)
         
         # ===== SECTION D'INFORMATION DÉTAILLÉE - EN DESSOUS DU RECTANGLE PRINCIPAL =====
         if selected_element is not None and int(selected_element) in discovered_elements:
@@ -508,10 +490,10 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                 )
                 
                 # Rectangle principal avec coins plus arrondis
-                draw.rect(ecr, color_scheme["info_bg"], info_area, border_radius=15)
+                draw.rect(ecr, ENCYC_GRID_BG, info_area, border_radius=15)
                 
                 # Bordure plus subtile
-                draw.rect(ecr, color_scheme["border_light"], info_area, 1, border_radius=15)
+                draw.rect(ecr, ENCYC_PANEL_BORDER, info_area, 1, border_radius=15)
                 
                 # Afficher les détails de l'élément sélectionné
                 elem_data = all_elements[selected_element]
@@ -519,7 +501,7 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                 # Titre (nom de l'élément) au centre en haut
                 name_text = elem_data["Nom"]
                 name_font = font.Font(None, 36)
-                name_surface = name_font.render(name_text, True, color_scheme["text"])
+                name_surface = name_font.render(name_text, True, TEXTE)
                 name_rect = name_surface.get_rect(midtop=(info_area.centerx, info_area.y + 15))
                 ecr.blit(name_surface, name_rect)
                 
@@ -553,19 +535,28 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                     # Informations de l'élément
                     # Catégorie
                     category = get_element_category(int(selected_element))
-                    if category > 0 and category < 5:
-                        cat_names = ["Base", "Plantes", "Animaux", "Outils"]
-                        cat_name = cat_names[category-1] if category-1 < len(cat_names) else "Autre"
-                        cat_color_key = f"category_{category}"
-                        cat_color = color_scheme[cat_color_key] if cat_color_key in color_scheme else color_scheme["text"]
-                        
-                        cat_text = stats_font.render(f"Catégorie: {cat_name}", True, cat_color)
-                        cat_rect = cat_text.get_rect(topleft=(img_rect.right + 30, info_area.y + 50))
-                        ecr.blit(cat_text, cat_rect)
+                    cat_names = ["Base", "Plantes", "Animaux", "Outils"]
+                    cat_name = cat_names[category-1] if category-1 < len(cat_names) else "Autre"
+                    
+                    # Déterminer la couleur de catégorie
+                    if category == 1:
+                        cat_color = ENCYC_CATEGORY_BASE
+                    elif category == 2:
+                        cat_color = ENCYC_CATEGORY_PLANT
+                    elif category == 3:
+                        cat_color = ENCYC_CATEGORY_ANIMAL
+                    elif category == 4:
+                        cat_color = ENCYC_CATEGORY_TOOL
+                    else:
+                        cat_color = GRIS
+                    
+                    cat_text = stats_font.render(f"Catégorie: {cat_name}", True, cat_color)
+                    cat_rect = cat_text.get_rect(topleft=(img_rect.right + 30, info_area.y + 50))
+                    ecr.blit(cat_text, cat_rect)
                     
                     # Consommation
                     dr_text = "Se consomme: " + ("Oui" if elem_data["DR"] == 0 else "Non")
-                    dr_color = color_scheme["warning"] if elem_data["DR"] == 0 else color_scheme["positive"]
+                    dr_color = GRIS if elem_data["DR"] == 0 else GRIS_CLAIR
                     dr_surface = description_font.render(dr_text, True, dr_color)
                     dr_rect = dr_surface.get_rect(topleft=(img_rect.right + 30, info_area.y + 75))
                     ecr.blit(dr_surface, dr_rect)
@@ -573,14 +564,14 @@ def Page(ecr, all_elements=None, discovered_elements=None):
                     # Nombre de combinaisons
                     creation_count = len(elem_data["Creations"]) if elem_data["Creations"] else 0
                     creation_text = f"Combinaisons: {creation_count}"
-                    creation_surface = description_font.render(creation_text, True, color_scheme["text"])
+                    creation_surface = description_font.render(creation_text, True, TEXTE)
                     creation_rect = creation_surface.get_rect(topleft=(img_rect.right + 30, info_area.y + 100))
                     ecr.blit(creation_surface, creation_rect)
                     
                 except:
                     # En cas d'erreur, afficher juste le nom
                     try:
-                        text_center = description_font.render("Informations non disponibles", True, color_scheme["text_dim"])
+                        text_center = description_font.render("Informations non disponibles", True, TEXTE_INTERACTIF)
                         text_rect = text_center.get_rect(center=(info_area.centerx, info_area.centery))
                         ecr.blit(text_center, text_rect)
                     except:
@@ -595,7 +586,7 @@ def Page(ecr, all_elements=None, discovered_elements=None):
         
         # Ombre du bouton de fermeture
         if close_button["hover"]:
-            draw.rect(ecr, color_scheme["button_hover"], close_button["rect"], border_radius=15)
+            draw.rect(ecr, PARAM_BUTTON_HOVER, close_button["rect"], border_radius=15)
         
         # Dessiner l'icône X
         ecr.blit(icons["close"], (close_button["rect"].x + 2, close_button["rect"].y + 2))
