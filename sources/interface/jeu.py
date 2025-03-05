@@ -199,7 +199,7 @@ def afficher_elements(ecr, elements, elementsbase, scale=1.0):
                             "last_move_time": 0,
                             "state": "idle",
                             "state_start_time": 0,
-                            "rect": frames["down"][0].get_rect(topleft=(x, y)),
+                            "rect": frames["down"][0].get_rect(center=(x, y)),
                             "selected": False,
                             "x": x,
                             "y": y,
@@ -220,7 +220,7 @@ def afficher_elements(ecr, elements, elementsbase, scale=1.0):
                             "is_objectif": True,
                             "image": img,
                             "original_image": img.copy(),
-                            "rect": img.get_rect(topleft=(x, y)),
+                            "rect": img.get_rect(center=(x, y)),
                             "x": x,
                             "y": y,
                             "selected": False,
@@ -239,7 +239,7 @@ def afficher_elements(ecr, elements, elementsbase, scale=1.0):
                             "id": elem_id,
                             "image": img,
                             "original_image": img.copy(),
-                            "rect": img.get_rect(topleft=(x, y)),
+                            "rect": img.get_rect(center=(x, y)),
                             "x": x,
                             "y": y,
                             "selected": False
@@ -542,13 +542,18 @@ def page_jeu(niveau):
                             objets.sort(key=lambda obj: obj["rect"].bottom)
                         selected_obj = None
                     elif evt.button == BUTTON_RIGHT:
-                        if target_obj and target_obj.get("is_animal", False):
-                            target_obj["selected"] = False
-                            base_frame = target_obj["frames"][target_obj["current_direction"]][0]
-                            target_obj["image"] = base_frame
-                            target_obj["rect"] = base_frame.get_rect(center=target_obj["rect"].center)
-                            target_obj["last_move_time"] = time.get_ticks()
-                            target_obj["state"] = "idle"
+                        if target_obj:
+                            if target_obj.get("is_animal", False):
+                                target_obj["selected"] = False
+                                base_frame = target_obj["frames"][target_obj["current_direction"]][0]
+                                target_obj["image"] = base_frame
+                                target_obj["rect"] = base_frame.get_rect(center=target_obj["rect"].center)
+                                target_obj["last_move_time"] = time.get_ticks()
+                                target_obj["state"] = "idle"
+                            else:
+                                # Pour les éléments classiques et objectifs, on réinitialise l'image
+                                target_obj["image"] = target_obj["original_image"]
+                                target_obj["rect"] = target_obj["image"].get_rect(center=target_obj["rect"].center)
                 elif evt.type == MOUSEMOTION and selected_obj:
                     selected_obj["rect"].move_ip(evt.rel)
             
@@ -701,6 +706,9 @@ def page_jeu(niveau):
             perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index] if moving else perso_frames[perso_current_direction][0], "rect": perso_rect.copy()}
             all_objs = objets + [perso_obj]
             all_objs.sort(key=lambda o: o["rect"].bottom)
+            if selected_obj is not None and selected_obj in all_objs:
+                all_objs.remove(selected_obj)
+                all_objs.append(selected_obj)
             for o in all_objs:
                 ecr.blit(o["image"], o["rect"])
             
