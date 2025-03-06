@@ -4,7 +4,7 @@ import os
 import csv
 import random
 import json
-from math import *  # Utilisation de from math import * comme demandé
+from math import *
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
@@ -21,7 +21,7 @@ global_volume_sfx = 1.0
 
 elements = {}
 
-# Séquences d'animation pour les états extra (pour les animaux)
+# Séquences d'animation pour les animaux
 EXTRA_ANIM_SEQUENCES = {
     "sleep": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
     "eat":   [0, 1, 2, 3, 2, 3, 2, 3, 2, 1, 0]
@@ -59,7 +59,7 @@ def charger_frames_perso_from_folder(folder_path, directions=("down", "left", "r
     for direction in directions:
         frames[direction] = []
         for i in range(1, nb_frames+1):
-            file_name = f"{direction}{i}.png"  # ex: down1.png, down2.png, etc.
+            file_name = f"{direction}{i}.png"
             full_path = os.path.join(folder_path, file_name)
             try:
                 frame = image.load(full_path).convert_alpha()
@@ -100,7 +100,7 @@ try:
                 "Creations": [int(x) for x in row.get("Creations", "").split(',') if x],
                 "DR": int(row.get("DR", "0") or "0"),
                 "Image": row.get("Image", ""),
-                "Type": row.get("Type", "classique"),  # "animal", "objectif" ou "classique"
+                "Type": row.get("Type", "classique"),
                 "Mission": row.get("Mission", "")
             }
             if elements[int(elem_id)]["Type"].lower() == "objectif":
@@ -109,12 +109,11 @@ except Exception as e:
     print(f"Erreur lors du chargement de l'encyclopédie: {e}")
     elements = {0: {"Nom": "Inconnu", "Creations": [], "DR": 0, "Image": "", "Type": "classique", "Mission": ""}}
 
-# Fonction qui renvoie la liste des identifiants communs (sans doublon) entre les "Créations" des deux éléments.
+# Fonction qui renvoie la liste des identifiants communs entre les "Créations" des deux éléments.
 def fusionner_ids(element1, element2):
     common = []
     if element1 not in elements or element2 not in elements:
         return common
-    # Ne fusionner que si les noms diffèrent
     if elements[element1]["Nom"] != elements[element2]["Nom"]:
         for cid in elements[element1]["Creations"]:
             if cid in elements[element2]["Creations"] and cid not in common:
@@ -289,7 +288,6 @@ def page_jeu(niveau):
 
     # Définir la résolution de référence et calculer les facteurs d'échelle
     reference_width, reference_height = 1920, 1080
-    # rec est supposé définir la taille de l'écran (par exemple via rec.right et rec.bottom)
     current_width, current_height = rec.right, rec.bottom
     scale_x = current_width / reference_width
     scale_y = current_height / reference_height
@@ -303,7 +301,7 @@ def page_jeu(niveau):
             for row in spamreader:
                 row = {k.strip(): v.strip() for k, v in row.items()}
                 bg = row.get("bg")
-                ef = row.get("elfinal")  # Élément final pour gagner
+                ef = row.get("elfinal")
                 if ef:
                     elfinal = int(ef)
                 if bg and not bg_loaded:
@@ -336,8 +334,7 @@ def page_jeu(niveau):
         print(f"Fichier du niveau {niveau} introuvable. Génération d'un niveau par défaut.")
         fnd = Surface((lrg, htr))
         fnd.fill((70, 30, 30))
-        elfinal = 11
-        base_elements = [1, 3, 7]
+        base_elements = []
         for elem_id in base_elements:
             if elem_id not in elementsbase:
                 elementsbase[elem_id] = []
@@ -356,16 +353,17 @@ def page_jeu(niveau):
     clock = time.Clock()
     act = True
     selected_obj = None
-    element_decouvert = [1, 3]
+    element_decouvert = []
     element_discovered = False
+    final_trigger_time = None
 
-    # Charger les frames du personnage (perso) – 4 frames par direction avec échelle
+    # Charger les frames du perso
     try:
         perso_frames = charger_frames_perso_from_folder("data/images/perso", scale=scale_common)
         perso_current_direction = "down"
         perso_anim_index = 0
         perso_last_anim_time = 0
-        perso_anim_delay = 150  # Délai en ms entre chaque frame
+        perso_anim_delay = 150
     except Exception as e:
         print(f"Erreur lors du chargement des frames du personnage: {e}")
         dummy = Surface((50,50))
@@ -376,7 +374,6 @@ def page_jeu(niveau):
         perso_last_anim_time = 0
         perso_anim_delay = 150
 
-    # Position initiale du perso (centre)
     x, y = current_width // 2, current_height // 2
     speed = 5
     target_x, target_y = x, y
@@ -393,7 +390,7 @@ def page_jeu(niveau):
     target_obj = None
     offset_x, offset_y = 0, 0
 
-    # Charger l'image de base de la bulle pour l'objectif
+    # Charger l'image de base de la bulle
     try:
         bubble_img = image.load("data/images/autres/bulle.png").convert_alpha()
     except Exception as e:
@@ -535,6 +532,8 @@ def page_jeu(niveau):
                                                     objets.remove(selected_obj)
                                                 if elements[closest_obj["id"]]["DR"] == 0 and closest_obj in objets:
                                                     objets.remove(closest_obj)
+                                                if elfinal is not None and elfinal in element_decouvert and final_trigger_time is None:
+                                                    final_trigger_time = current_time
                                         except Exception as e:
                                             print(f"Erreur lors de la fusion d'éléments: {e}")
                             selected_obj["rect"].center = (evt.pos[0] - offset_x, evt.pos[1] - offset_y)
@@ -611,6 +610,8 @@ def page_jeu(niveau):
                         except Exception as e:
                             print(f"Erreur lors de la fusion avec le personnage: {e}")
                 target_obj = None
+                if elfinal is not None and elfinal in element_decouvert and final_trigger_time is None:
+                    final_trigger_time = current_time
 
             # Mise à jour du mouvement et de l'animation des animaux
             for obj in objets:
@@ -700,7 +701,6 @@ def page_jeu(niveau):
                                                 obj["image"] = obj["frames"][obj["current_direction"]][0]
                             else:
                                 obj["image"] = obj["frames"][obj["current_direction"]][0]
-                    # Si l'animal est sélectionné, son animation reste gelée.
             
             # Pour le rendu final, combiner le perso avec les autres objets et trier par rect.bottom
             perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index] if moving else perso_frames[perso_current_direction][0], "rect": perso_rect.copy()}
@@ -741,6 +741,10 @@ def page_jeu(niveau):
                         elements[obj["id"]]["mission_seen"] = True
 
             hover_ency = bouton(ecr, (150, 150, 150), btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
+            if final_trigger_time is not None and current_time - final_trigger_time >= 200:
+                afficher_victoire_niveau(ecr, niveau, element_final=None)
+                act = False
+
             display.flip()
             clock.tick(60)
         except Exception as e:
