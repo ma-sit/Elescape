@@ -35,7 +35,7 @@ except Exception as e:
 
 # Chargement fond menu
 try:
-    img_menu = image.load("data/images/image_menu.png").convert()
+    img_menu = image.load("data/images/bg/image_menu.png").convert()
     img_menu = transform.scale(img_menu, (rec.right, rec.bottom))
 except Exception as e:
     print(f"Erreur lors du chargement de l'image de fond du menu: {e}")
