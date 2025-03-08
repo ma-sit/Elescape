@@ -25,7 +25,9 @@ def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius, surbrillance
     else:
         draw.rect(ecr, couleur, rect, border_radius=radius)
         txt_rendu = fnt.render(texte, True, TEXTE)
-        ecr.blit(txt_rendu, (rect.x + (rect.width - txt_rendu.get_width()) // 2, rect.y + 10))
+        # Centre le texte horizontalement et verticalement
+        text_rect = txt_rendu.get_rect(center=(rect.x + rect.width // 2, rect.y + rect.height // 2))
+        ecr.blit(txt_rendu, text_rect)
 
     return survole
 
