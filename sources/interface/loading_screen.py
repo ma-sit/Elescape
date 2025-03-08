@@ -49,7 +49,9 @@ def loading_screen():
         "Astuce: Certains objets disparaissent en les combinant",
         "Astuce: Consultez l'encyclopédie pour voir vos découvertes",
         "Astuce: Pour vous déplacer, utilisez le clic droit",
-        "Astuce: Le dernier niveau débloqué est indiqué par un halo doré"
+        "Astuce: Le dernier niveau débloqué est indiqué par un halo doré",
+        "Astuce: Vous pouvez déplacer tous les élements comme vous le souhaitez",
+        "Astuce: Vous pouvez réinitialiser la progression à tout moment"
     ]
     
     # Choisir une astuce aléatoire
