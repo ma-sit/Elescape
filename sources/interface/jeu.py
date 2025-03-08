@@ -21,7 +21,7 @@ global_volume_sfx = 1.0
 
 elements = {}
 
-# Séquences d'animation pour les animaux
+# Séquences d'animation pour les états extra (pour les animaux)
 EXTRA_ANIM_SEQUENCES = {
     "sleep": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
     "eat":   [0, 1, 2, 3, 2, 3, 2, 3, 2, 1, 0]
@@ -100,7 +100,7 @@ try:
                 "Creations": [int(x) for x in row.get("Creations", "").split(',') if x],
                 "DR": int(row.get("DR", "0") or "0"),
                 "Image": row.get("Image", ""),
-                "Type": row.get("Type", "classique"),
+                "Type": row.get("Type", "classique"),  # "animal", "objectif" ou "classique"
                 "Mission": row.get("Mission", "")
             }
             if elements[int(elem_id)]["Type"].lower() == "objectif":
@@ -288,6 +288,7 @@ def page_jeu(niveau):
 
     # Définir la résolution de référence et calculer les facteurs d'échelle
     reference_width, reference_height = 1920, 1080
+    # rec est supposé définir la taille de l'écran (par exemple via rec.right et rec.bottom)
     current_width, current_height = rec.right, rec.bottom
     scale_x = current_width / reference_width
     scale_y = current_height / reference_height
@@ -363,7 +364,7 @@ def page_jeu(niveau):
         perso_current_direction = "down"
         perso_anim_index = 0
         perso_last_anim_time = 0
-        perso_anim_delay = 150
+        perso_anim_delay = 150  # Délai en ms entre chaque frame
     except Exception as e:
         print(f"Erreur lors du chargement des frames du personnage: {e}")
         dummy = Surface((50,50))
@@ -523,7 +524,12 @@ def page_jeu(niveau):
                                                     "original_image": img.copy(),
                                                     "rect": img.get_rect(center=center)
                                                 }
-                                                # Appliquer un décalage pour le deuxième objet
+                                                # Si l'objet restant existe et n'est pas le perso, appliquer un décalage.
+                                                if elements[closest_obj["id"]]["DR"] != 0 or elements[selected_obj["id"]]["DR"] != 0:
+                                                    offset = -10
+                                                    new_center = (closest_obj["rect"].right + new_obj["rect"].width // 2 + offset,
+                                                                  closest_obj["rect"].centery)
+                                                    new_obj["rect"].center = new_center
                                                 offset = new_obj["rect"].width // 2 + 10
                                                 center = (closest_obj["rect"].centerx + offset, closest_obj["rect"].centery)
                                                 objets.append(new_obj)
@@ -601,6 +607,11 @@ def page_jeu(niveau):
                                     "original_image": img.copy(),
                                     "rect": img.get_rect(center=center)
                                 }
+                                if elements[target_obj["id"]]["DR"] != 0:
+                                    offset = -10
+                                    new_center = (target_obj["rect"].right + new_obj["rect"].width // 2 + offset,
+                                                  target_obj["rect"].centery)
+                                    new_obj["rect"].center = new_center
                                 offset = new_obj["rect"].width // 2 + 10
                                 center = (target_obj["rect"].centerx + offset, target_obj["rect"].centery)
                                 objets.append(new_obj)
@@ -701,6 +712,7 @@ def page_jeu(niveau):
                                                 obj["image"] = obj["frames"][obj["current_direction"]][0]
                             else:
                                 obj["image"] = obj["frames"][obj["current_direction"]][0]
+                    # Si l'animal est sélectionné, son animation reste gelée.
             
             # Pour le rendu final, combiner le perso avec les autres objets et trier par rect.bottom
             perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index] if moving else perso_frames[perso_current_direction][0], "rect": perso_rect.copy()}
