@@ -1,0 +1,32 @@
+ID;Nom;Creations;DR;Image;Type;mission
+0;Humain;2,8,1,15,22,6;1;;classique;
+1;Arbre;2,11;0;data/images/elements/arbre1.png, data/images/elements/arbre2.png, data/images/elements/arbre3.png, data/images/elements/arbre4.png;classique;
+2;Buches;19,27,26;0;data/images/elements/buches.png;classique;
+3;Rocher;24,28;0;data/images/elements/rocher1.png, data/images/elements/rocher2.png, data/images/elements/rocher3.png;classique;
+4;Buisson;;0;data/images/elements/buisson.png;classique;
+5;Champignon;;0;data/images/elements/champignon1.png, data/images/elements/champignon2.png, data/images/elements/champignon3.png, data/images/elements/champignon4.png;classique;
+6;Foin;16,25;0;data/images/elements/foin1.png, data/images/elements/foin2.png;classique;
+7;Puit;8;1;data/images/elements/puit.png;classique;
+8;Seau;11,3,7,30;0;data/images/elements/seau.png;classique;
+9;Baril;;0;data/images/elements/baril1.png, data/images/elements/baril2.png;classique;
+10;Souche;;0;data/images/elements/souche.png;classique;
+11;Pommier;1,15;0;data/images/elements/pommier.png;classique;
+12;cochon;29;0;data/images/animaux/cochon;animal;
+13;niv1;;;data/images/autres/niv1.png;objectif;il me faut des pommes.
+14;maison;16,23;0;data/images/elements/maison.png;classique;
+15;pommes;;0;data/images/elements/pommes.png;classique;
+16;grange;6;1;data/images/elements/grange.png;classique;
+17;lanterne;22;0;data/images/elements/lanterne.png;classique;
+18;poisson;;0;data/images/elements/poisson.png;classique;
+19;feux de camps;23,29;0;data/images/elements/feux_de_camp.png;classique;
+20;barrière;;0;data/images/elements/barrière_bois3.png;classique;
+21;caisse;;0;data/images/elements/caisse_en_bois.png;classique;
+22;feu;19,3;1;data/images/elements/feu.png;classique;
+23;forge;24;1;data/images/elements/forge.png;classique;
+24;metal;27,9;0;data/images/elements/metal.png;classique;
+25;petite maison;14;0;data/images/elements/petite_maison.png;classique;
+26;planches;14,25,7;0;data/images/elements/planche.png;classique;
+27;hache;26,9,28;1;data/images/elements/hache.png;classique;
+28;pierre;30;0;data/images/elements/pierre.png;classique;
+29;viande;;0;data/images/elements/viande.png;classique;
+30;abreuvoir;;0;data/images/elements/abreuvoir.png;classique;
