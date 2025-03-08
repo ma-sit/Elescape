@@ -229,7 +229,7 @@ def selection_niveau():
         try:
             # Charger et adapter l'image de fond
             if background is None:  # Charger l'image une seule fois
-                background = image.load("data/images/image_selection_niveau.png").convert()
+                background = image.load("data/images/bg/image_selection_niveau.png").convert()
                 background = transform.scale(background, (rec.right, rec.bottom))
         except Exception as e:
             print(f"Erreur lors du chargement de l'image de fond: {e}")
