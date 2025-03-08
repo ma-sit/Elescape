@@ -5,6 +5,7 @@ from shared.components.config import *
 from interface.menu import bouton, dessiner_menu, plein_ecran
 from interface.selection_niveau import selection_niveau
 from interface.parametres import page_parametres, page_parametres_superpose, TOUCHES_DEFAUT
+from interface.loading_screen import loading_screen  # Import de l'écran de chargement
 
 # Initialisation
 try:
@@ -32,6 +33,10 @@ except Exception as e:
             json.dump(touches, f)
     except:
         print("Impossible de sauvegarder le fichier touches.json par défaut")
+
+# Affichage de l'écran de chargement
+if not loading_screen():
+    sys.exit(0)
 
 # Chargement fond menu
 try:

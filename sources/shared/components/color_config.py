@@ -64,7 +64,8 @@ PARAM_TEXT = (255, 255, 255)  # Texte
 PARAM_TEXT_DIM = (200, 200, 200)  # Texte moins important
 
 # Barre de volume
-VOLUME_BAR_BG = (35, 35, 35)  # Fond original pour les éléments d'interface
+VOLUME_BAR_BG = (30, 30, 30)  # Fond original pour les éléments d'interface
+VOLUME_CHARG_BG = (94, 115, 99)  # Fond de la barre de chargement
 BARRE_FOND_BLANC = (255, 255, 255)  # Fond blanc spécifique pour les barres
 VOLUME_BAR_FILL = (60, 60, 60)  # Remplissage de la barre
 VOLUME_BAR_BORDER = (80, 80, 80)  # Bordure de la barre
