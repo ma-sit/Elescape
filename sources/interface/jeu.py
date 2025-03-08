@@ -295,6 +295,23 @@ def page_jeu(niveau):
     # Pour les images, on utilise un facteur commun pour préserver les proportions
     scale_common = min(scale_x, scale_y)
 
+    # Variables pour le tutoriel
+    tutorial_active = niveau == 1
+    tutorial_step = 0
+    tutorial_steps = [
+        "Clique droit n'importe où pour déplacer ton personnage",
+        "Clique gauche sur un objet pour le sélectionner",
+        "Déplace-le vers un autre objet compatible pour les fusionner",
+        "Consulte l'encyclopédie pour voir les éléments découverts",
+        "Essaie de découvrir l'élément qui termine le niveau"
+    ]
+    tutorial_actions_done = [False, False, False, False, False]
+    tutorial_display_time = 0
+    tutorial_font = font.Font(None, 30)
+    tutorial_bg_alpha = 0
+    tutorial_fade_in = True
+    tutorial_last_interaction = 0
+    
     try:
         with open(f'data/csv/niveau{niveau}.csv', newline='', encoding='utf-8') as csvfile:
             spamreader = csv.DictReader(csvfile, delimiter=';')
@@ -403,6 +420,34 @@ def page_jeu(niveau):
     niveau_titre_font = font.Font(None, 40)
     niveau_titre = niveau_titre_font.render(f"Niveau {niveau}", True, (255,255,255))
     niveau_titre_rect = niveau_titre.get_rect(midtop=(current_width//2, 10))
+    
+    # Fonction pour afficher les messages du tutoriel
+    def show_tutorial_message():
+        if not tutorial_active or tutorial_step >= len(tutorial_steps):
+            return
+            
+        current_msg = tutorial_steps[tutorial_step]
+        
+        # Créer une surface semi-transparente pour le fond du message
+        tutorial_bg = Surface((current_width, 60), SRCALPHA)
+        
+        # Calculer l'alpha du fond (animation de fondu)
+        nonlocal tutorial_bg_alpha
+        if tutorial_fade_in:
+            tutorial_bg_alpha = min(tutorial_bg_alpha + 10, 180)
+        else:
+            tutorial_bg_alpha = max(tutorial_bg_alpha - 10, 0)
+            
+        tutorial_bg.fill((0, 0, 0, tutorial_bg_alpha))
+        ecr.blit(tutorial_bg, (0, current_height - 60))
+        
+        # Afficher le texte du tutoriel
+        msg_surf = tutorial_font.render(current_msg, True, (255, 255, 255))
+        msg_rect = msg_surf.get_rect(center=(current_width//2, current_height - 30))
+        
+        # L'opacité du texte suit celle du fond
+        msg_surf.set_alpha(int(255 * tutorial_bg_alpha / 180))
+        ecr.blit(msg_surf, msg_rect)
 
     while act:
         try:
@@ -437,11 +482,33 @@ def page_jeu(niveau):
                         # Utilisation de reversed(objets) pour sélectionner l'objet affiché par-dessus
                         if btn_ency["rect"].collidepoint(evt.pos):
                             son_survol.play()
+                            
+                            # Tutoriel: Consulter l'encyclopédie
+                            if tutorial_active and not tutorial_actions_done[3]:
+                                tutorial_actions_done[3] = True
+                                if tutorial_step == 3:
+                                    tutorial_step += 1
+                                    tutorial_fade_in = True
+                                    tutorial_bg_alpha = 0
+                                    tutorial_display_time = current_time
+                                    tutorial_last_interaction = current_time
+                                    
                             Page(ecr, elements, element_decouvert)
                         else:
                             for obj in reversed(objets):
                                 if obj["rect"].collidepoint(evt.pos):
                                     selected_obj = obj
+                                    
+                                    # Tutoriel: Sélectionner un objet
+                                    if tutorial_active and not tutorial_actions_done[1]:
+                                        tutorial_actions_done[1] = True
+                                        if tutorial_step == 1:
+                                            tutorial_step += 1
+                                            tutorial_fade_in = True
+                                            tutorial_bg_alpha = 0
+                                            tutorial_display_time = current_time
+                                            tutorial_last_interaction = current_time
+                                    
                                     if obj.get("is_animal", False):
                                         if not obj.get("selected", False):
                                             obj["selected"] = True
@@ -461,6 +528,17 @@ def page_jeu(niveau):
                     elif evt.button == touches.get('Déplacement', BUTTON_RIGHT):
                         target_x, target_y = mouse.get_pos()
                         moving = True
+                        
+                        # Tutoriel: Déplacer le personnage
+                        if tutorial_active and not tutorial_actions_done[0]:
+                            tutorial_actions_done[0] = True
+                            if tutorial_step == 0:
+                                tutorial_step += 1
+                                tutorial_fade_in = True
+                                tutorial_bg_alpha = 0
+                                tutorial_display_time = current_time
+                                tutorial_last_interaction = current_time
+                                
                         for obj in reversed(objets):
                             if obj["rect"].collidepoint(evt.pos):
                                 obj["enlarge_start"] = time.get_ticks()
@@ -510,6 +588,17 @@ def page_jeu(niveau):
                                         if cid not in element_decouvert:
                                             element_discovered = cid
                                             element_decouvert.append(cid)
+                                            
+                                            # Tutoriel: Fusion réussie
+                                            if tutorial_active and not tutorial_actions_done[2]:
+                                                tutorial_actions_done[2] = True
+                                                if tutorial_step == 2:
+                                                    tutorial_step += 1
+                                                    tutorial_fade_in = True
+                                                    tutorial_bg_alpha = 0
+                                                    tutorial_display_time = current_time
+                                                    tutorial_last_interaction = current_time
+                                                    
                                         try:
                                             img_paths = elements[cid]["Image"].split(',')
                                             if img_paths:
@@ -540,6 +629,13 @@ def page_jeu(niveau):
                                                     objets.remove(closest_obj)
                                                 if elfinal is not None and elfinal in element_decouvert and final_trigger_time is None:
                                                     final_trigger_time = current_time
+                                                    
+                                                    # Tutoriel: Niveau terminé
+                                                    if tutorial_active and not tutorial_actions_done[4]:
+                                                        tutorial_actions_done[4] = True
+                                                        if tutorial_step == 4:
+                                                            tutorial_step += 1
+                                                            
                                         except Exception as e:
                                             print(f"Erreur lors de la fusion d'éléments: {e}")
                             selected_obj["rect"].center = (evt.pos[0] - offset_x, evt.pos[1] - offset_y)
@@ -593,6 +689,17 @@ def page_jeu(niveau):
                         if cid not in element_decouvert:
                             element_discovered = cid
                             element_decouvert.append(cid)
+                            
+                            # Tutoriel: Fusion automatique avec le personnage
+                            if tutorial_active and not tutorial_actions_done[2]:
+                                tutorial_actions_done[2] = True
+                                if tutorial_step == 2:
+                                    tutorial_step += 1
+                                    tutorial_fade_in = True
+                                    tutorial_bg_alpha = 0
+                                    tutorial_display_time = current_time
+                                    tutorial_last_interaction = current_time
+                                    
                         try:
                             img_paths = elements[cid]["Image"].split(',')
                             if img_paths:
@@ -751,6 +858,24 @@ def page_jeu(niveau):
                                                      bubble_y_final + y_offset + 35))
                             y_offset += text_surface.get_height() + 2
                         elements[obj["id"]]["mission_seen"] = True
+
+            # Affichage du tutoriel
+            if tutorial_active and tutorial_step < len(tutorial_steps):
+                # Gérer l'affichage du tutoriel avec un délai avant de passer au message suivant
+                time_since_last_interaction = current_time - tutorial_last_interaction
+                
+                # Gérer le fondu des messages
+                if tutorial_step > 0 and time_since_last_interaction < 800:
+                    tutorial_fade_in = True
+                elif time_since_last_interaction > 10000 and not any(tutorial_actions_done[tutorial_step:]):
+                    # Réafficher avec effet de pulsation si aucune interaction depuis longtemps
+                    if int(time_since_last_interaction / 1000) % 2 == 0:
+                        tutorial_fade_in = True
+                    else:
+                        tutorial_fade_in = False
+                
+                # Afficher le message du tutoriel
+                show_tutorial_message()
 
             hover_ency = bouton(ecr, (150, 150, 150), btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
             if final_trigger_time is not None and current_time - final_trigger_time >= 200:
