@@ -299,13 +299,20 @@ def page_jeu(niveau):
     tutorial_active = niveau == 1
     tutorial_step = 0
     tutorial_steps = [
+        "Bienvenue sur Vitanox",
         "Clique droit n'importe où pour déplacer ton personnage",
         "Clique gauche sur un objet pour le sélectionner",
         "Déplace-le vers un autre objet compatible pour les fusionner",
         "Consulte l'encyclopédie pour voir les éléments découverts",
-        "Essaie de découvrir l'élément qui termine le niveau"
+        "Appuie sur Echap pour ouvrir le menu",
+        "Essaie de découvrir l'élément qui termine le niveau",
+        "Maintenant, à toi de jouer !"
     ]
-    tutorial_actions_done = [False, False, False, False, False]
+    # True signifie que l'étape avance automatiquement après un délai
+    tutorial_auto_advance = [True, False, False, False, False, False, True, True]
+    # Délais en millisecondes pour les étapes avec avance automatique
+    tutorial_delays = [2000, 0, 0, 0, 0, 0, 3000, 8000]
+    tutorial_actions_done = [False, False, False, False, False, False, False, False]
     tutorial_display_time = 0
     tutorial_font = font.Font(None, 30)
     tutorial_bg_alpha = 0
@@ -473,6 +480,16 @@ def page_jeu(niveau):
                     for action, key_code in touches.items():
                         if evt.key == key_code:
                             if action == 'Retour':
+                                # Pour le tutoriel : Appuyer sur Echap
+                                if tutorial_active and not tutorial_actions_done[5]:
+                                    tutorial_actions_done[5] = True
+                                    if tutorial_step == 5:
+                                        tutorial_step += 1
+                                        tutorial_fade_in = True
+                                        tutorial_bg_alpha = 0
+                                        tutorial_display_time = current_time
+                                        tutorial_last_interaction = current_time
+                                
                                 game_screen = ecr.copy()
                                 act = menu_parametres(game_screen)
                 elif evt.type == MOUSEBUTTONDOWN:
@@ -484,9 +501,9 @@ def page_jeu(niveau):
                             son_survol.play()
                             
                             # Tutoriel: Consulter l'encyclopédie
-                            if tutorial_active and not tutorial_actions_done[3]:
-                                tutorial_actions_done[3] = True
-                                if tutorial_step == 3:
+                            if tutorial_active and not tutorial_actions_done[4]:
+                                tutorial_actions_done[4] = True
+                                if tutorial_step == 4:
                                     tutorial_step += 1
                                     tutorial_fade_in = True
                                     tutorial_bg_alpha = 0
@@ -500,9 +517,9 @@ def page_jeu(niveau):
                                     selected_obj = obj
                                     
                                     # Tutoriel: Sélectionner un objet
-                                    if tutorial_active and not tutorial_actions_done[1]:
-                                        tutorial_actions_done[1] = True
-                                        if tutorial_step == 1:
+                                    if tutorial_active and not tutorial_actions_done[2]:
+                                        tutorial_actions_done[2] = True
+                                        if tutorial_step == 2:
                                             tutorial_step += 1
                                             tutorial_fade_in = True
                                             tutorial_bg_alpha = 0
@@ -530,9 +547,9 @@ def page_jeu(niveau):
                         moving = True
                         
                         # Tutoriel: Déplacer le personnage
-                        if tutorial_active and not tutorial_actions_done[0]:
-                            tutorial_actions_done[0] = True
-                            if tutorial_step == 0:
+                        if tutorial_active and not tutorial_actions_done[1]:
+                            tutorial_actions_done[1] = True
+                            if tutorial_step == 1:
                                 tutorial_step += 1
                                 tutorial_fade_in = True
                                 tutorial_bg_alpha = 0
@@ -590,9 +607,9 @@ def page_jeu(niveau):
                                             element_decouvert.append(cid)
                                             
                                             # Tutoriel: Fusion réussie
-                                            if tutorial_active and not tutorial_actions_done[2]:
-                                                tutorial_actions_done[2] = True
-                                                if tutorial_step == 2:
+                                            if tutorial_active and not tutorial_actions_done[3]:
+                                                tutorial_actions_done[3] = True
+                                                if tutorial_step == 3:
                                                     tutorial_step += 1
                                                     tutorial_fade_in = True
                                                     tutorial_bg_alpha = 0
@@ -631,10 +648,14 @@ def page_jeu(niveau):
                                                     final_trigger_time = current_time
                                                     
                                                     # Tutoriel: Niveau terminé
-                                                    if tutorial_active and not tutorial_actions_done[4]:
-                                                        tutorial_actions_done[4] = True
-                                                        if tutorial_step == 4:
+                                                    if tutorial_active and not tutorial_actions_done[6]:
+                                                        tutorial_actions_done[6] = True
+                                                        if tutorial_step == 6:
                                                             tutorial_step += 1
+                                                            tutorial_fade_in = True
+                                                            tutorial_bg_alpha = 0
+                                                            tutorial_display_time = current_time
+                                                            tutorial_last_interaction = current_time
                                                             
                                         except Exception as e:
                                             print(f"Erreur lors de la fusion d'éléments: {e}")
@@ -691,9 +712,9 @@ def page_jeu(niveau):
                             element_decouvert.append(cid)
                             
                             # Tutoriel: Fusion automatique avec le personnage
-                            if tutorial_active and not tutorial_actions_done[2]:
-                                tutorial_actions_done[2] = True
-                                if tutorial_step == 2:
+                            if tutorial_active and not tutorial_actions_done[3]:
+                                tutorial_actions_done[3] = True
+                                if tutorial_step == 3:
                                     tutorial_step += 1
                                     tutorial_fade_in = True
                                     tutorial_bg_alpha = 0
@@ -861,13 +882,28 @@ def page_jeu(niveau):
 
             # Affichage du tutoriel
             if tutorial_active and tutorial_step < len(tutorial_steps):
-                # Gérer l'affichage du tutoriel avec un délai avant de passer au message suivant
+                # Gérer l'avancement automatique pour les étapes avec délai
+                if tutorial_auto_advance[tutorial_step]:
+                    if tutorial_display_time == 0:
+                        tutorial_display_time = current_time
+                    
+                    elapsed_time = current_time - tutorial_display_time
+                    if elapsed_time >= tutorial_delays[tutorial_step]:
+                        tutorial_actions_done[tutorial_step] = True
+                        tutorial_step += 1
+                        if tutorial_step < len(tutorial_steps):
+                            tutorial_fade_in = True
+                            tutorial_bg_alpha = 0
+                            tutorial_display_time = current_time
+                            tutorial_last_interaction = current_time
+                
+                # Gérer le fondu des messages
                 time_since_last_interaction = current_time - tutorial_last_interaction
                 
                 # Gérer le fondu des messages
                 if tutorial_step > 0 and time_since_last_interaction < 800:
                     tutorial_fade_in = True
-                elif time_since_last_interaction > 10000 and not any(tutorial_actions_done[tutorial_step:]):
+                elif time_since_last_interaction > 10000 and not tutorial_auto_advance[tutorial_step] and not tutorial_actions_done[tutorial_step]:
                     # Réafficher avec effet de pulsation si aucune interaction depuis longtemps
                     if int(time_since_last_interaction / 1000) % 2 == 0:
                         tutorial_fade_in = True
