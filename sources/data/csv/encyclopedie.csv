@@ -1,4 +1,4 @@
-ID;Nom;Creations;DR;Image;Type;mission
+ID;Nom;Creations;DR;Image;Type;Mission
 0;Humain;2,8,1,15,22,6;1;;classique;
 1;Arbre;2,11;0;data/images/elements/arbre1.png, data/images/elements/arbre2.png, data/images/elements/arbre3.png, data/images/elements/arbre4.png;classique;
 2;Buches;19,27,26;0;data/images/elements/buches.png;classique;
