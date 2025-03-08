@@ -917,6 +917,8 @@ def page_jeu(niveau):
             if final_trigger_time is not None and current_time - final_trigger_time >= 200:
                 afficher_victoire_niveau(ecr, niveau, element_final=None)
                 act = False
+                
+                niveau_complete = True
 
             display.flip()
             clock.tick(60)
