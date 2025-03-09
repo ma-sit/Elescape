@@ -381,6 +381,10 @@ def page_jeu(niveau):
     element_decouvert = []
     element_discovered = False
     final_trigger_time = None
+    final_element_found = False
+    final_object_reached = False
+    final_object_time = None
+
 
     # Charger les frames du perso
     try:
@@ -644,8 +648,8 @@ def page_jeu(niveau):
                                                     objets.remove(selected_obj)
                                                 if elements[closest_obj["id"]]["DR"] == 0 and closest_obj in objets:
                                                     objets.remove(closest_obj)
-                                                if elfinal is not None and elfinal in element_decouvert and final_trigger_time is None:
-                                                    final_trigger_time = current_time
+                                                if elfinal is not None and elfinal in element_decouvert:
+                                                    final_element_found = True
                                                     
                                                     # Tutoriel: Niveau terminé
                                                     if tutorial_active and not tutorial_actions_done[6]:
@@ -749,8 +753,8 @@ def page_jeu(niveau):
                         except Exception as e:
                             print(f"Erreur lors de la fusion avec le personnage: {e}")
                 target_obj = None
-                if elfinal is not None and elfinal in element_decouvert and final_trigger_time is None:
-                    final_trigger_time = current_time
+                if elfinal is not None and elfinal in element_decouvert:
+                    final_element_found = True
 
             # Mise à jour du mouvement et de l'animation des animaux
             for obj in objets:
@@ -855,30 +859,55 @@ def page_jeu(niveau):
             # Affichage de l'objectif : pour chaque objet objectif, afficher une bulle en haut à droite
             for obj in objets:
                 if obj.get("is_objectif", False):
-                    bubble_x = obj["rect"].right + 35
-                    bubble_y = obj["rect"].top - 20
-                    if not elements[obj["id"]].get("mission_seen", False):
+                    if final_element_found and perso_rect.colliderect(obj["rect"]):
+                        if not final_object_reached:
+                            final_object_reached = True
+                            final_object_time = current_time
+                        large_bubble = transform.scale(bubble_img, (150, 100))
+                        bubble_x_final = obj["rect"].right - large_bubble.get_width() + 120
+                        bubble_y_final = obj["rect"].top - 70
+                        ecr.blit(large_bubble, (bubble_x_final, bubble_y_final))
+                        thank_text = "Merci !"
+                        thank_surface = fnt.render(thank_text, True, (0, 0, 0))
+                        ecr.blit(thank_surface, (bubble_x_final + (large_bubble.get_width() - thank_surface.get_width()) // 2,
+                                                 bubble_y_final + (large_bubble.get_height() - thank_surface.get_height()) // 2 - 8))
+                    # Si c'est l'élément final et qu'il a été découvert, on affiche toujours la bulle
+                    elif final_element_found:
+                        bubble_x = obj["rect"].right + 35
+                        bubble_y = obj["rect"].top - 20
                         small_bubble = transform.scale(bubble_img, (50, 50))
                         ecr.blit(small_bubble, (bubble_x - small_bubble.get_width(), bubble_y))
                         exclam_text = fnt.render("!", True, (255, 0, 0))
                         exclam_x = bubble_x - small_bubble.get_width() + (small_bubble.get_width() - exclam_text.get_width()) // 2
                         exclam_y = bubble_y + (small_bubble.get_height() - exclam_text.get_height()) // 2
                         ecr.blit(exclam_text, (exclam_x, exclam_y))
-                    if perso_rect.colliderect(obj["rect"]):
-                        large_bubble = transform.scale(bubble_img, (200, 200))
-                        bubble_x_final = obj["rect"].right - large_bubble.get_width() + 200
-                        bubble_y_final = obj["rect"].top - 150
-                        ecr.blit(large_bubble, (bubble_x_final, bubble_y_final))
-                        mission_text = elements[obj["id"]].get("Mission", "Objectif non défini")
-                        mission_text = wrap_text(mission_text, max_chars=10)
-                        lines = mission_text.split("\n")
-                        y_offset = 0
-                        for line in lines:
-                            text_surface = fnt.render(line, True, (0, 0, 0))
-                            ecr.blit(text_surface, (bubble_x_final + (large_bubble.get_width() - text_surface.get_width()) // 2,
-                                                     bubble_y_final + y_offset + 35))
-                            y_offset += text_surface.get_height() + 2
-                        elements[obj["id"]]["mission_seen"] = True
+                        
+                    else:
+                        # Traitement normal pour les autres objectifs
+                        if not elements[obj["id"]].get("mission_seen", False):
+                            bubble_x = obj["rect"].right + 35
+                            bubble_y = obj["rect"].top - 20
+                            small_bubble = transform.scale(bubble_img, (50, 50))
+                            ecr.blit(small_bubble, (bubble_x - small_bubble.get_width(), bubble_y))
+                            exclam_text = fnt.render("!", True, (255, 0, 0))
+                            exclam_x = bubble_x - small_bubble.get_width() + (small_bubble.get_width() - exclam_text.get_width()) // 2
+                            exclam_y = bubble_y + (small_bubble.get_height() - exclam_text.get_height()) // 2
+                            ecr.blit(exclam_text, (exclam_x, exclam_y))
+                        if perso_rect.colliderect(obj["rect"]):
+                            large_bubble = transform.scale(bubble_img, (200, 200))
+                            bubble_x_final = obj["rect"].right - large_bubble.get_width() + 200
+                            bubble_y_final = obj["rect"].top - 150
+                            ecr.blit(large_bubble, (bubble_x_final, bubble_y_final))
+                            mission_text = elements[obj["id"]].get("Mission", "Objectif non défini")
+                            mission_text = wrap_text(mission_text, max_chars=10)
+                            lines = mission_text.split("\n")
+                            y_offset = 0
+                            for line in lines:
+                                text_surface = fnt.render(line, True, (0, 0, 0))
+                                ecr.blit(text_surface, (bubble_x_final + (large_bubble.get_width() - text_surface.get_width()) // 2,
+                                                         bubble_y_final + y_offset + 35))
+                                y_offset += text_surface.get_height() + 2
+                            elements[obj["id"]]["mission_seen"] = True
 
             # Affichage du tutoriel
             if tutorial_active and tutorial_step < len(tutorial_steps):
@@ -914,12 +943,11 @@ def page_jeu(niveau):
                 show_tutorial_message()
 
             hover_ency = bouton(ecr, (150, 150, 150), btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
-            if final_trigger_time is not None and current_time - final_trigger_time >= 200:
+            if final_object_reached and current_time - final_object_time >= 1000:
                 afficher_victoire_niveau(ecr, niveau, element_final=None)
                 act = False
-                
                 niveau_complete = True
-
+                
             display.flip()
             clock.tick(60)
         except Exception as e:
