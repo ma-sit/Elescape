@@ -9,6 +9,12 @@ from shared.components.config import *
 from shared.components.color_config import *  # Import des couleurs standardisées
 from interface.jeu import page_jeu
 from interface.menu import bouton
+from shared.utils.progression_utils import (
+    charger_progression, 
+    sauvegarder_progression, 
+    debloquer_niveau_suivant, 
+    reinitialiser_progression
+)
 
 def draw_dashed_line(surface, color, start_pos, end_pos, dash_length=10, width=2):
     """Dessine une ligne pointillée entre deux points"""
@@ -34,41 +40,6 @@ def draw_dashed_line(surface, color, start_pos, end_pos, dash_length=10, width=2
             end = (x1 + dx * (i + 0.5) * dash_length, y1 + dy * (i + 0.5) * dash_length)
             draw.line(surface, color, start, end, width)
         dash_on = not dash_on
-
-# Fonction pour charger la progression des niveaux
-def charger_progression():
-    try:
-        with open("data/progression.json", "r") as f:
-            return json.load(f)
-    except:
-        # Si le fichier n'existe pas, créer une progression par défaut
-        progression = {"niveaux_debloques": [1]}
-        sauvegarder_progression(progression)
-        return progression
-
-# Fonction pour sauvegarder la progression
-def sauvegarder_progression(progression):
-    try:
-        with open("data/progression.json", "w") as f:
-            json.dump(progression, f)
-        return True
-    except:
-        print("Erreur lors de la sauvegarde de la progression")
-        return False
-
-# Fonction pour débloquer le niveau suivant
-def debloquer_niveau_suivant(niveau_actuel):
-    progression = charger_progression()
-    if niveau_actuel + 1 not in progression["niveaux_debloques"]:
-        progression["niveaux_debloques"].append(niveau_actuel + 1)
-        sauvegarder_progression(progression)
-        return True
-    return False
-
-# Fonction pour réinitialiser la progression
-def reinitialiser_progression():
-    progression = {"niveaux_debloques": [1]}
-    return sauvegarder_progression(progression)
 
 # Fonction pour afficher une boîte de dialogue de confirmation
 def afficher_confirmation(ecr, message):

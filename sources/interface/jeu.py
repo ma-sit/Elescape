@@ -13,6 +13,7 @@ from interface.menu import bouton
 from interface.page_laterale_jeu_combinaisons import Page
 from interface.parametres import TOUCHES_DEFAUT
 from interface.fin_niveau_victoire import afficher_victoire_niveau
+from shared.utils.progression_utils import charger_progression, sauvegarder_progression
 
 # Variables pour le paramètre de volume global
 global_volume_general = 1.0
@@ -285,6 +286,10 @@ def page_jeu(niveau):
     elementsbase = {}
     niveau_complete = False
     elfinal = None
+    
+    # Charger la progression actuelle pour obtenir les éléments déjà découverts
+    progression = charger_progression()
+    element_decouvert = progression.get("elements_decouverts", [])[:]  # Copie pour éviter de modifier l'original
 
     # Définir la résolution de référence et calculer les facteurs d'échelle
     reference_width, reference_height = 1920, 1080
@@ -378,7 +383,6 @@ def page_jeu(niveau):
     clock = time.Clock()
     act = True
     selected_obj = None
-    element_decouvert = []
     element_discovered = False
     final_trigger_time = None
     final_element_found = False
@@ -513,8 +517,10 @@ def page_jeu(niveau):
                                     tutorial_bg_alpha = 0
                                     tutorial_display_time = current_time
                                     tutorial_last_interaction = current_time
-                                    
-                            Page(ecr, elements, element_decouvert)
+                            
+                            # Utiliser les éléments découverts de la progression actuelle
+                            progression_actuelle = charger_progression()        
+                            Page(ecr, elements, progression_actuelle.get("elements_decouverts", []))
                         else:
                             for obj in reversed(objets):
                                 if obj["rect"].collidepoint(evt.pos):
@@ -609,6 +615,14 @@ def page_jeu(niveau):
                                         if cid not in element_decouvert:
                                             element_discovered = cid
                                             element_decouvert.append(cid)
+                                            
+                                            # Sauvegarder l'élément découvert dans la progression
+                                            progression = charger_progression()
+                                            if cid not in progression.get("elements_decouverts", []):
+                                                elements_decouverts = progression.get("elements_decouverts", [])
+                                                elements_decouverts.append(cid)
+                                                progression["elements_decouverts"] = elements_decouverts
+                                                sauvegarder_progression(progression)
                                             
                                             # Tutoriel: Fusion réussie
                                             if tutorial_active and not tutorial_actions_done[3]:
@@ -714,6 +728,14 @@ def page_jeu(niveau):
                         if cid not in element_decouvert:
                             element_discovered = cid
                             element_decouvert.append(cid)
+                            
+                            # Sauvegarder l'élément découvert dans la progression
+                            progression = charger_progression()
+                            if cid not in progression.get("elements_decouverts", []):
+                                elements_decouverts = progression.get("elements_decouverts", [])
+                                elements_decouverts.append(cid)
+                                progression["elements_decouverts"] = elements_decouverts
+                                sauvegarder_progression(progression)
                             
                             # Tutoriel: Fusion automatique avec le personnage
                             if tutorial_active and not tutorial_actions_done[3]:
@@ -953,5 +975,13 @@ def page_jeu(niveau):
         except Exception as e:
             print(f"Erreur dans la boucle principale du jeu: {e}")
             return False
+    
+    # Sauvegarder les éléments découverts avant de quitter
+    if element_decouvert:
+        progression = charger_progression()
+        # Fusionner les éléments découverts avec ceux déjà enregistrés
+        elements_uniques = list(set(progression.get("elements_decouverts", []) + element_decouvert))
+        progression["elements_decouverts"] = elements_uniques
+        sauvegarder_progression(progression)
     
     return niveau_complete
