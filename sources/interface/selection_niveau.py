@@ -41,6 +41,52 @@ def draw_dashed_line(surface, color, start_pos, end_pos, dash_length=10, width=2
             draw.line(surface, color, start, end, width)
         dash_on = not dash_on
 
+def afficher_niveau_a_venir(ecran, niveau):
+    """Affiche un message simple pour un niveau à venir"""
+    # Sauvegarder l'écran actuel
+    ecran_sauvegarde = ecran.copy()
+    
+    # Créer un fond semi-transparent
+    overlay = Surface((lrg, htr), SRCALPHA)
+    overlay.fill((0, 0, 0, 180))  # Noir semi-transparent
+    ecran.blit(overlay, (0, 0))
+    
+    # Police et texte
+    titre_font = font.Font(None, 80)
+    sous_titre_font = font.Font(None, 40)
+    
+    # Titre
+    titre_texte = titre_font.render(f"Niveau {niveau}", True, TEXTE)
+    titre_rect = titre_texte.get_rect(center=(lrg//2, htr//3))
+    
+    # Message
+    message_texte = sous_titre_font.render("Ce niveau arrive prochainement", True, TEXTE_INTERACTIF)
+    message_rect = message_texte.get_rect(center=(lrg//2, htr//2))
+    
+    # Instructions
+    instructions_texte = sous_titre_font.render("Appuyez sur une touche pour revenir au menu", True, TEXTE_INTERACTIF)
+    instructions_rect = instructions_texte.get_rect(center=(lrg//2, 2*htr//3))
+    
+    # Afficher les textes
+    ecran.blit(titre_texte, titre_rect)
+    ecran.blit(message_texte, message_rect)
+    ecran.blit(instructions_texte, instructions_rect)
+    
+    display.flip()
+    
+    # Attendre une action utilisateur
+    en_attente = True
+    while en_attente:
+        for evt in event.get():
+            if evt.type == QUIT:
+                return False
+            if evt.type == KEYDOWN or evt.type == MOUSEBUTTONDOWN:
+                en_attente = False
+    
+    # Restaurer l'écran
+    ecran.blit(ecran_sauvegarde, (0, 0))
+    return True
+
 # Fonction pour afficher une boîte de dialogue de confirmation
 def afficher_confirmation(ecr, message):
     # Sauvegarder l'écran actuel
@@ -458,23 +504,25 @@ def selection_niveau():
                     if scaled_rect.collidepoint(mouse_pos):
                         son_clicmenu.play()
                         if level["available"]:
-                            # Lancer le niveau correspondant
-                            resultat = page_jeu(level["id"])
-                            
-                            if resultat:
-                                # Si le niveau est terminé avec succès, débloquer le suivant
-                                if level["id"] < 8:  # Ne pas dépasser niveau 8
-                                    if debloquer_niveau_suivant(level["id"]):
-                                        print(f"Niveau {level['id']+1} débloqué !")
-                                        newly_unlocked = level["id"] + 1
-                                        unlock_anim_time = time.get_ticks()
+                            # Cas spécial pour le niveau 3
+                            if level["id"] == 3:
+                                afficher_niveau_a_venir(ecr, level["id"])
+                            else:
+                                # Lancer le niveau correspondant
+                                resultat = page_jeu(level["id"])
                                 
-                                # Mettre à jour l'état des niveaux
-                                progression = charger_progression()
-                                niveaux_debloques = progression["niveaux_debloques"]
-                                for lvl in levels:
-                                    lvl["available"] = lvl["id"] in niveaux_debloques
+                                if resultat:
+                                    # Si le niveau est terminé avec succès, débloquer le suivant
+                                    if level["id"] < 8:  # Ne pas dépasser niveau 8
+                                        if debloquer_niveau_suivant(level["id"]):
+                                            print(f"Niveau {level['id']+1} débloqué !")
+                                            newly_unlocked = level["id"] + 1
+                                            unlock_anim_time = time.get_ticks()
+                                    
+                                    # Mettre à jour l'état des niveaux
+                                    progression = charger_progression()
+                                    niveaux_debloques = progression["niveaux_debloques"]
+                                    for lvl in levels:
+                                        lvl["available"] = lvl["id"] in niveaux_debloques
                         else:
                             print(f"{level['text']} non disponible")
-
-    return True

@@ -388,6 +388,7 @@ def page_jeu(niveau):
     final_element_found = False
     final_object_reached = False
     final_object_time = None
+    final_element_time = None  # Nouvel ajout pour le timer de l'élément final
 
 
     # Charger les frames du perso
@@ -662,18 +663,24 @@ def page_jeu(niveau):
                                                     objets.remove(selected_obj)
                                                 if elements[closest_obj["id"]]["DR"] == 0 and closest_obj in objets:
                                                     objets.remove(closest_obj)
-                                                if elfinal is not None and elfinal in element_decouvert:
-                                                    final_element_found = True
-                                                    
-                                                    # Tutoriel: Niveau terminé
-                                                    if tutorial_active and not tutorial_actions_done[6]:
-                                                        tutorial_actions_done[6] = True
-                                                        if tutorial_step == 6:
-                                                            tutorial_step += 1
-                                                            tutorial_fade_in = True
-                                                            tutorial_bg_alpha = 0
-                                                            tutorial_display_time = current_time
-                                                            tutorial_last_interaction = current_time
+                                                
+                                                # MODIFICATION: Vérification améliorée de l'élément final
+                                                if elfinal is not None:
+                                                    if elfinal in element_decouvert:
+                                                        final_element_found = True
+                                                        print(f"Élément final {elfinal} trouvé! Fin du niveau activée.")
+                                                    else:
+                                                        print(f"Élément final: {elfinal}, Éléments découverts: {element_decouvert}")
+                                                
+                                                # Tutoriel: Niveau terminé
+                                                if tutorial_active and not tutorial_actions_done[6]:
+                                                    tutorial_actions_done[6] = True
+                                                    if tutorial_step == 6:
+                                                        tutorial_step += 1
+                                                        tutorial_fade_in = True
+                                                        tutorial_bg_alpha = 0
+                                                        tutorial_display_time = current_time
+                                                        tutorial_last_interaction = current_time
                                                             
                                         except Exception as e:
                                             print(f"Erreur lors de la fusion d'éléments: {e}")
@@ -775,8 +782,14 @@ def page_jeu(niveau):
                         except Exception as e:
                             print(f"Erreur lors de la fusion avec le personnage: {e}")
                 target_obj = None
-                if elfinal is not None and elfinal in element_decouvert:
-                    final_element_found = True
+                
+                # MODIFICATION: Vérification améliorée de l'élément final
+                if elfinal is not None:
+                    if elfinal in element_decouvert:
+                        final_element_found = True
+                        print(f"Élément final {elfinal} trouvé! Fin du niveau activée.")
+                    else:
+                        print(f"Élément final: {elfinal}, Éléments découverts: {element_decouvert}")
 
             # Mise à jour du mouvement et de l'animation des animaux
             for obj in objets:
@@ -916,21 +929,29 @@ def page_jeu(niveau):
                             exclam_y = bubble_y + (small_bubble.get_height() - exclam_text.get_height()) // 2
                             ecr.blit(exclam_text, (exclam_x, exclam_y))
                         if perso_rect.colliderect(obj["rect"]):
-                            large_bubble = transform.scale(bubble_img, (200, 200))
-                            bubble_x_final = obj["rect"].right - large_bubble.get_width() + 200
-                            bubble_y_final = obj["rect"].top - 150
+                            # Bulle plus grande pour le vieux monsieur (ID 31)
+                            if obj["id"] == 31:
+                                large_bubble = transform.scale(bubble_img, (300, 250))  # Bulle plus grande
+                                bubble_x_final = obj["rect"].right - large_bubble.get_width() + 250
+                                bubble_y_final = obj["rect"].top - 190
+                                max_chars = 20  # Plus de caractères par ligne pour le vieux monsieur
+                            else:
+                                large_bubble = transform.scale(bubble_img, (200, 200))
+                                bubble_x_final = obj["rect"].right - large_bubble.get_width() + 200
+                                bubble_y_final = obj["rect"].top - 150
+                                max_chars = 10
+                                
                             ecr.blit(large_bubble, (bubble_x_final, bubble_y_final))
                             mission_text = elements[obj["id"]].get("Mission", "Objectif non défini")
-                            mission_text = wrap_text(mission_text, max_chars=10)
+                            mission_text = wrap_text(mission_text, max_chars=max_chars)
                             lines = mission_text.split("\n")
                             y_offset = 0
                             for line in lines:
                                 text_surface = fnt.render(line, True, (0, 0, 0))
                                 ecr.blit(text_surface, (bubble_x_final + (large_bubble.get_width() - text_surface.get_width()) // 2,
-                                                         bubble_y_final + y_offset + 35))
+                                                        bubble_y_final + y_offset + 35))
                                 y_offset += text_surface.get_height() + 2
                             elements[obj["id"]]["mission_seen"] = True
-
             # Affichage du tutoriel
             if tutorial_active and tutorial_step < len(tutorial_steps):
                 # Gérer l'avancement automatique pour les étapes avec délai
@@ -965,10 +986,24 @@ def page_jeu(niveau):
                 show_tutorial_message()
 
             hover_ency = bouton(ecr, (150, 150, 150), btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
+            
+            # MODIFICATION : Gestion améliorée de la fin du niveau
             if final_object_reached and current_time - final_object_time >= 1000:
                 afficher_victoire_niveau(ecr, niveau, element_final=None)
                 act = False
                 niveau_complete = True
+            # Ajout d'une condition alternative pour la fin du niveau
+            elif final_element_found:
+                # Si on n'a pas encore démarré le timer
+                if final_element_time is None:
+                    final_element_time = current_time
+                    print(f"Élément final trouvé, démarrage du timer: {final_element_time}")
+                # Si le timer est écoulé (3 secondes)
+                elif current_time - final_element_time >= 3000:
+                    print("Timer écoulé, forçage de l'écran de victoire")
+                    afficher_victoire_niveau(ecr, niveau, element_final=None)
+                    act = False
+                    niveau_complete = True
                 
             display.flip()
             clock.tick(60)
