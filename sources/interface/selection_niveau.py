@@ -172,8 +172,8 @@ def selection_niveau():
     levels = [
         {"id": 1, "pos": (lrg//6, htr//4), "text": "Niveau 1", "available": 1 in niveaux_debloques},
         {"id": 2, "pos": (lrg//2 - 120, htr//2 - 50), "text": "Niveau 2", "available": 2 in niveaux_debloques},
-        {"id": 3, "pos": (lrg//2 + 20, htr//4), "text": "Niveau 3", "available": 3 in niveaux_debloques},
-        {"id": 4, "pos": (4*lrg//5, htr//4), "text": "Niveau 4", "available": 4 in niveaux_debloques},
+        {"id": 3, "pos": (lrg//2 + 20, htr//4), "text": "Niveau 3", "available": 3 in niveaux_debloques}, 
+        {"id": 4, "pos": (4*lrg//5, htr//4), "text": "Niveau 4", "available": 4 in niveaux_debloques}, # Position du niveau 4
         {"id": 5, "pos": (2*lrg//3, htr//2), "text": "Niveau 5", "available": 5 in niveaux_debloques},
         {"id": 6, "pos": (lrg//6, 3*htr//5), "text": "Niveau 6", "available": 6 in niveaux_debloques},
         {"id": 7, "pos": (lrg//2, 3*htr//4), "text": "Niveau 7", "available": 7 in niveaux_debloques},
@@ -225,6 +225,13 @@ def selection_niveau():
     while running:
         dt = clock.tick(60) / 1000.0
         current_time = time.get_ticks()
+        
+        # Vérifier si l'animation de déverrouillage est terminée
+        if newly_unlocked is not None:
+            anim_progress = (current_time - unlock_anim_time) / unlock_anim_duration
+            if anim_progress >= 1.0:
+                # Animation terminée, réinitialiser le statut de niveau nouvellement débloqué
+                newly_unlocked = None
         
         try:
             # Charger et adapter l'image de fond
@@ -334,20 +341,20 @@ def selection_niveau():
                     scaled_rect.height
                 )
                 shadow_surface = Surface((shadow_rect.width, shadow_rect.height), SRCALPHA)
-                draw_rect_alpha = lambda surface, color, rect, border_radius=0: draw.rect(surface, color, rect, border_radius=border_radius)
-                draw_rect_alpha(shadow_surface, OMBRE, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15)
-                ecr.blit(shadow_surface, shadow_rect)
+                draw_rect_alpha = lambda surface, color, rect, border_radius=0: draw.rect(surface, color, rect, border_radius=border_radius) # Fonction pour contourner le problème de portée
+                draw_rect_alpha(shadow_surface, OMBRE, Rect(0, 0, shadow_rect.width, shadow_rect.height), border_radius=15) # Ombre
+                ecr.blit(shadow_surface, shadow_rect) # Appliquer l'ombre
                 
                 # Surface du bouton avec coins arrondis
-                button_surface = Surface((scaled_rect.width, scaled_rect.height), SRCALPHA)
-                draw.rect(button_surface, color, Rect(0, 0, scaled_rect.width, scaled_rect.height), border_radius=15)
+                button_surface = Surface((scaled_rect.width, scaled_rect.height), SRCALPHA) # Surface transparente
+                draw.rect(button_surface, color, Rect(0, 0, scaled_rect.width, scaled_rect.height), border_radius=15) # Fond du bouton (avec coins arrondis) 
                 
                 # Bordure (plus visible pour niveau nouvellement débloqué)
                 border_width = 3 if is_newly_unlocked else 2
                 draw.rect(button_surface, border_color, Rect(0, 0, scaled_rect.width, scaled_rect.height), border_width, border_radius=15)
                 
-                # Texte du niveau (mis à l'échelle)
-                text_scale = 1.0 + (level["scale"] - 1.0) * 0.6  # Échelle légèrement atténuée pour le texte
+                # Texte du niveau (mis à l'échelle complète comme le bouton)
+                text_scale = level["scale"]  # Utiliser la même échelle que le bouton
                 font_size = int(38 * text_scale)  # Taille de base 38 avec mise à l'échelle
                 level_text_font = font.Font(None, font_size)
                 text_surf = level_text_font.render(level["text"], True, text_color)
