@@ -431,11 +431,6 @@ def page_jeu(niveau):
         print(f"Erreur lors du chargement de la bulle : {e}")
         bubble_img = Surface((100, 50))
         bubble_img.fill((255,255,255))
-
-    # Titre du niveau
-    niveau_titre_font = font.Font(None, 40)
-    niveau_titre = niveau_titre_font.render(f"Niveau {niveau}", True, (255,255,255))
-    niveau_titre_rect = niveau_titre.get_rect(midtop=(current_width//2, 10))
     
     # Fonction pour afficher les messages du tutoriel
     def show_tutorial_message():
@@ -468,7 +463,6 @@ def page_jeu(niveau):
     while act:
         try:
             ecr.blit(fnd, (0, 0))
-            ecr.blit(niveau_titre, niveau_titre_rect)
             current_time = time.get_ticks()
             
             # Affichage des éléments classiques (non-animés, non-objectifs)
@@ -500,7 +494,7 @@ def page_jeu(niveau):
                                         tutorial_last_interaction = current_time
                                 
                                 game_screen = ecr.copy()
-                                act = menu_parametres(game_screen)
+                                act = menu_parametres(niveau,game_screen)
                 elif evt.type == MOUSEBUTTONDOWN:
                     if element_discovered:
                         element_discovered = False
