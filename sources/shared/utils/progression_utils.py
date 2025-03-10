@@ -1,5 +1,5 @@
 import json
-from user_progression_handler import (
+from shared.utils.user_progression_handler import (
     charger_progression as charger_progression_utilisateur,
     sauvegarder_progression as sauvegarder_progression_utilisateur,
     debloquer_niveau_suivant as debloquer_niveau_suivateur,
