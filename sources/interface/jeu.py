@@ -617,14 +617,18 @@ def page_jeu(niveau):
                                             element_discovered = cid
                                             element_decouvert.append(cid)
                                             
-                                            # Sauvegarder l'élément découvert dans la progression
-                                            progression = charger_progression()
-                                            if cid not in progression.get("elements_decouverts", []):
-                                                elements_decouverts = progression.get("elements_decouverts", [])
-                                                elements_decouverts.append(cid)
-                                                progression["elements_decouverts"] = elements_decouverts
-                                                sauvegarder_progression(progression)
-                                            
+                                            # Si ce n'est pas l'élément final, sauvegarder immédiatement
+                                            if cid != elfinal:
+                                                progression = charger_progression()
+                                                if cid not in progression.get("elements_decouverts", []):
+                                                    elements_decouverts = progression.get("elements_decouverts", [])
+                                                    elements_decouverts.append(cid)
+                                                    progression["elements_decouverts"] = elements_decouverts
+                                                    sauvegarder_progression(progression)
+                                            else:
+                                                # Pour l'élément final, ne pas le sauvegarder maintenant
+                                                final_element_found = True
+
                                             # Tutoriel: Fusion réussie
                                             if tutorial_active and not tutorial_actions_done[3]:
                                                 tutorial_actions_done[3] = True
@@ -986,24 +990,16 @@ def page_jeu(niveau):
                 show_tutorial_message()
 
             hover_ency = bouton(ecr, (150, 150, 150), btn_ency, "Encyclopédie", son_survol, son_clicmenu, r_jeu, surbrillance=BLC)
-            
-            # MODIFICATION : Gestion améliorée de la fin du niveau
+                                
             if final_object_reached and current_time - final_object_time >= 1000:
+                # Sauvegarder l'élément final dans la progression, s'il n'est pas déjà enregistré
+                progression = charger_progression()
+                if elfinal not in progression.get("elements_decouverts", []):
+                    progression["elements_decouverts"].append(elfinal)
+                    sauvegarder_progression(progression)
                 afficher_victoire_niveau(ecr, niveau, element_final=None)
                 act = False
                 niveau_complete = True
-            # Ajout d'une condition alternative pour la fin du niveau
-            elif final_element_found:
-                # Si on n'a pas encore démarré le timer
-                if final_element_time is None:
-                    final_element_time = current_time
-                    print(f"Élément final trouvé, démarrage du timer: {final_element_time}")
-                # Si le timer est écoulé (3 secondes)
-                elif current_time - final_element_time >= 3000:
-                    print("Timer écoulé, forçage de l'écran de victoire")
-                    afficher_victoire_niveau(ecr, niveau, element_final=None)
-                    act = False
-                    niveau_complete = True
                 
             display.flip()
             clock.tick(60)
