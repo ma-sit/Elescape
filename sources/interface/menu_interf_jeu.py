@@ -5,7 +5,7 @@ from shared.components.color_config import *
 from interface.menu import bouton
 from interface.parametres import page_parametres, page_parametres_superpose, TOUCHES_DEFAUT
 
-def menu_parametres(background_image=None):
+def menu_parametres(niveau,background_image=None):
     """Menu des paramètres qui s'affiche par-dessus le niveau"""
     # Chargement des touches
     try:
@@ -82,7 +82,7 @@ def menu_parametres(background_image=None):
         draw.rect(ecr, MENU_JEU_BORDER, panel, 2, border_radius=20)
         
         # Titre
-        titre = font.Font(None, 50).render("Pause", True, MENU_JEU_TEXT)
+        titre = font.Font(None, 50).render(f"niveau {niveau}", True, MENU_JEU_TEXT)
         titre_rect = titre.get_rect(center=(menu_x + menu_width//2, menu_y + 50))
         ecr.blit(titre, titre_rect)
         
