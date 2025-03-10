@@ -179,9 +179,6 @@ def selection_niveau():
     subtitle_font = font.Font(None, 40)
     level_font = font.Font(None, 40)
     
-    title = title_font.render("Vitanox", True, NOM_JEU)
-    subtitle = subtitle_font.render("Sélection du niveau", True, TEXTE_INTERACTIF)
-    
     title_rect = title.get_rect(center=(lrg//2, htr//8))
     subtitle_rect = subtitle.get_rect(center=(lrg//2, htr//8 + 80))
     
