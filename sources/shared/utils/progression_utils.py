@@ -1,49 +1,49 @@
 import json
+from user_progression_handler import (
+    charger_progression as charger_progression_utilisateur,
+    sauvegarder_progression as sauvegarder_progression_utilisateur,
+    debloquer_niveau_suivant as debloquer_niveau_suivateur,
+    reinitialiser_progression as reinitialiser_progression_utilisateur,
+    ajouter_elements_decouverts as ajouter_elements_decouverts_utilisateur
+)
+
+"""
+Ce module sert d'adaptateur pour la compatibilité avec le code existant.
+Il redirige les appels de fonctions vers le nouveau système de gestion des progressions 
+par utilisateur.
+"""
 
 # Fonction pour charger la progression des niveaux
 def charger_progression():
-    try:
-        with open("data/progression.json", "r") as f:
-            progression = json.load(f)
-            # Assurer la compatibilité avec les anciennes sauvegardes
-            if "elements_decouverts" not in progression:
-                progression["elements_decouverts"] = []
-            return progression
-    except:
-        # Si le fichier n'existe pas, créer une progression par défaut
-        progression = {"niveaux_debloques": [1], "elements_decouverts": []}
-        sauvegarder_progression(progression)
-        return progression
+    """
+    Charge la progression depuis le système de gestion par utilisateur.
+    """
+    return charger_progression_utilisateur()
 
 # Fonction pour sauvegarder la progression
 def sauvegarder_progression(progression):
-    try:
-        with open("data/progression.json", "w") as f:
-            json.dump(progression, f)
-        return True
-    except:
-        print("Erreur lors de la sauvegarde de la progression")
-        return False
+    """
+    Sauvegarde la progression dans le système de gestion par utilisateur.
+    """
+    return sauvegarder_progression_utilisateur(progression)
 
 # Fonction pour débloquer le niveau suivant
 def debloquer_niveau_suivant(niveau_actuel):
-    progression = charger_progression()
-    if niveau_actuel + 1 not in progression["niveaux_debloques"]:
-        progression["niveaux_debloques"].append(niveau_actuel + 1)
-        sauvegarder_progression(progression)
-        return True
-    return False
+    """
+    Débloque le niveau suivant dans le système de gestion par utilisateur.
+    """
+    return debloquer_niveau_suivateur(niveau_actuel)
 
 # Fonction pour réinitialiser la progression
 def reinitialiser_progression():
-    progression = {"niveaux_debloques": [1], "elements_decouverts": []}
-    return sauvegarder_progression(progression)
+    """
+    Réinitialise la progression dans le système de gestion par utilisateur.
+    """
+    return reinitialiser_progression_utilisateur()
 
 # Fonction pour ajouter des éléments découverts à la progression
 def ajouter_elements_decouverts(elements):
-    progression = charger_progression()
-    # Convertir en ensemble pour éliminer les doublons
-    elements_actuels = set(progression.get("elements_decouverts", []))
-    elements_actuels.update(elements)
-    progression["elements_decouverts"] = list(elements_actuels)
-    return sauvegarder_progression(progression)
+    """
+    Ajoute des éléments découverts à la progression dans le système de gestion par utilisateur.
+    """
+    return ajouter_elements_decouverts_utilisateur(elements)
