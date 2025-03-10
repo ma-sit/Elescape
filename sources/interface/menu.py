@@ -65,6 +65,49 @@ def dessiner_menu(ecr, image):
     rect_titre = txt_titre.get_rect(center=(lrg // 2, htr // 4))
     ecr.blit(txt_titre, rect_titre)
     
+    # Description du jeu sous les boutons dans un rectangle semi-transparent
+    description = [
+        "Bienvenue dans Vitanox, un jeu de découverte et de création !",
+        "Combinez des éléments, explorez des environnements divers et variés,",
+        "et découvrez plus de 30 objets uniques dans plusieurs niveaux captivants."
+    ]
+    
+    police_description = font.Font(None, 30)
+    espacement = 30  # Espacement entre les lignes
+    
+    # Calculer la hauteur totale nécessaire pour le texte
+    hauteur_texte = len(description) * espacement + 40  # 40px de padding (20px en haut et en bas)
+    largeur_rectangle = 800  # Largeur du rectangle
+    
+    # Créer le rectangle de fond
+    rect_fond = Rect(
+        (lrg - largeur_rectangle) // 2,  # Centré horizontalement
+        htr // 2 + 220,                  # Position Y sous les boutons
+        largeur_rectangle,
+        hauteur_texte
+    )
+    
+    # Dessiner le rectangle semi-transparent avec coins arrondis
+    fond_description = Surface((largeur_rectangle, hauteur_texte), SRCALPHA)
+    fond_description.fill((30, 30, 40, 180))  # Couleur sombre semi-transparente
+    
+    # Appliquer des coins arrondis au rectangle
+    draw.rect(fond_description, (30, 30, 40, 180), Rect(0, 0, largeur_rectangle, hauteur_texte), border_radius=30)
+    
+    # Ajouter une bordure subtile
+    draw.rect(fond_description, (50, 50, 60, 200), Rect(0, 0, largeur_rectangle, hauteur_texte), width=2, border_radius=30)
+    
+    # Afficher le rectangle de fond
+    ecr.blit(fond_description, rect_fond)
+    
+    # Dessiner le texte
+    y_position = rect_fond.y + 20  # 20px de marge en haut
+    
+    for ligne in description:
+        texte_description = police_description.render(ligne, True, TEXTE)
+        rect_description = texte_description.get_rect(center=(lrg // 2, y_position + police_description.get_height() // 2))
+        ecr.blit(texte_description, rect_description)
+        y_position += espacement  # Déplace la position Y pour la ligne suivante
     
 
 def plein_ecran():
