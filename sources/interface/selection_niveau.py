@@ -179,8 +179,9 @@ def selection_niveau():
     subtitle_font = font.Font(None, 40)
     level_font = font.Font(None, 40)
     
+    title = title_font.render("Vitanox", True, NOM_JEU)
+    
     title_rect = title.get_rect(center=(lrg//2, htr//8))
-    subtitle_rect = subtitle.get_rect(center=(lrg//2, htr//8 + 80))
     
     # Définition des niveaux avec leurs positions
     levels = [
@@ -275,7 +276,6 @@ def selection_niveau():
         
         # Afficher le titre et sous-titre
         ecr.blit(title, title_rect)
-        ecr.blit(subtitle, subtitle_rect)
         
         # Mettre à jour l'état de survol et l'échelle de chaque niveau
         mouse_pos = mouse.get_pos()
