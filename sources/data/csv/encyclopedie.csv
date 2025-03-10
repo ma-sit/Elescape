@@ -30,5 +30,6 @@ ID;Nom;Creations;DR;Image;Type;Mission
 28;pierre;30;0;data/images/elements/pierre.png;classique;
 29;viande;;0;data/images/elements/viande.png;classique;
 30;abreuvoir;;0;data/images/elements/abreuvoir.png;classique;
-31;vieux monsieur;;1;data/images/autres/niv1.png;objectif;J'ai froid, peux-tu me faire un feu de camp?
-32;Panneau d'information;;1;data/images/autres/book-open-text.png;objectif;Ce niveau arrive prochainement
+31;mangeoire;;0;data/images/elements/mangeoire.png;classique;
+32;vieux monsieur;;1;data/images/autres/niv1.png;objectif;J'ai froid, peux-tu me faire un feu de camp?
+33;Panneau d'information;;1;data/images/autres/book-open-text.png;objectif;Ce niveau arrive prochainement
