@@ -578,25 +578,6 @@ def page_jeu(niveau):
         # L'opacité du texte suit celle du fond
         msg_surf.set_alpha(int(255 * tutorial_bg_alpha / 180))
         ecr.blit(msg_surf, msg_rect)
-        
-        # Si c'est une étape qui nécessite une action et qu'elle n'a pas été faite depuis longtemps,
-        # faire une animation de pulsation pour attirer l'attention
-        if not tutorial_auto_advance[tutorial_step] and not tutorial_actions_done[tutorial_step]:
-            time_since_last = current_time - tutorial_last_interaction
-            if time_since_last > 8000: # Après 8 secondes sans interaction
-                pulse_effect = abs(sin(current_time / 500)) * 0.2 + 0.9 # Effet de pulsation entre 0.9 et 1.1
-                
-                # Dessiner un indicateur supplémentaire (par exemple une flèche ou une main)
-                # selon le type d'action attendue
-                if tutorial_step == 1: # Clic droit
-                    # Indicateur pour le clic droit / déplacement
-                    indicator = tutorial_font.render("→", True, (255, 215, 0)) # Flèche dorée
-                    ind_rect = indicator.get_rect(center=(current_width // 2, panel_y - 25))
-                    indicator = transform.scale(indicator, 
-                                            (int(indicator.get_width() * pulse_effect),
-                                                int(indicator.get_height() * pulse_effect)))
-                    ind_rect = indicator.get_rect(center=ind_rect.center)
-                    ecr.blit(indicator, ind_rect)
 
     while act:
         try:
