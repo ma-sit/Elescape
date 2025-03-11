@@ -92,4 +92,4 @@ ENCYC_CATEGORY_TOOL = (100, 100, 100)  # Catégorie 4
 # Écrans de victoire et fin
 VICTOIRE_TEXT = (255, 255, 255)  # Texte de victoire
 VICTOIRE_TEXT_SECOND = (200, 200, 200)  # Texte secondaire
-VICTOIRE_HIGHLIGHT = (170, 170, 170)  # Surbrillance (remplacé doré par gris clair)
+VICTOIRE_HIGHLIGHT = (242, 242, 0)  # Surbrillance

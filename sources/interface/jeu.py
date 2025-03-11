@@ -25,7 +25,7 @@ elements = {}
 # Séquences d'animation pour les états extra (pour les animaux)
 EXTRA_ANIM_SEQUENCES = {
     "sleep": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-    "eat":   [0, 1, 2, 3, 2, 3, 2, 3, 2, 1, 0]
+    "eat": [0, 1, 2, 3, 2, 3, 2, 3, 2, 1, 0]
 }
 
 # Fonction pour déterminer la direction (cardinale) la plus proche d'un vecteur (dx, dy)
@@ -101,7 +101,7 @@ try:
                 "Creations": [int(x) for x in row.get("Creations", "").split(',') if x],
                 "DR": int(row.get("DR", "0") or "0"),
                 "Image": row.get("Image", ""),
-                "Type": row.get("Type", "classique"),  # "animal", "objectif" ou "classique"
+                "Type": row.get("Type", "classique"), # "animal", "objectif" ou "classique"
                 "Mission": row.get("Mission", "")
             }
             if elements[int(elem_id)]["Type"].lower() == "objectif":
@@ -280,6 +280,107 @@ def creer_objet(new_id, img, target_obj, objets):
         "rect": img.get_rect(center=(new_x, new_y))
     }
 
+# Classe du tutoriel amélioré
+class TutorielAmeliore:
+    """
+    Classe pour gérer le tutoriel amélioré du jeu Vitanox avec des effets visuels
+    et une progression plus interactive.
+    """
+    def __init__(self, screen_width, screen_height, scale_factor=1.0):
+        # Dimensions de l'écran
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.scale = scale_factor
+        
+        # Étapes du tutoriel
+        self.etapes = [
+            {
+                "texte": "Bienvenue sur Vitanox !",
+                "auto_avance": True,
+                "delai": 2000,
+                "action_requise": False,
+                "indicateur": None,
+                "accompli": False
+            },
+            {
+                "texte": "Clique droit n'importe où pour déplacer ton personnage",
+                "auto_avance": False,
+                "action_requise": True,
+                "indicateur": "deplacement",
+                "accompli": False
+            },
+            {
+                "texte": "Clique gauche sur un objet pour le sélectionner",
+                "auto_avance": False,
+                "action_requise": True,
+                "indicateur": "selection",
+                "accompli": False
+            },
+            {
+                "texte": "Déplace-le vers un autre objet compatible pour les fusionner",
+                "auto_avance": False,
+                "action_requise": True,
+                "indicateur": "fusion",
+                "accompli": False
+            },
+            {
+                "texte": "Consulte l'encyclopédie pour voir les éléments découverts",
+                "auto_avance": False,
+                "action_requise": True,
+                "indicateur": "encyclopedie",
+                "accompli": False
+            },
+            {
+                "texte": "Appuie sur Echap pour ouvrir le menu",
+                "auto_avance": False,
+                "action_requise": True,
+                "indicateur": "menu",
+                "accompli": False
+            },
+            {
+                "texte": "Essaie de découvrir l'élément qui termine le niveau !",
+                "auto_avance": True,
+                "delai": 3000,
+                "action_requise": False,
+                "indicateur": None,
+                "accompli": False
+            },
+            {
+                "texte": "Maintenant, à toi de jouer !",
+                "auto_avance": True,
+                "delai": 3000,
+                "action_requise": False,
+                "indicateur": None,
+                "accompli": False
+            }
+        ]
+        
+        # Variables d'état
+        self.etape_courante = 0
+        self.actif = True
+        self.temps_affichage = 0
+        self.temps_derniere_interaction = 0
+        self.alpha_fond = 0
+        self.fondu_entrant = True
+        self.temps_pulsation = 0
+        self.police = font.Font(None, int(30 * self.scale))
+        
+        # Variables pour les indicateurs visuels
+        self.indicateur_alpha = 0
+        self.indicateur_taille = 1.0
+        self.temps_indicateur = 0
+        
+        # Création des images pour les indicateurs
+        self.img_curseur_main = self.creer_curseur_main_defaut()
+        self.img_curseur_clic = self.creer_curseur_clic_defaut()
+        self.img_fleche = self.creer_fleche_defaut()
+        self.img_cercle = self.creer_cercle_defaut()
+    
+    def creer_curseur_main_defaut(self):
+        """Crée une image de curseur main par défaut"""
+        surf = Surface((32, 32), SRCALPHA)
+        draw
+        
 def page_jeu(niveau):
     global global_volume_general, global_volume_musique, global_volume_sfx
     touches = charger_touches()
@@ -439,8 +540,19 @@ def page_jeu(niveau):
             
         current_msg = tutorial_steps[tutorial_step]
         
-        # Créer une surface semi-transparente pour le fond du message
-        tutorial_bg = Surface((current_width, 60), SRCALPHA)
+        # Calcul des dimensions du panneau de tutoriel
+        padding_horizontal = 40
+        padding_vertical = 20
+        msg_surf = tutorial_font.render(current_msg, True, (255, 255, 255))
+        panel_width = msg_surf.get_width() + padding_horizontal * 2
+        panel_height = 60
+        
+        # Position du panneau (centré horizontalement, plus haut sur l'écran)
+        panel_x = (current_width - panel_width) // 2
+        panel_y = current_height - 120 # Position plus haute que l'original
+        
+        # Créer une surface semi-transparente pour le fond du message avec coins arrondis
+        tutorial_bg = Surface((panel_width, panel_height), SRCALPHA)
         
         # Calculer l'alpha du fond (animation de fondu)
         nonlocal tutorial_bg_alpha
@@ -448,17 +560,43 @@ def page_jeu(niveau):
             tutorial_bg_alpha = min(tutorial_bg_alpha + 10, 180)
         else:
             tutorial_bg_alpha = max(tutorial_bg_alpha - 10, 0)
-            
-        tutorial_bg.fill((0, 0, 0, tutorial_bg_alpha))
-        ecr.blit(tutorial_bg, (0, current_height - 60))
+        
+        # Dessiner le rectangle arrondi
+        draw.rect(tutorial_bg, (0, 0, 0, tutorial_bg_alpha), Rect(0, 0, panel_width, panel_height), border_radius=15)
+        
+        # Ajouter une bordure subtile
+        if tutorial_bg_alpha > 50:
+            border_alpha = min(255, int(tutorial_bg_alpha * 1.2))
+            draw.rect(tutorial_bg, (80, 80, 100, border_alpha), Rect(0, 0, panel_width, panel_height), width=2, border_radius=15)
+        
+        # Positionner et afficher le fond
+        ecr.blit(tutorial_bg, (panel_x, panel_y))
         
         # Afficher le texte du tutoriel
-        msg_surf = tutorial_font.render(current_msg, True, (255, 255, 255))
-        msg_rect = msg_surf.get_rect(center=(current_width//2, current_height - 30))
+        msg_rect = msg_surf.get_rect(center=(panel_x + panel_width // 2, panel_y + panel_height // 2))
         
         # L'opacité du texte suit celle du fond
         msg_surf.set_alpha(int(255 * tutorial_bg_alpha / 180))
         ecr.blit(msg_surf, msg_rect)
+        
+        # Si c'est une étape qui nécessite une action et qu'elle n'a pas été faite depuis longtemps,
+        # faire une animation de pulsation pour attirer l'attention
+        if not tutorial_auto_advance[tutorial_step] and not tutorial_actions_done[tutorial_step]:
+            time_since_last = current_time - tutorial_last_interaction
+            if time_since_last > 8000: # Après 8 secondes sans interaction
+                pulse_effect = abs(sin(current_time / 500)) * 0.2 + 0.9 # Effet de pulsation entre 0.9 et 1.1
+                
+                # Dessiner un indicateur supplémentaire (par exemple une flèche ou une main)
+                # selon le type d'action attendue
+                if tutorial_step == 1: # Clic droit
+                    # Indicateur pour le clic droit / déplacement
+                    indicator = tutorial_font.render("→", True, (255, 215, 0)) # Flèche dorée
+                    ind_rect = indicator.get_rect(center=(current_width // 2, panel_y - 25))
+                    indicator = transform.scale(indicator, 
+                                            (int(indicator.get_width() * pulse_effect),
+                                                int(indicator.get_height() * pulse_effect)))
+                    ind_rect = indicator.get_rect(center=ind_rect.center)
+                    ecr.blit(indicator, ind_rect)
 
     while act:
         try:
