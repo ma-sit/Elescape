@@ -77,9 +77,19 @@ def charger_touches():
     try:
         with open("data/touches.json", "r") as f:
             touches = json.load(f)
-        for key in TOUCHES_DEFAUT:
+        touches_modifiees = False
+        for key, default_value in TOUCHES_DEFAUT.items():
             if key not in touches:
-                touches[key] = TOUCHES_DEFAUT[key]
+                print(f"Touche '{key}' manquante, utilisation de la valeur par défaut")
+                touches[key] = default_value
+                touches_modifiees = True
+        if touches_modifiees:
+            try:
+                with open("data/touches.json", "w") as f:
+                    json.dump(touches, f)
+                print("Fichier touches.json mis à jour avec les valeurs par défaut")
+            except Exception as e:
+                print(f"Impossible de sauvegarder le fichier touches.json: {e}")
         return touches
     except Exception as e:
         print(f"Erreur lors du chargement des touches: {e}")
@@ -486,7 +496,7 @@ def page_jeu(niveau):
                     ecr.blit(obj["image"], (obj["rect"].x, obj["rect"].y))
                     if "enlarge_start" in obj:
                         if current_time - obj["enlarge_start"] > 100:
-                            obj["image"] = obj["original_image"]
+                            obj["image"] = obj["original_image"].copy()
                             obj["rect"] = obj["original_image"].get_rect(center=obj["rect"].center)
                             del obj["enlarge_start"]
             
@@ -511,7 +521,10 @@ def page_jeu(niveau):
                     if element_discovered:
                         element_discovered = False
                     elif evt.button == 1:
-                        if btn_ency["rect"].collidepoint(evt.pos):
+                        if niveau == 1 and hint_button_visible and hint_button["rect"].collidepoint(evt.pos):
+                            son_survol.play()
+                            hint_active = not hint_active
+                        elif btn_ency["rect"].collidepoint(evt.pos):
                             son_survol.play()
                             if tutorial_active and not tutorial_actions_done[4]:
                                 tutorial_actions_done[4] = True
@@ -546,8 +559,6 @@ def page_jeu(niveau):
                                     else:
                                         if "original_image" in obj:
                                             if "burn_level" in obj and obj["burn_level"] > 0:
-                                                if "burned_image" not in obj:
-                                                    obj["burned_image"] = assombrir_image(obj["original_image"], obj["burn_level"])
                                                 enlarged_img = transform.scale(obj["burned_image"], (int(obj["burned_image"].get_width() * 1.1), int(obj["burned_image"].get_height() * 1.1))).convert_alpha()
                                             else:
                                                 enlarged_img = transform.scale(obj["original_image"], (int(obj["original_image"].get_width() * 1.1), int(obj["original_image"].get_height() * 1.1))).convert_alpha()
@@ -583,8 +594,6 @@ def page_jeu(niveau):
                                 else:
                                     center = obj["rect"].center
                                     if "burn_level" in obj and obj["burn_level"] > 0:
-                                        if "burned_image" not in obj:
-                                            obj["burned_image"] = assombrir_image(obj["original_image"], obj["burn_level"])
                                         enlarged_img = transform.scale(obj["burned_image"], (int(obj["burned_image"].get_width() * 1.1), int(obj["burned_image"].get_height() * 1.1))).convert_alpha()
                                     else:
                                         enlarged_img = transform.scale(obj["original_image"], (int(obj["original_image"].get_width() * 1.1), int(obj["original_image"].get_height() * 1.1))).convert_alpha()
@@ -597,8 +606,6 @@ def page_jeu(niveau):
                             center = selected_obj["rect"].center
                             if not selected_obj.get("is_animal", False) and "original_image" in selected_obj:
                                 if "burn_level" in selected_obj and selected_obj["burn_level"] > 0:
-                                    if "burned_image" not in selected_obj:
-                                        selected_obj["burned_image"] = assombrir_image(selected_obj["original_image"], selected_obj["burn_level"])
                                     selected_obj["image"] = selected_obj["burned_image"]
                                 else:
                                     selected_obj["image"] = selected_obj["original_image"]
@@ -719,8 +726,6 @@ def page_jeu(niveau):
                                 target_obj["state"] = "idle"
                             else:
                                 if "burn_level" in target_obj and target_obj["burn_level"] > 0:
-                                    if "burned_image" not in target_obj:
-                                        target_obj["burned_image"] = assombrir_image(target_obj["original_image"], target_obj["burn_level"])
                                     target_obj["image"] = target_obj["burned_image"]
                                 else:
                                     target_obj["image"] = target_obj["original_image"]
