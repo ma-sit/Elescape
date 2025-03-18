@@ -71,18 +71,41 @@ while act:
                 elif btn_cfg["rect"].collidepoint(evt.pos):
                     son_clicmenu.play()
                     try:
-                        # Capture l'écran actuel pour l'utiliser comme arrière-plan
                         current_screen = ecr.copy()
-                        # Utilise la version superposée des paramètres en passant l'écran actuel
                         param_result = page_parametres_superpose(current_screen)
-                        # Si page_parametres_superpose() retourne False, on quitte l'application
                         if not param_result:
                             act = False
                     except Exception as e:
                         print(f"Erreur lors de l'accès aux paramètres: {e}")
+                elif btn_profil["rect"].collidepoint(evt.pos):
+                    son_clicmenu.play()
+                    try:
+                        from interface.profil_utilisateur import profil_utilisateur
+                        # Capture l'écran actuel pour l'utiliser comme arrière-plan
+                        current_screen = ecr.copy()
+                        # Utilise la version superposée des profils
+                        profil_result = profil_utilisateur(current_screen)
+                        # Si profil_utilisateur() retourne False, on quitte l'application
+                        if not profil_result:
+                            act = False
+                    except Exception as e:
+                        print(f"Erreur lors de l'accès au profil: {e}")
                 elif btn_fin["rect"].collidepoint(evt.pos):
                     son_clicmenu.play()
                     act = False
+            elif btn_profil["rect"].collidepoint(evt.pos):
+                son_clicmenu.play()
+                try:
+                    from interface.profil_utilisateur import profil_utilisateur
+                    # Capture l'écran actuel pour l'utiliser comme arrière-plan
+                    current_screen = ecr.copy()
+                    # Affiche l'interface du profil
+                    profil_result = profil_utilisateur(current_screen)
+                    # Si profil_utilisateur() retourne False, on quitte l'application
+                    if not profil_result:
+                        act = False
+                except Exception as e:
+                    print(f"Erreur lors de l'accès au profil: {e}")
             if evt.type == KEYDOWN:
                 # Vérifier si la touche est dans notre configuration
                 for action, key_code in touches.items():

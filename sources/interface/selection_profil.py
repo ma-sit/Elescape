@@ -13,7 +13,6 @@ from shared.components.color_config import *
 # Chemins des fichiers
 DATA_DIR = "data"
 USER_DATA_DIR = os.path.join(DATA_DIR, "users")
-DEVICE_ID_FILE = os.path.join(DATA_DIR, "device_id.json")
 PROFILES_FILE = os.path.join(DATA_DIR, "profiles.json")
 
 def load_or_create_profiles():
@@ -24,19 +23,15 @@ def load_or_create_profiles():
         # Créer le répertoire data si nécessaire
         os.makedirs(DATA_DIR, exist_ok=True)
         
-        # Créer le profil par défaut (utilisateur actuel)
-        try:
-            with open(DEVICE_ID_FILE, "r") as f:
-                data = json.load(f)
-                current_device_id = data.get("device_id")
-        except:
-            current_device_id = None
+        # Créer un profil par défaut avec ID unique
+        import uuid
+        default_profile_id = str(uuid.uuid4())
             
         profiles = {
-            "active_profile": current_device_id,
+            "active_profile": default_profile_id,
             "profiles": [
                 {
-                    "id": current_device_id,
+                    "id": default_profile_id,
                     "name": "Joueur 1",
                     "created_at": time.get_ticks(),
                     "last_used": time.get_ticks()
@@ -46,6 +41,19 @@ def load_or_create_profiles():
         
         with open(PROFILES_FILE, "w") as f:
             json.dump(profiles, f)
+        
+        # Créer le dossier et la progression pour le profil par défaut
+        user_path = os.path.join(USER_DATA_DIR, default_profile_id)
+        os.makedirs(user_path, exist_ok=True)
+        
+        progression_file = os.path.join(user_path, "progression.json")
+        progression = {"niveaux_debloques": [1], "elements_decouverts": []}
+        
+        try:
+            with open(progression_file, "w") as f:
+                json.dump(progression, f)
+        except Exception as e:
+            print(f"Erreur lors de la création du fichier de progression: {e}")
         
         return profiles
     
@@ -71,13 +79,9 @@ def save_profiles(profiles):
 
 def set_active_profile(profile_id):
     """
-    Définit le profil actif et met à jour le fichier device_id.json.
+    Définit le profil actif et met à jour le fichier de profils.
     """
-    # Mettre à jour le fichier device_id.json
     try:
-        with open(DEVICE_ID_FILE, "w") as f:
-            json.dump({"device_id": profile_id}, f)
-        
         # Mettre à jour le fichier de profils
         profiles = load_or_create_profiles()
         profiles["active_profile"] = profile_id
@@ -146,7 +150,7 @@ def delete_profile(profile_id):
     # Si le profil supprimé était le profil actif, en définir un nouveau
     if profiles["active_profile"] == profile_id:
         profiles["active_profile"] = profiles["profiles"][0]["id"]
-        # Mettre à jour device_id.json
+        # Utilisez uniquement set_active_profile sans référence à device_id.json
         set_active_profile(profiles["active_profile"])
     
     save_profiles(profiles)
@@ -650,8 +654,45 @@ def selection_profil():
                             delete_btn_rect = Rect(btn_rect.right - 40, btn_rect.centery - 15, 30, 30)
                             if delete_btn_rect.collidepoint(evt.pos):
                                 son_clicmenu.play()
-                                deleting_profile = profile["id"]
-                                break
+                                # Vérifier s'il s'agit du dernier profil
+                                if len(profiles["profiles"]) <= 1:
+                                    # Message d'avertissement
+                                    warning_font = font.Font(None, 28)
+                                    warning_message = "Impossible de supprimer le dernier profil."
+                                    warning_message2 = "Veuillez créer un autre profil avant de supprimer celui-ci."
+                                    
+                                    # Créer une surface pour le message d'avertissement
+                                    warning_width, warning_height = 500, 120
+                                    warning_bg = Surface((warning_width, warning_height), SRCALPHA)
+                                    warning_bg.fill((20, 20, 30, 230))
+                                    warning_rect = Rect((lrg - warning_width) // 2, 
+                                                    (htr - warning_height) // 2, 
+                                                    warning_width, warning_height)
+                                    
+                                    # Dessiner le fond et la bordure
+                                    draw.rect(ecr, (0, 0, 0, 230), warning_rect, border_radius=15)
+                                    draw.rect(ecr, PARAM_PANEL_BORDER, warning_rect, 2, border_radius=15)
+                                    
+                                    # Texte du message
+                                    text1 = warning_font.render(warning_message, True, BOUTON_REINIT_FOND)
+                                    text2 = warning_font.render(warning_message2, True, BOUTON_REINIT_FOND)
+                                    text_rect1 = text1.get_rect(center=(lrg // 2, warning_rect.centery - 20))
+                                    text_rect2 = text2.get_rect(center=(lrg // 2, warning_rect.centery + 20))
+                                    ecr.blit(text1, text_rect1)
+                                    ecr.blit(text2, text_rect2)
+                                    
+                                    display.flip()
+                                    
+                                    # Attendre que l'utilisateur clique pour fermer le message
+                                    waiting = True
+                                    while waiting:
+                                        for wait_evt in event.get():
+                                            if wait_evt.type == MOUSEBUTTONDOWN or wait_evt.type == KEYDOWN:
+                                                waiting = False
+                                            if wait_evt.type == QUIT:
+                                                return False
+                                else:
+                                    deleting_profile = profile["id"]
                             
                             # Clic sur le profil (pour l'activer)
                             elif btn_rect.collidepoint(evt.pos) and not delete_btn_rect.collidepoint(evt.pos):

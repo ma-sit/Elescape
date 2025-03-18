@@ -1,7 +1,7 @@
 from shared.utils.user_account_manager import (
     get_current_user,
-    load_progression as load_user_progression,
-    save_progression as save_user_progression,
+    load_progression,
+    save_progression,
     initialize_system
 )
 
@@ -19,7 +19,7 @@ def charger_progression():
         return {"niveaux_debloques": [1], "elements_decouverts": []}
     
     # Charger la progression de l'utilisateur
-    return load_user_progression(username)
+    return load_progression(username)
 
 def sauvegarder_progression(progression):
     """
@@ -32,7 +32,7 @@ def sauvegarder_progression(progression):
         return False
     
     # Sauvegarder la progression pour l'utilisateur actuel
-    return save_user_progression(username, progression)
+    return save_progression(username, progression)
 
 def debloquer_niveau_suivant(niveau_actuel):
     """

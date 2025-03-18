@@ -108,12 +108,14 @@ def save_progression(username: str, progression: Dict[str, Any]) -> bool:
         print(f"Error saving progression for user {username}: {e}")
         return False
 
-def set_current_user(username: str) -> bool:
-    """Set the current active user and update their last login time."""
+def set_current_user(username):
+    """
+    Définit l'utilisateur actif dans accounts.json.
+    """
     if not username_exists(username):
         return False
     
-    # Update last login time
+    # Mettre à jour le fichier accounts.json
     with open(ACCOUNTS_FILE, "r") as f:
         accounts = json.load(f)
     
