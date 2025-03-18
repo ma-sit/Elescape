@@ -6,7 +6,7 @@ from interface.menu import bouton, dessiner_menu, plein_ecran
 from interface.selection_niveau import selection_niveau
 from interface.parametres import page_parametres, page_parametres_superpose, TOUCHES_DEFAUT
 from interface.loading_screen import loading_screen  # Import de l'écran de chargement
-from interface.login import afficher_login  # Import de l'écran de connexion
+from interface.selection_profil import selection_profil  # Import de la sélection de profil
 
 # Initialisation
 try:
@@ -35,12 +35,12 @@ except Exception as e:
     except:
         print("Impossible de sauvegarder le fichier touches.json par défaut")
 
-# Affichage de l'écran de chargement d'abord
+# Affichage de l'écran de chargement
 if not loading_screen():
     sys.exit(0)
 
-# Puis affichage de l'écran de connexion
-if not afficher_login():
+# Affichage de la sélection de profil
+if not selection_profil():
     sys.exit(0)
 
 # Chargement fond menu
@@ -80,19 +80,6 @@ while act:
                             act = False
                     except Exception as e:
                         print(f"Erreur lors de l'accès aux paramètres: {e}")
-                elif btn_profil["rect"].collidepoint(evt.pos):
-                    son_clicmenu.play()
-                    try:
-                        # Capture l'écran actuel pour l'utiliser comme arrière-plan
-                        current_screen = ecr.copy()
-                        # Afficher le profil utilisateur
-                        from interface.profil_utilisateur import profil_utilisateur
-                        profil_result = profil_utilisateur(current_screen)
-                        # Si profil_utilisateur() retourne False, on quitte l'application
-                        if not profil_result:
-                            act = False
-                    except Exception as e:
-                        print(f"Erreur lors de l'accès au profil utilisateur: {e}")
                 elif btn_fin["rect"].collidepoint(evt.pos):
                     son_clicmenu.play()
                     act = False
