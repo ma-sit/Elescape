@@ -5,8 +5,12 @@ from shared.components.config import *
 from interface.menu import bouton, dessiner_menu, plein_ecran
 from interface.selection_niveau import selection_niveau
 from interface.parametres import page_parametres, page_parametres_superpose, TOUCHES_DEFAUT
-from interface.loading_screen import loading_screen  # Import de l'écran de chargement
-from interface.selection_profil import selection_profil  # Import de la sélection de profil
+from interface.loading_screen import loading_screen
+import uuid
+
+# Importer la sélection de profil modifiée
+# Elle est maintenant le point d'entrée pour la gestion des profils
+from interface.selection_profil import selection_profil
 
 # Initialisation
 try:
@@ -80,32 +84,15 @@ while act:
                 elif btn_profil["rect"].collidepoint(evt.pos):
                     son_clicmenu.play()
                     try:
-                        from interface.profil_utilisateur import profil_utilisateur
-                        # Capture l'écran actuel pour l'utiliser comme arrière-plan
-                        current_screen = ecr.copy()
-                        # Utilise la version superposée des profils
-                        profil_result = profil_utilisateur(current_screen)
-                        # Si profil_utilisateur() retourne False, on quitte l'application
-                        if not profil_result:
+                        # Affiche la sélection de profil
+                        if not selection_profil():
                             act = False
                     except Exception as e:
-                        print(f"Erreur lors de l'accès au profil: {e}")
+                        print(f"Erreur lors de l'accès à la sélection de profil: {e}")
                 elif btn_fin["rect"].collidepoint(evt.pos):
                     son_clicmenu.play()
                     act = False
-            elif btn_profil["rect"].collidepoint(evt.pos):
-                son_clicmenu.play()
-                try:
-                    from interface.profil_utilisateur import profil_utilisateur
-                    # Capture l'écran actuel pour l'utiliser comme arrière-plan
-                    current_screen = ecr.copy()
-                    # Affiche l'interface du profil
-                    profil_result = profil_utilisateur(current_screen)
-                    # Si profil_utilisateur() retourne False, on quitte l'application
-                    if not profil_result:
-                        act = False
-                except Exception as e:
-                    print(f"Erreur lors de l'accès au profil: {e}")
+            
             if evt.type == KEYDOWN:
                 # Vérifier si la touche est dans notre configuration
                 for action, key_code in touches.items():
@@ -122,11 +109,8 @@ while act:
                                 print(f"Erreur lors de l'accès à la sélection de niveau: {e}")
                         elif action == 'Paramètres':
                             try:
-                                # Capture l'écran actuel pour l'utiliser comme arrière-plan
                                 current_screen = ecr.copy()
-                                # Utilise la version superposée des paramètres en passant l'écran actuel
                                 param_result = page_parametres_superpose(current_screen)
-                                # Si page_parametres_superpose() retourne False, on quitte l'application
                                 if not param_result:
                                     act = False
                             except Exception as e:

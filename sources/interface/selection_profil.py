@@ -4,6 +4,7 @@ import shutil
 from pygame import *
 from math import sin
 import sys
+import uuid
 
 # Assurer le chemin pour les imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -12,7 +13,6 @@ from shared.components.color_config import *
 
 # Chemins des fichiers
 DATA_DIR = "data"
-USER_DATA_DIR = os.path.join(DATA_DIR, "users")
 PROFILES_FILE = os.path.join(DATA_DIR, "profiles.json")
 
 def load_or_create_profiles():
@@ -24,7 +24,6 @@ def load_or_create_profiles():
         os.makedirs(DATA_DIR, exist_ok=True)
         
         # Créer un profil par défaut avec ID unique
-        import uuid
         default_profile_id = str(uuid.uuid4())
             
         profiles = {
@@ -34,26 +33,14 @@ def load_or_create_profiles():
                     "id": default_profile_id,
                     "name": "Joueur 1",
                     "created_at": time.get_ticks(),
-                    "last_used": time.get_ticks()
+                    "last_used": time.get_ticks(),
+                    "progression": {"niveaux_debloques": [1], "elements_decouverts": []}
                 }
             ]
         }
         
         with open(PROFILES_FILE, "w") as f:
             json.dump(profiles, f)
-        
-        # Créer le dossier et la progression pour le profil par défaut
-        user_path = os.path.join(USER_DATA_DIR, default_profile_id)
-        os.makedirs(user_path, exist_ok=True)
-        
-        progression_file = os.path.join(user_path, "progression.json")
-        progression = {"niveaux_debloques": [1], "elements_decouverts": []}
-        
-        try:
-            with open(progression_file, "w") as f:
-                json.dump(progression, f)
-        except Exception as e:
-            print(f"Erreur lors de la création du fichier de progression: {e}")
         
         return profiles
     
@@ -100,26 +87,13 @@ def set_active_profile(profile_id):
 
 def create_profile(name):
     """
-    Crée un nouveau profil avec un ID unique.
+    Crée un nouveau profil avec un ID unique et une progression par défaut.
     """
-    import uuid
-    
     # Générer un ID unique
     profile_id = str(uuid.uuid4())
     
-    # Créer le dossier de données utilisateur
-    user_path = os.path.join(USER_DATA_DIR, profile_id)
-    os.makedirs(user_path, exist_ok=True)
-    
-    # Créer un fichier de progression par défaut
-    progression_file = os.path.join(user_path, "progression.json")
+    # Créer une progression par défaut
     progression = {"niveaux_debloques": [1], "elements_decouverts": []}
-    
-    try:
-        with open(progression_file, "w") as f:
-            json.dump(progression, f)
-    except Exception as e:
-        print(f"Erreur lors de la création du fichier de progression: {e}")
     
     # Mettre à jour les profils
     profiles = load_or_create_profiles()
@@ -127,7 +101,8 @@ def create_profile(name):
         "id": profile_id,
         "name": name,
         "created_at": time.get_ticks(),
-        "last_used": time.get_ticks()
+        "last_used": time.get_ticks(),
+        "progression": progression
     })
     
     save_profiles(profiles)
@@ -135,7 +110,7 @@ def create_profile(name):
 
 def delete_profile(profile_id):
     """
-    Supprime un profil et ses données.
+    Supprime un profil.
     """
     # Vérifier si le profil existe
     profiles = load_or_create_profiles()
@@ -150,20 +125,47 @@ def delete_profile(profile_id):
     # Si le profil supprimé était le profil actif, en définir un nouveau
     if profiles["active_profile"] == profile_id:
         profiles["active_profile"] = profiles["profiles"][0]["id"]
-        # Utilisez uniquement set_active_profile sans référence à device_id.json
         set_active_profile(profiles["active_profile"])
     
     save_profiles(profiles)
-    
-    # Supprimer le dossier de données de l'utilisateur
-    user_path = os.path.join(USER_DATA_DIR, profile_id)
-    if os.path.exists(user_path):
-        try:
-            shutil.rmtree(user_path)
-        except Exception as e:
-            print(f"Erreur lors de la suppression des données utilisateur: {e}")
-    
     return True
+
+def get_active_profile():
+    """
+    Récupère le profil actif.
+    """
+    profiles = load_or_create_profiles()
+    return profiles.get("active_profile")
+
+def get_profile_progression(profile_id=None):
+    """
+    Récupère la progression du profil spécifié ou du profil actif.
+    """
+    profiles = load_or_create_profiles()
+    if profile_id is None:
+        profile_id = profiles.get("active_profile")
+    
+    for profile in profiles["profiles"]:
+        if profile["id"] == profile_id:
+            return profile.get("progression", {"niveaux_debloques": [1], "elements_decouverts": []})
+    
+    return {"niveaux_debloques": [1], "elements_decouverts": []}
+
+def save_profile_progression(progression, profile_id=None):
+    """
+    Sauvegarde la progression pour un profil spécifié ou le profil actif.
+    """
+    profiles = load_or_create_profiles()
+    if profile_id is None:
+        profile_id = profiles.get("active_profile")
+    
+    for profile in profiles["profiles"]:
+        if profile["id"] == profile_id:
+            profile["progression"] = progression
+            save_profiles(profiles)
+            return True
+    
+    return False
 
 def selection_profil():
     """
@@ -716,7 +718,6 @@ def selection_profil():
             
             elif evt.type == MOUSEMOTION:
                 # Gestion du survol pour les sons
-                # Déjà gérée dans le dessin des boutons
                 pass
         
         display.flip()

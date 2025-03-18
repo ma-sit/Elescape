@@ -1,42 +1,73 @@
-from shared.utils.user_account_manager import (
-    get_current_user,
-    load_progression,
-    save_progression,
-    initialize_system
-)
+import os
+import json
 
-# Initialisation du système
-initialize_system()
+# Chemin du fichier de profils
+PROFILES_FILE = os.path.join("data", "profiles.json")
+
+def load_profiles():
+    """
+    Charge les profils existants ou retourne une structure par défaut.
+    """
+    if not os.path.exists(PROFILES_FILE):
+        return {"active_profile": None, "profiles": []}
+    
+    try:
+        with open(PROFILES_FILE, "r") as f:
+            profiles = json.load(f)
+            return profiles
+    except:
+        return {"active_profile": None, "profiles": []}
+
+def get_active_profile():
+    """
+    Récupère l'ID du profil actif.
+    """
+    profiles = load_profiles()
+    return profiles.get("active_profile")
 
 def charger_progression():
     """
-    Charge la progression de l'utilisateur actuel.
+    Charge la progression du profil actif.
     """
-    # Récupérer l'utilisateur actuel
-    username = get_current_user()
-    if not username:
-        # Si aucun utilisateur n'est connecté, retourner une progression par défaut
+    profiles = load_profiles()
+    active_profile_id = profiles.get("active_profile")
+    
+    if not active_profile_id:
         return {"niveaux_debloques": [1], "elements_decouverts": []}
     
-    # Charger la progression de l'utilisateur
-    return load_progression(username)
+    for profile in profiles.get("profiles", []):
+        if profile["id"] == active_profile_id:
+            return profile.get("progression", {"niveaux_debloques": [1], "elements_decouverts": []})
+    
+    return {"niveaux_debloques": [1], "elements_decouverts": []}
 
 def sauvegarder_progression(progression):
     """
-    Sauvegarde la progression pour l'utilisateur actuel.
+    Sauvegarde la progression pour le profil actif.
     """
-    # Récupérer l'utilisateur actuel
-    username = get_current_user()
-    if not username:
-        # Si aucun utilisateur n'est connecté, ne rien faire
+    profiles = load_profiles()
+    active_profile_id = profiles.get("active_profile")
+    
+    if not active_profile_id:
         return False
     
-    # Sauvegarder la progression pour l'utilisateur actuel
-    return save_progression(username, progression)
+    for profile in profiles.get("profiles", []):
+        if profile["id"] == active_profile_id:
+            profile["progression"] = progression
+            
+            try:
+                with open(PROFILES_FILE, "w") as f:
+                    json.dump(profiles, f)
+                return True
+            except Exception as e:
+                print(f"Erreur lors de la sauvegarde de la progression: {e}")
+                return False
+    
+    return False
 
 def debloquer_niveau_suivant(niveau_actuel):
     """
-    Débloque le niveau suivant pour l'utilisateur actuel.
+    Débloque le niveau suivant pour le profil actif.
     """
     progression = charger_progression()
     if niveau_actuel + 1 not in progression["niveaux_debloques"]:
@@ -46,14 +77,14 @@ def debloquer_niveau_suivant(niveau_actuel):
 
 def reinitialiser_progression():
     """
-    Réinitialise la progression de l'utilisateur actuel.
+    Réinitialise la progression du profil actif.
     """
     progression = {"niveaux_debloques": [1], "elements_decouverts": []}
     return sauvegarder_progression(progression)
 
 def ajouter_elements_decouverts(elements):
     """
-    Ajoute des éléments découverts à la progression de l'utilisateur.
+    Ajoute des éléments découverts à la progression du profil.
     """
     progression = charger_progression()
     

@@ -6,7 +6,7 @@ import json
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
-from shared.components.color_config import *  # Import des couleurs standardisées
+from shared.components.color_config import *
 from interface.jeu import page_jeu
 from interface.menu import bouton
 from shared.utils.progression_utils import (
@@ -188,7 +188,7 @@ def selection_niveau():
         {"id": 1, "pos": (lrg//6, htr//4), "text": "Niveau 1", "available": 1 in niveaux_debloques},
         {"id": 2, "pos": (lrg//2 - 120, htr//2 - 50), "text": "Niveau 2", "available": 2 in niveaux_debloques},
         {"id": 3, "pos": (lrg//2 + 20, htr//4), "text": "Niveau 3", "available": 3 in niveaux_debloques}, 
-        {"id": 4, "pos": (4*lrg//5, htr//4), "text": "Niveau 4", "available": 4 in niveaux_debloques}, # Position du niveau 4
+        {"id": 4, "pos": (4*lrg//5, htr//4), "text": "Niveau 4", "available": 4 in niveaux_debloques}, 
         {"id": 5, "pos": (2*lrg//3, htr//2), "text": "Niveau 5", "available": 5 in niveaux_debloques},
         {"id": 6, "pos": (lrg//6, 3*htr//5), "text": "Niveau 6", "available": 6 in niveaux_debloques},
         {"id": 7, "pos": (lrg//2, 3*htr//4), "text": "Niveau 7", "available": 7 in niveaux_debloques},
@@ -466,8 +466,13 @@ def selection_niveau():
         for evt in event.get():
             if evt.type == QUIT:
                 return False
+            
+            # Modification ici pour retourner au menu principal 
+            # quand on appuie sur Échap au lieu de quitter le jeu
             if evt.type == KEYDOWN and evt.key == K_ESCAPE:
-                running = False
+                # Retourne True pour revenir au menu principal
+                return True
+                
             if evt.type == MOUSEBUTTONDOWN and evt.button == 1:
                 mouse_pos = mouse.get_pos()
                 

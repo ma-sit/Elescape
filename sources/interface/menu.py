@@ -4,7 +4,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import * 
 from shared.components.color_config import *
-from shared.utils.user_account_manager import get_current_user
 
 def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius, surbrillance=None):
     """Dessine un bouton interactif avec sons et coins arrondis"""
@@ -32,6 +31,29 @@ def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius, surbrillance
 
     return survole
 
+def get_active_profile_name():
+    """
+    Récupère le nom du profil actif depuis le fichier profiles.json.
+    """
+    try:
+        profile_file = os.path.join("data", "profiles.json")
+        if not os.path.exists(profile_file):
+            return None
+            
+        with open(profile_file, "r") as f:
+            profiles = json.load(f)
+            
+        active_id = profiles.get("active_profile")
+        if not active_id:
+            return None
+            
+        for profile in profiles.get("profiles", []):
+            if profile["id"] == active_id:
+                return profile.get("name")
+                
+        return None
+    except:
+        return None
 
 def dessiner_menu(ecr, image):
     """Affiche le menu principal"""
@@ -67,11 +89,11 @@ def dessiner_menu(ecr, image):
     rect_titre = txt_titre.get_rect(center=(lrg // 2, htr // 4))
     ecr.blit(txt_titre, rect_titre)
     
-    # Afficher l'utilisateur actuellement connecté
-    current_user = get_current_user()
-    if current_user:
+    # Afficher le profil actuellement actif
+    profile_name = get_active_profile_name()
+    if profile_name:
         user_font = font.Font(None, 30)
-        user_text = user_font.render(f"Connecté en tant que : {current_user}", True, TEXTE_INTERACTIF)
+        user_text = user_font.render(f"Profil actif : {profile_name}", True, TEXTE_INTERACTIF)
         user_rect = user_text.get_rect(topleft=(20, 20))
         ecr.blit(user_text, user_rect)
     
