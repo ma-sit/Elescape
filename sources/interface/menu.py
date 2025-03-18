@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import * 
 from shared.components.color_config import *
+from shared.utils.user_account_manager import get_current_user
 
 def bouton(ecr, couleur, btn, texte, son_survol, son_click, radius, surbrillance=None):
     """Dessine un bouton interactif avec sons et coins arrondis"""
@@ -39,6 +40,7 @@ def dessiner_menu(ecr, image):
     
     hover_jeu = bouton(ecr, MENU_BOUTON, btn_jeu, "Jouer", son_survol, son_clicmenu, r_menu, surbrillance=MENU_BOUTON_SURVOL)
     hover_cfg = bouton(ecr, MENU_BOUTON, btn_cfg, "Paramètres", son_survol, son_clicmenu, r_menu, surbrillance=MENU_BOUTON_SURVOL)
+    hover_profil = bouton(ecr, MENU_BOUTON, btn_profil, "Profil", son_survol, son_clicmenu, r_menu, surbrillance=MENU_BOUTON_SURVOL)
     hover_fin = bouton(ecr, MENU_BOUTON, btn_fin, "Quitter", son_survol, son_clicmenu, r_menu, surbrillance=MENU_BOUTON_SURVOL)
     
     """Titre du jeu"""
@@ -64,6 +66,14 @@ def dessiner_menu(ecr, image):
     txt_titre = police_titre.render("Vitanox", True, NOM_JEU)
     rect_titre = txt_titre.get_rect(center=(lrg // 2, htr // 4))
     ecr.blit(txt_titre, rect_titre)
+    
+    # Afficher l'utilisateur actuellement connecté
+    current_user = get_current_user()
+    if current_user:
+        user_font = font.Font(None, 30)
+        user_text = user_font.render(f"Connecté en tant que : {current_user}", True, TEXTE_INTERACTIF)
+        user_rect = user_text.get_rect(topleft=(20, 20))
+        ecr.blit(user_text, user_rect)
     
     # Description du jeu sous les boutons dans un rectangle semi-transparent
     description = [

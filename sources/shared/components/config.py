@@ -22,9 +22,10 @@ except:
     print("Error : fichiers sons non trouvés")
 
 # Boutons menu
-btn_jeu = {"rect": Rect(lrg/2-125, htr/2-100, 250, 60), "image": None, "a_joue_son": False}
-btn_cfg = {"rect": Rect(lrg/2-125, htr/2, 250, 60), "image": None, "a_joue_son": False}
-btn_fin = {"rect": Rect(lrg/2-125, htr/2+100, 250, 60), "image": None, "a_joue_son": False}
+btn_jeu = {"rect": Rect(lrg/2-125, htr/2-150, 250, 60), "image": None, "a_joue_son": False}
+btn_cfg = {"rect": Rect(lrg/2-125, htr/2-50, 250, 60), "image": None, "a_joue_son": False}
+btn_profil = {"rect": Rect(lrg/2-125, htr/2+50, 250, 60), "image": None, "a_joue_son": False}
+btn_fin = {"rect": Rect(lrg/2-125, htr/2+150, 250, 60), "image": None, "a_joue_son": False}
 
 r_menu = 15
 
