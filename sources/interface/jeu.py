@@ -5,6 +5,8 @@ import csv
 import random
 import json
 from math import *
+from PIL import Image
+import numpy as np
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from shared.components.config import *
@@ -28,7 +30,6 @@ EXTRA_ANIM_SEQUENCES = {
     "eat":   [0, 1, 2, 3, 2, 3, 2, 3, 2, 1, 0]
 }
 
-# Fonction pour déterminer la direction (cardinale) la plus proche d'un vecteur (dx, dy)
 def get_direction(dx, dy):
     angle = degrees(atan2(dy, dx))
     if -45 <= angle < 45:
@@ -54,7 +55,6 @@ def wrap_text(text, max_chars=40):
         lines.append(current_line)
     return "\n".join(lines)
 
-# Charger les frames du personnage depuis un dossier en appliquant un facteur d'échelle
 def charger_frames_perso_from_folder(folder_path, directions=("down", "left", "right", "up"), nb_frames=4, scale=1.0):
     frames = {}
     for direction in directions:
@@ -71,49 +71,20 @@ def charger_frames_perso_from_folder(folder_path, directions=("down", "left", "r
                 frames[direction].append(frame)
             except Exception as e:
                 print(f"Erreur lors du chargement de {full_path}: {e}")
-                # Créer une image de remplacement en cas d'erreur
-                dummy = Surface((50, 50))
-                dummy.fill((255, 0, 255))  # Magenta pour la visibilité
-                frames[direction].append(dummy)
-        
-        # S'assurer qu'il y a au moins une frame par direction
-        if not frames[direction]:
-            dummy = Surface((50, 50))
-            dummy.fill((255, 0, 255))
-            frames[direction].append(dummy)
-            
     return frames
 
-# Chargement des touches du jeu avec gestion des erreurs
 def charger_touches():
-    """Charge les touches du jeu avec gestion plus robuste des erreurs"""
     try:
         with open("data/touches.json", "r") as f:
             touches = json.load(f)
-        
-        # Vérifier que toutes les touches requises sont présentes
-        touches_modifiees = False
-        for key, default_value in TOUCHES_DEFAUT.items():
+        for key in TOUCHES_DEFAUT:
             if key not in touches:
-                print(f"Touche '{key}' manquante, utilisation de la valeur par défaut")
-                touches[key] = default_value
-                touches_modifiees = True
-        
-        # Si des touches ont été ajoutées, sauvegarder le fichier mis à jour
-        if touches_modifiees:
-            try:
-                with open("data/touches.json", "w") as f:
-                    json.dump(touches, f)
-                print("Fichier touches.json mis à jour avec les valeurs par défaut")
-            except Exception as e:
-                print(f"Impossible de sauvegarder le fichier touches.json: {e}")
-        
+                touches[key] = TOUCHES_DEFAUT[key]
         return touches
     except Exception as e:
         print(f"Erreur lors du chargement des touches: {e}")
         return TOUCHES_DEFAUT.copy()
 
-# Chargement de l'encyclopédie
 try:
     with open('data/csv/encyclopedie.csv', newline='', encoding='utf-8') as csvfile:
         spamreader = csv.DictReader(csvfile, delimiter=';')
@@ -137,27 +108,16 @@ except Exception as e:
     print(f"Erreur lors du chargement de l'encyclopédie: {e}")
     elements = {0: {"Nom": "Inconnu", "Creations": [], "DR": 0, "Image": "", "Type": "classique", "Mission": ""}}
 
-# Fonction qui renvoie la liste des identifiants communs entre les "Créations" des deux éléments.
 def fusionner_ids(element1, element2):
     common = []
-    try:
-        if element1 not in elements or element2 not in elements:
-            return common
-        if elements[element1]["Nom"] != elements[element2]["Nom"]:
-            creations1 = elements[element1].get("Creations", [])
-            creations2 = elements[element2].get("Creations", [])
-            
-            if not creations1 or not creations2:
-                return common
-                
-            for cid in creations1:
-                if cid in creations2 and cid not in common:
-                    common.append(cid)
-    except Exception as e:
-        print(f"Erreur lors de la fusion d'IDs ({element1}, {element2}): {e}")
+    if element1 not in elements or element2 not in elements:
+        return common
+    if elements[element1]["Nom"] != elements[element2]["Nom"]:
+        for cid in elements[element1]["Creations"]:
+            if cid in elements[element2]["Creations"] and cid not in common:
+                common.append(cid)
     return common
 
-# Pour compatibilité, fusionner() retourne le premier id commun s'il existe
 def fusionner(element1, element2):
     common = fusionner_ids(element1, element2)
     if common:
@@ -168,7 +128,6 @@ def get_next_image(c, w):
     c = (c + 1) % len(w)
     return w[c], c
 
-# Charger les frames d'un animal depuis un dossier en appliquant un facteur d'échelle
 def charger_frames_animal_from_folder(folder_path, nb_frames=4, directions=("down", "left", "right", "up"), extras=("sleep", "eat"), scale=1.0):
     frames = {}
     for direction in directions:
@@ -185,17 +144,6 @@ def charger_frames_animal_from_folder(folder_path, nb_frames=4, directions=("dow
                 frames[direction].append(frame)
             except Exception as e:
                 print(f"Erreur lors du chargement de {full_path}: {e}")
-                # Créer une image de remplacement
-                dummy = Surface((50, 50))
-                dummy.fill((255, 0, 255))
-                frames[direction].append(dummy)
-                
-        # S'assurer qu'il y a au moins une frame par direction        
-        if not frames[direction]:
-            dummy = Surface((50, 50))
-            dummy.fill((255, 0, 255))
-            frames[direction].append(dummy)
-            
     for extra in extras:
         frames[extra] = []
         for i in range(1, nb_frames+1):
@@ -210,27 +158,8 @@ def charger_frames_animal_from_folder(folder_path, nb_frames=4, directions=("dow
                 frames[extra].append(frame)
             except Exception as e:
                 print(f"Erreur lors du chargement de {full_path}: {e}")
-                # Créer une image de remplacement
-                if frames[directions[0]]:
-                    # Utiliser la première frame de la première direction disponible
-                    frames[extra].append(frames[directions[0]][0])
-                else:
-                    dummy = Surface((50, 50))
-                    dummy.fill((255, 0, 255))
-                    frames[extra].append(dummy)
-                    
-        # S'assurer qu'il y a au moins une frame par état extra        
-        if not frames[extra]:
-            if frames[directions[0]]:
-                frames[extra].append(frames[directions[0]][0])
-            else:
-                dummy = Surface((50, 50))
-                dummy.fill((255, 0, 255))
-                frames[extra].append(dummy)
-                
     return frames
 
-# Afficher les éléments en appliquant une échelle aux images
 def afficher_elements(ecr, elements, elementsbase, scale=1.0):
     objets = []
     for elem_id, instances in elementsbase.items():
@@ -344,49 +273,40 @@ def creer_objet(new_id, img, target_obj, objets):
         "rect": img.get_rect(center=(new_x, new_y))
     }
 
-# Fonction d'assombrissement pour l'effet de brûlure
 def assombrir_image(surface, burn_level, max_factor_r=0.6, max_factor_g=0.4, max_factor_b=0.2):
     """
-    Version simplifiée de la fonction d'assombrissement.
-    Applique un effet de brûlure/assombrissement à une surface pygame.
-    
-    Args:
-        surface: Surface pygame à modifier
-        burn_level: Niveau de brûlure entre 0 et 1
-        max_factor_*: Facteurs d'assombrissement pour chaque canal
-    
-    Returns:
-        Surface pygame modifiée
+    Applique un effet de dessèchement sur la surface en assombrissant les zones dominées par le vert.
+    Le burn_level doit être compris entre 0 (aucun effet) et 1 (effet maximal).
     """
-    try:
-        # Créer une surface de la même taille
-        width, height = surface.get_size()
-        darkened = Surface((width, height), SRCALPHA)
-        
-        # Copier la surface originale
-        darkened.blit(surface, (0, 0))
-        
-        # Créer une surface d'assombrissement
-        dark_overlay = Surface((width, height), SRCALPHA)
-        
-        # Calculer la couleur d'assombrissement
-        # Plus burn_level est élevé, plus l'assombrissement est fort
-        r = int(255 * max_factor_r * burn_level)
-        g = int(255 * max_factor_g * burn_level)
-        b = int(255 * max_factor_b * burn_level)
-        a = int(180 * burn_level)  # Semi-transparent
-        
-        # Remplir l'overlay avec la couleur d'assombrissement
-        dark_overlay.fill((r, g, b, a))
-        
-        # Appliquer l'overlay à la surface copiée
-        darkened.blit(dark_overlay, (0, 0), special_flags=BLEND_RGBA_MULT)
-        
-        return darkened
-    except Exception as e:
-        print(f"Erreur lors de l'assombrissement de l'image: {e}")
-        # En cas d'erreur, retourner la surface originale
-        return surface
+    facteur_r = 1 - burn_level * (1 - max_factor_r)
+    facteur_g = 1 - burn_level * (1 - max_factor_g)
+    facteur_b = 1 - burn_level * (1 - max_factor_b)
+    
+    pil_string = image.tostring(surface, "RGBA", False)
+    pil_image = Image.frombytes("RGBA", surface.get_size(), pil_string)
+    
+    image_array = np.array(pil_image)
+    r = image_array[..., 0].astype(np.float32)
+    g = image_array[..., 1].astype(np.float32)
+    b = image_array[..., 2].astype(np.float32)
+    a = image_array[..., 3]
+    
+    green_mask = (g > r) & (g > b)
+    
+    r[green_mask] = (r[green_mask] * facteur_r)
+    g[green_mask] = (g[green_mask] * facteur_g)
+    b[green_mask] = (b[green_mask] * facteur_b)
+    
+    r = np.clip(r, 0, 255).astype(np.uint8)
+    g = np.clip(g, 0, 255).astype(np.uint8)
+    b = np.clip(b, 0, 255).astype(np.uint8)
+    
+    modified_array = np.stack([r, g, b, a], axis=-1)
+    pil_modifiee = Image.fromarray(modified_array, "RGBA")
+    
+    modified_data = pil_modifiee.tobytes()
+    modified_surface = image.fromstring(modified_data, surface.get_size(), "RGBA")
+    return modified_surface
 
 def page_jeu(niveau):
     global global_volume_general, global_volume_musique, global_volume_sfx
@@ -492,6 +412,7 @@ def page_jeu(niveau):
     clock = time.Clock()
     act = True
     selected_obj = None
+    t_obj = None
     element_discovered = False
     final_trigger_time = None
     final_element_found = False
@@ -560,13 +481,12 @@ def page_jeu(niveau):
             ecr.blit(fnd, (0, 0))
             current_time = time.get_ticks()
             
-            # Affichage des objets classiques (non-animés, non-objectifs)
             for obj in objets:
                 if not obj.get("is_animal", False) and not obj.get("is_objectif", False):
                     ecr.blit(obj["image"], (obj["rect"].x, obj["rect"].y))
                     if "enlarge_start" in obj:
                         if current_time - obj["enlarge_start"] > 100:
-                            obj["image"] = obj["original_image"].copy()
+                            obj["image"] = obj["original_image"]
                             obj["rect"] = obj["original_image"].get_rect(center=obj["rect"].center)
                             del obj["enlarge_start"]
             
@@ -591,11 +511,7 @@ def page_jeu(niveau):
                     if element_discovered:
                         element_discovered = False
                     elif evt.button == 1:
-                        # Gestion du clic sur le bouton d'indice
-                        if niveau == 1 and hint_button_visible and hint_button["rect"].collidepoint(evt.pos):
-                            son_survol.play()
-                            hint_active = not hint_active  # Inverser l'état (afficher/masquer)
-                        elif btn_ency["rect"].collidepoint(evt.pos):
+                        if btn_ency["rect"].collidepoint(evt.pos):
                             son_survol.play()
                             if tutorial_active and not tutorial_actions_done[4]:
                                 tutorial_actions_done[4] = True
@@ -619,36 +535,24 @@ def page_jeu(niveau):
                                             tutorial_bg_alpha = 0
                                             tutorial_display_time = current_time
                                             tutorial_last_interaction = current_time
+                                    center = obj["rect"].center
                                     if obj.get("is_animal", False):
                                         if not obj.get("selected", False):
                                             obj["selected"] = True
                                             base_frame = obj["frames"][obj["current_direction"]][0]
-                                            w, h = base_frame.get_size()
-                                            # On applique le scaling sur l'image de base
-                                            scaled_img = transform.scale(base_frame, (int(w * 1.2), int(h * 1.2)))
-                                            if "burn_level" in obj and obj["burn_level"] > 0:
-                                                # Si l'image brûlée n'est pas encore calculée pour cet objet, on la calcule et la stocke
-                                                if "burned_image" not in obj:
-                                                    obj["burned_image"] = assombrir_image(obj["original_image"], obj["burn_level"])
-                                                # Appliquer le scaling sur l'image brûlée mise en cache
-                                                scaled_burned_img = transform.scale(obj["burned_image"], (int(w * 1.2), int(h * 1.2)))
-                                                obj["image"] = scaled_burned_img
-                                            else:
-                                                obj["image"] = scaled_img
-                                            obj["rect"] = obj["image"].get_rect(center=obj["rect"].center)
+                                            enlarged_img = transform.scale(base_frame, (int(base_frame.get_width() * 1.2), int(base_frame.get_height() * 1.2))).convert_alpha()
+                                            obj["image"] = enlarged_img
+                                            obj["rect"] = obj["image"].get_rect(center=center)
                                     else:
                                         if "original_image" in obj:
                                             if "burn_level" in obj and obj["burn_level"] > 0:
                                                 if "burned_image" not in obj:
                                                     obj["burned_image"] = assombrir_image(obj["original_image"], obj["burn_level"])
-                                                obj["image"] = transform.scale(obj["burned_image"],
-                                                                                (int(obj["burned_image"].get_width() * 1.1),
-                                                                                 int(obj["burned_image"].get_height() * 1.1)))
+                                                enlarged_img = transform.scale(obj["burned_image"], (int(obj["burned_image"].get_width() * 1.1), int(obj["burned_image"].get_height() * 1.1))).convert_alpha()
                                             else:
-                                                obj["image"] = transform.scale(obj["original_image"],
-                                                                            (int(obj["original_image"].get_width() * 1.1),
-                                                                             int(obj["original_image"].get_height() * 1.1)))
-                                            obj["rect"] = obj["image"].get_rect(center=obj["rect"].center)
+                                                enlarged_img = transform.scale(obj["original_image"], (int(obj["original_image"].get_width() * 1.1), int(obj["original_image"].get_height() * 1.1))).convert_alpha()
+                                            obj["image"] = enlarged_img
+                                            obj["rect"] = obj["image"].get_rect(center=center)
                                     offset_x, offset_y = evt.pos[0] - obj["rect"].centerx, evt.pos[1] - obj["rect"].centery
                                     break
                     elif evt.button == touches.get('Déplacement', BUTTON_RIGHT):
@@ -666,35 +570,44 @@ def page_jeu(niveau):
                             if obj["rect"].collidepoint(evt.pos):
                                 obj["enlarge_start"] = time.get_ticks()
                                 target_obj = obj
+                                t_obj = obj
                                 if obj.get("is_animal", False):
                                     if not obj.get("selected", False):
                                         obj["selected"] = True
                                         base_frame = obj["frames"][obj["current_direction"]][0]
                                         w, h = base_frame.get_size()
                                         new_size = (int(w * 1.1), int(h * 1.1))
-                                        scaled_img = transform.scale(base_frame, new_size)
+                                        scaled_img = transform.scale(base_frame, new_size).convert_alpha()
                                         obj["image"] = scaled_img
                                         obj["rect"] = scaled_img.get_rect(center=obj["rect"].center)
                                 else:
-                                    orig_w, orig_h = obj["original_image"].get_size()
-                                    new_size = (int(orig_w * 1.1), int(orig_h * 1.1))
-                                    obj["image"] = transform.scale(obj["original_image"], new_size)
-                                    obj["rect"] = obj["image"].get_rect(center=obj["rect"].center)
+                                    center = obj["rect"].center
+                                    if "burn_level" in obj and obj["burn_level"] > 0:
+                                        if "burned_image" not in obj:
+                                            obj["burned_image"] = assombrir_image(obj["original_image"], obj["burn_level"])
+                                        enlarged_img = transform.scale(obj["burned_image"], (int(obj["burned_image"].get_width() * 1.1), int(obj["burned_image"].get_height() * 1.1))).convert_alpha()
+                                    else:
+                                        enlarged_img = transform.scale(obj["original_image"], (int(obj["original_image"].get_width() * 1.1), int(obj["original_image"].get_height() * 1.1))).convert_alpha()
+                                    obj["image"] = enlarged_img
+                                    obj["rect"] = obj["image"].get_rect(center=center)
                                 break
                 elif evt.type == MOUSEBUTTONUP:
                     if evt.button == 1:
                         if selected_obj:
+                            center = selected_obj["rect"].center
                             if not selected_obj.get("is_animal", False) and "original_image" in selected_obj:
                                 if "burn_level" in selected_obj and selected_obj["burn_level"] > 0:
-                                    selected_obj["image"] = assombrir_image(selected_obj["original_image"], selected_obj["burn_level"])
+                                    if "burned_image" not in selected_obj:
+                                        selected_obj["burned_image"] = assombrir_image(selected_obj["original_image"], selected_obj["burn_level"])
+                                    selected_obj["image"] = selected_obj["burned_image"]
                                 else:
-                                    selected_obj["image"] = selected_obj["original_image"].copy()
-                                    selected_obj["rect"] = selected_obj["image"].get_rect(center=selected_obj["rect"].center)
+                                    selected_obj["image"] = selected_obj["original_image"]
+                                selected_obj["rect"] = selected_obj["image"].get_rect(center=center)
                             if selected_obj.get("is_animal", False):
                                 selected_obj["selected"] = False
                                 base_frame = selected_obj["frames"][selected_obj["current_direction"]][0]
                                 selected_obj["image"] = base_frame
-                                selected_obj["rect"] = base_frame.get_rect(center=selected_obj["rect"].center)
+                                selected_obj["rect"] = base_frame.get_rect(center=center)
                                 if "animal_target_pos" in selected_obj:
                                     del selected_obj["animal_target_pos"]
                                 selected_obj["last_move_time"] = time.get_ticks()
@@ -796,16 +709,23 @@ def page_jeu(niveau):
                         selected_obj = None
                     elif evt.button == BUTTON_RIGHT:
                         if target_obj:
+                            center = target_obj["rect"].center
                             if target_obj.get("is_animal", False):
                                 target_obj["selected"] = False
                                 base_frame = target_obj["frames"][target_obj["current_direction"]][0]
                                 target_obj["image"] = base_frame
-                                target_obj["rect"] = base_frame.get_rect(center=target_obj["rect"].center)
+                                target_obj["rect"] = base_frame.get_rect(center=center)
                                 target_obj["last_move_time"] = time.get_ticks()
                                 target_obj["state"] = "idle"
                             else:
-                                target_obj["image"] = target_obj["original_image"].copy()
-                                target_obj["rect"] = target_obj["image"].get_rect(center=target_obj["rect"].center)
+                                if "burn_level" in target_obj and target_obj["burn_level"] > 0:
+                                    if "burned_image" not in target_obj:
+                                        target_obj["burned_image"] = assombrir_image(target_obj["original_image"], target_obj["burn_level"])
+                                    target_obj["image"] = target_obj["burned_image"]
+                                else:
+                                    target_obj["image"] = target_obj["original_image"]
+                                target_obj["rect"] = target_obj["image"].get_rect(center=center)
+                        t_obj = None
                 elif evt.type == MOUSEMOTION and selected_obj:
                     selected_obj["rect"].move_ip(evt.rel)
             
@@ -830,7 +750,6 @@ def page_jeu(niveau):
                 perso_rect.center = (x, y)
                 perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][0], "rect": perso_rect.copy()}
             
-            # Fusion automatique entre le perso et un élément cible
             if target_obj and perso_rect.colliderect(target_obj["rect"]) and not moving:
                 common_ids = fusionner_ids(0, target_obj["id"])
                 if common_ids:
@@ -845,12 +764,10 @@ def page_jeu(niveau):
                                 elements_decouverts.append(cid)
                                 progression["elements_decouverts"] = elements_decouverts
                                 sauvegarder_progression(progression)
-                            
-                            # Gestion du bouton d'indice pour le niveau 1
+                                
                             if niveau == 1:
                                 if cid == 11:  # Si le Pommier a été créé
                                     pommier_created = True
-                                
                                 # Réinitialiser le chrono à chaque action importante
                                 last_action_time = time.get_ticks()
                                 hint_button_visible = False  # Cacher le bouton
@@ -865,32 +782,29 @@ def page_jeu(niveau):
                                     tutorial_display_time = current_time
                                     tutorial_last_interaction = current_time
                         try:
-                            if cid in elements and "Image" in elements[cid]:
-                                img_paths_str = elements[cid]["Image"]
-                                if img_paths_str:
-                                    img_paths = [p.strip().strip('"') for p in img_paths_str.split(',')]
-                                    if img_paths:
-                                        img_path = random.choice(img_paths)
-                                        img = image.load(img_path).convert_alpha()
-                                        orig_w, orig_h = img.get_size()
-                                        img = transform.scale(img, (int(orig_w * scale_common), int(orig_h * scale_common)))
-                                        new_obj = {
-                                            "id": cid,
-                                            "image": img,
-                                            "original_image": img.copy(),
-                                            "rect": img.get_rect(center=center)
-                                        }
-                                        if elements[target_obj["id"]]["DR"] != 0:
-                                            offset = -10
-                                            new_center = (target_obj["rect"].right + new_obj["rect"].width // 2 + offset,
-                                                        target_obj["rect"].centery)
-                                            new_obj["rect"].center = new_center
-                                        offset = new_obj["rect"].width // 2 + 10
-                                        center = (target_obj["rect"].centerx + offset, target_obj["rect"].centery)
-                                        objets.append(new_obj)
-                                        if elements[target_obj["id"]]["DR"] == 0:
-                                            if target_obj in objets:
-                                                objets.remove(target_obj)
+                            img_paths = elements[cid]["Image"].split(',')
+                            if img_paths:
+                                img_path = random.choice([p.strip().strip('"') for p in img_paths])
+                                img = image.load(img_path).convert_alpha()
+                                orig_w, orig_h = img.get_size()
+                                img = transform.scale(img, (int(orig_w * scale_common), int(orig_h * scale_common)))
+                                new_obj = {
+                                    "id": cid,
+                                    "image": img,
+                                    "original_image": img.copy(),
+                                    "rect": img.get_rect(center=center)
+                                }
+                                if elements[target_obj["id"]]["DR"] != 0:
+                                    offset = -10
+                                    new_center = (target_obj["rect"].right + new_obj["rect"].width // 2 + offset,
+                                                  target_obj["rect"].centery)
+                                    new_obj["rect"].center = new_center
+                                offset = new_obj["rect"].width // 2 + 10
+                                center = (target_obj["rect"].centerx + offset, target_obj["rect"].centery)
+                                objets.append(new_obj)
+                                if elements[target_obj["id"]]["DR"] == 0:
+                                    if target_obj in objets:
+                                        objets.remove(target_obj)
                         except Exception as e:
                             print(f"Erreur lors de la fusion avec le personnage: {e}")
                 target_obj = None
@@ -902,7 +816,6 @@ def page_jeu(niveau):
                     else:
                         print(f"Élément final: {elfinal}, Éléments découverts: {element_decouvert}")
 
-            # Gestion des animaux
             for obj in objets:
                 if obj.get("is_animal", False):
                     if not obj.get("selected", False):
@@ -991,34 +904,35 @@ def page_jeu(niveau):
                             else:
                                 obj["image"] = obj["frames"][obj["current_direction"]][0]
             
-            # Mise à jour de l'effet de brûlure
-            burn_delta = 0.005  # Taux d'augmentation par frame
+            burn_delta = 0.005
             for obj in objets:
-                if obj["id"] not in [22, 8]:
+                if selected_obj is not None and selected_obj["id"] == 22 and obj["id"] in [1, 4]:
                     fire_present = any(other for other in objets if other["id"] == 22 and obj["rect"].colliderect(other["rect"]))
-                    water_present = any(other for other in objets if other["id"] == 8 and obj["rect"].colliderect(other["rect"]))
                     if fire_present:
                         if "burn_level" not in obj:
                             obj["burn_level"] = 0.0
                         obj["burn_level"] = min(obj["burn_level"] + burn_delta, 1.0)
-                        obj["image"] = assombrir_image(obj["original_image"], obj["burn_level"])
-                    elif water_present:
-                        if "burn_level" in obj and obj["burn_level"] > 0:
-                            obj["burn_level"] = 0.0
-                            obj["image"] = obj["original_image"].copy()
-                            water_objs = [w for w in objets if w["id"] == 8 and obj["rect"].colliderect(w["rect"])]
-                            for w in water_objs:
-                                if w in objets:
-                                    objets.remove(w)
-            
+                        obj["burned_image"] = assombrir_image(obj["original_image"], obj["burn_level"])
+                        obj["image"] = obj["burned_image"]
+                        
             perso_obj = {"id": 0, "image": perso_frames[perso_current_direction][perso_anim_index] if moving else perso_frames[perso_current_direction][0], "rect": perso_rect.copy()}
             all_objs = objets + [perso_obj]
             all_objs.sort(key=lambda o: o["rect"].bottom)
             if selected_obj is not None and selected_obj in all_objs:
                 all_objs.remove(selected_obj)
                 all_objs.append(selected_obj)
-            for o in all_objs:
-                ecr.blit(o["image"], o["rect"])
+            for obj in all_objs:
+                if t_obj is not None and mouse.get_pressed()[2] and t_obj == obj:  # Vérifie si le clic droit est enfoncé
+                    if "original_image" in obj:
+                        if "burn_level" in obj and obj["burn_level"] > 0:
+                            if "burned_image" not in obj:
+                                obj["burned_image"] = assombrir_image(obj["original_image"], obj["burn_level"])
+                            enlarged_img = transform.scale(obj["burned_image"], (int(obj["burned_image"].get_width() * 1.1), int(obj["burned_image"].get_height() * 1.1))).convert_alpha()
+                        else:
+                            enlarged_img = transform.scale(obj["original_image"], (int(obj["original_image"].get_width() * 1.1), int(obj["original_image"].get_height() * 1.1))).convert_alpha()
+                        obj["image"] = enlarged_img
+                        obj["rect"] = obj["image"].get_rect(center=center)
+                ecr.blit(obj["image"], obj["rect"])  # Affiche l'objet
             
             for obj in objets:
                 if obj.get("is_objectif", False):
@@ -1074,14 +988,6 @@ def page_jeu(niveau):
                                 ecr.blit(text_surface, (bubble_x_final + (large_bubble.get_width() - text_surface.get_width()) // 2,
                                                         bubble_y_final + y_offset + 35))
                                 y_offset += text_surface.get_height() + 2
-                            
-                            # Marquer la quête comme reçue et démarrer le chronomètre pour l'indice
-                            if not quest_received and niveau == 1:
-                                quest_received = True
-                                last_action_time = time.get_ticks()  # Mettre à jour le temps de la dernière action
-                                hint_button_visible = False  # Cacher le bouton
-                                hint_active = False  # Cacher l'indice s'il était affiché
-                            
                             elements[obj["id"]]["mission_seen"] = True
             
             # Gestion du bouton d'indice (niveau 1 uniquement)
@@ -1158,7 +1064,7 @@ def page_jeu(niveau):
                     ecr.blit(hint_title, (hint_x + 20, hint_y + 20))
                     ecr.blit(hint_text, (hint_x + 20, hint_y + 55))
                     ecr.blit(hint_text2, (hint_x + 20, hint_y + 85))
-            
+                    
             if tutorial_active and tutorial_step < len(tutorial_steps):
                 if tutorial_auto_advance[tutorial_step]:
                     if tutorial_display_time == 0:
