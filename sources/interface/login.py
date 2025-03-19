@@ -106,7 +106,7 @@ def afficher_login():
         ecr.blit(overlay, (0, 0))
         
         # Afficher le titre
-        title = title_font.render("Vitanox", True, title_color)
+        title = title_font.render("Elescape", True, title_color)
         title_rect = title.get_rect(center=(lrg//2, 100))
         ecr.blit(title, title_rect)
         

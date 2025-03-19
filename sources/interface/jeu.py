@@ -337,7 +337,7 @@ def page_jeu(niveau):
     tutorial_active = niveau == 1
     tutorial_step = 0
     tutorial_steps = [
-        "Bienvenue sur Vitanox",
+        "Bienvenue sur Elescape",
         "Clique droit n'importe où pour déplacer ton personnage",
         "Clique gauche sur un objet pour le sélectionner",
         "Déplace-le vers un autre objet compatible pour les fusionner",
