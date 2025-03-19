@@ -34,7 +34,9 @@ def load_or_create_profiles():
                     "name": "Joueur 1",
                     "created_at": time.get_ticks(),
                     "last_used": time.get_ticks(),
-                    "progression": {"niveaux_debloques": [1], "elements_decouverts": []}
+                    "progression": {"niveaux_debloques": [1], "elements_decouverts": []},
+                    "playtime": 0,
+                    "combinations": 0
                 }
             ]
         }
@@ -47,6 +49,12 @@ def load_or_create_profiles():
     try:
         with open(PROFILES_FILE, "r") as f:
             profiles = json.load(f)
+            # Assurer que les profils ont les champs nécessaires pour les statistiques
+            for profile in profiles.get("profiles", []):
+                if "playtime" not in profile:
+                    profile["playtime"] = 0
+                if "combinations" not in profile:
+                    profile["combinations"] = len(profile.get("progression", {}).get("elements_decouverts", []))
             return profiles
     except:
         # En cas d'erreur, retourner une structure par défaut
@@ -102,7 +110,9 @@ def create_profile(name):
         "name": name,
         "created_at": time.get_ticks(),
         "last_used": time.get_ticks(),
-        "progression": progression
+        "progression": progression,
+        "playtime": 0,
+        "combinations": 0
     })
     
     save_profiles(profiles)
@@ -225,6 +235,9 @@ def selection_profil():
     # Mode confirmation de suppression
     deleting_profile = None
     
+    # Variable pour suivre quel profil est survolé
+    hover_profile = None
+    
     # Chargement du fond
     try:
         background = image.load("data/images/bg/image_menu.png").convert()
@@ -235,6 +248,9 @@ def selection_profil():
     
     while running:
         current_time = time.get_ticks()
+        
+        # Réinitialiser le profil survolé à chaque frame
+        hover_profile = None
         
         # Afficher le fond
         ecr.blit(background, (0, 0))
@@ -427,15 +443,19 @@ def selection_profil():
                     continue
                 
                 # Calculer l'état du bouton
-                hover = btn_rect.collidepoint(mouse.get_pos())
+                is_hovering = btn_rect.collidepoint(mouse.get_pos())
                 is_active = profile["id"] == active_profile_id
+                
+                # Mettre à jour le profil survolé
+                if is_hovering:
+                    hover_profile = profile
                 
                 # Choisir la couleur en fonction de l'état
                 if is_active:
                     # Profil actif avec une couleur plus foncée
-                    bg_color = NIVEAU_DEBLOQUE_FOND if not hover else NIVEAU_DEBLOQUE_SURVOL_FOND
+                    bg_color = NIVEAU_DEBLOQUE_FOND if not is_hovering else NIVEAU_DEBLOQUE_SURVOL_FOND
                 else:
-                    bg_color = PARAM_BUTTON_BG if not hover else PARAM_BUTTON_HOVER
+                    bg_color = PARAM_BUTTON_BG if not is_hovering else PARAM_BUTTON_HOVER
                 
                 # Dessiner le bouton principal
                 draw.rect(ecr, bg_color, btn_rect, border_radius=15)
@@ -519,6 +539,111 @@ def selection_profil():
                 create_btn["a_joue_son"] = True
             elif not create_btn["hover"]:
                 create_btn["a_joue_son"] = False
+                
+            # Afficher le panneau de statistiques si un profil est survolé
+            if hover_profile and not creating_profile and deleting_profile is None:
+                # Calculer les dimensions et la position du panneau
+                stats_panel_width = 280
+                stats_panel_height = 240
+                stats_panel_x = panel_x + panel_width + 20  # Positionné à droite du panneau principal
+                stats_panel_y = panel_y + (panel_height - stats_panel_height) // 2  # Centré verticalement
+                
+                # Créer une animation fluide d'apparition
+                stats_panel_alpha = min(255, int((time.get_ticks() % 500) * 1.5)) if time.get_ticks() % 1000 < 500 else 255
+                
+                # Créer une surface semi-transparente pour le panneau
+                stats_panel = Surface((stats_panel_width, stats_panel_height), SRCALPHA)
+                stats_panel.fill((40, 40, 50, 220))  # Couleur légèrement différente pour distinction
+                
+                # Dessiner le panneau avec coins arrondis
+                draw.rect(stats_panel, (40, 40, 50, 220), Rect(0, 0, stats_panel_width, stats_panel_height), border_radius=15)
+                draw.rect(stats_panel, PARAM_PANEL_BORDER, Rect(0, 0, stats_panel_width, stats_panel_height), 2, border_radius=15)
+                
+                # Titre du panneau
+                stats_title_font = font.Font(None, 34)
+                stats_title = stats_title_font.render("Statistiques", True, TEXTE)
+                stats_title_rect = stats_title.get_rect(center=(stats_panel_width // 2, 30))
+                stats_panel.blit(stats_title, stats_title_rect)
+                
+                # Récupérer les données de progression
+                progression = hover_profile.get("progression", {"niveaux_debloques": [1], "elements_decouverts": []})
+                
+                # Statistiques à afficher
+                niveaux_debloques = progression.get("niveaux_debloques", [1])
+                elements_decouverts = progression.get("elements_decouverts", [])
+                
+                # Récupérer ou calculer le temps de jeu (ajouter cette donnée au profil si non présente)
+                playtime = hover_profile.get("playtime", 0)  # En secondes
+                hours = playtime // 3600
+                minutes = (playtime % 3600) // 60
+                seconds = playtime % 60
+                playtime_str = f"{hours}h {minutes}m {seconds}s"
+                
+                # Récupérer ou calculer le nombre de combinaisons (ajouter cette donnée au profil si non présente)
+                combinations = hover_profile.get("combinations", len(elements_decouverts))
+                
+                # Afficher les statistiques
+                stats_font = font.Font(None, 28)
+                stats_data_font = font.Font(None, 30)
+                line_height = 40
+                start_y = 80
+                
+                # Niveaux débloqués
+                stats_panel.blit(stats_font.render("Niveaux débloqués:", True, TEXTE_INTERACTIF), (20, start_y))
+                niveaux_text = stats_data_font.render(f"{len(niveaux_debloques)} / 8", True, INDICATEUR_NOUVEAU)
+                stats_panel.blit(niveaux_text, (stats_panel_width - niveaux_text.get_width() - 20, start_y))
+                
+                # Niveau max atteint
+                stats_panel.blit(stats_font.render("Niveau max:", True, TEXTE_INTERACTIF), (20, start_y + line_height))
+                niveau_max_text = stats_data_font.render(f"Niveau {max(niveaux_debloques)}", True, INDICATEUR_NOUVEAU)
+                stats_panel.blit(niveau_max_text, (stats_panel_width - niveau_max_text.get_width() - 20, start_y + line_height))
+                
+                # Éléments découverts
+                stats_panel.blit(stats_font.render("Éléments découverts:", True, TEXTE_INTERACTIF), (20, start_y + 2 * line_height))
+                elements_text = stats_data_font.render(f"{len(elements_decouverts)} / 30", True, INDICATEUR_NOUVEAU)
+                stats_panel.blit(elements_text, (stats_panel_width - elements_text.get_width() - 20, start_y + 2 * line_height))
+                
+                # Combinaisons réalisées
+                stats_panel.blit(stats_font.render("Combinaisons:", True, TEXTE_INTERACTIF), (20, start_y + 3 * line_height))
+                combo_text = stats_data_font.render(f"{combinations}", True, INDICATEUR_NOUVEAU)
+                stats_panel.blit(combo_text, (stats_panel_width - combo_text.get_width() - 20, start_y + 3 * line_height))
+                
+                # Appliquer le panneau sur l'écran
+                ecr.blit(stats_panel, (stats_panel_x, stats_panel_y))
+                
+                # Trouver le bouton du profil survolé
+                for i, profile in enumerate(profile_list):
+                    if profile["id"] == hover_profile["id"]:
+                        hovered_btn_rect = Rect(
+                            panel_x + (panel_width - profile_btn_width) // 2,
+                            profile_y + i * (profile_btn_height + profile_btn_spacing),
+                            profile_btn_width,
+                            profile_btn_height
+                        )
+                        
+                        # Vérifier si le bouton est visible
+                        if content_area.y <= hovered_btn_rect.centery <= content_area.bottom:
+                            # Dessiner une ligne pointillée semi-transparente comme connecteur
+                            arrow_start_x = hovered_btn_rect.right
+                            arrow_start_y = hovered_btn_rect.centery
+                            arrow_end_x = stats_panel_x
+                            arrow_end_y = stats_panel_y + stats_panel_height // 2
+                            
+                            points = []
+                            steps = 20
+                            for t in range(steps + 1):
+                                t_normalized = t / steps
+                                x = arrow_start_x + t_normalized * (arrow_end_x - arrow_start_x)
+                                y = arrow_start_y + 4 * sin(t_normalized * 3.14) * (1 - t_normalized)
+                                
+                                if t % 2 == 0:  # Points alternés pour effet pointillé
+                                    points.append((x, y))
+                            
+                            # Dessiner les points de la ligne pointillée
+                            for point in points:
+                                draw.circle(ecr, (150, 150, 150, 150), point, 2)
+                        
+                        break
         
         # Gestion des événements
         for evt in event.get():
