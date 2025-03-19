@@ -77,7 +77,7 @@ def loading_screen():
     min_duration = 5000  # 5 secondes en millisecondes
     
     # Ajouter un logo ou un titre du jeu centré verticalement
-    titre_jeu = police_titre.render("Elescape", True, NOM_JEU)
+    titre_jeu = police_titre.render("Vitanox", True, NOM_JEU)
     titre_rect = titre_jeu.get_rect(center=(lrg // 2, htr // 2 - 120))
     
     # Boucle d'animation

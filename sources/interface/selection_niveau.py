@@ -179,7 +179,7 @@ def selection_niveau():
     subtitle_font = font.Font(None, 40)
     level_font = font.Font(None, 40)
     
-    title = title_font.render("Elescape", True, NOM_JEU)
+    title = title_font.render("Vitanox", True, NOM_JEU)
     
     title_rect = title.get_rect(center=(lrg//2, htr//8))
     
