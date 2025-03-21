@@ -92,11 +92,37 @@ def set_active_profile(profile_id):
     except Exception as e:
         print(f"Erreur lors de la définition du profil actif: {e}")
         return False
+# 1. Ajouter une fonction de vérification de nom de profil (après les autres fonctions)
+
+def profile_name_exists(name):
+    """
+    Vérifie si un profil avec ce nom existe déjà.
+    """
+    profiles = load_or_create_profiles()
+    for profile in profiles.get("profiles", []):
+        if profile["name"].lower() == name.lower():  # Comparaison insensible à la casse
+            return True
+    return False
 
 def create_profile(name):
     """
     Crée un nouveau profil avec un ID unique et une progression par défaut.
     """
+    # Générer un ID unique
+    profile_id = str(uuid.uuid4())
+    
+    # Créer une progression par défaut
+    progression = {"niveaux_debloques": [1], "elements_decouverts": []}
+    
+def create_profile(name):
+    """
+    Crée un nouveau profil avec un ID unique et une progression par défaut.
+    Retourne l'ID du profil créé ou None si le nom existe déjà.
+    """
+    # Vérifier si le nom existe déjà
+    if profile_name_exists(name):
+        return None
+        
     # Générer un ID unique
     profile_id = str(uuid.uuid4())
     
@@ -189,9 +215,13 @@ def selection_profil():
     profiles = load_or_create_profiles()
     active_profile_id = profiles.get("active_profile")
     
+    # Messages d'erreur
+    error_message = ""
+    error_display_time = 0
+    
     # Dimensions
     panel_width = 600
-    panel_height = 500
+    panel_height = 550  # Augmenté pour avoir plus d'espace vertical
     panel_x = (lrg - panel_width) // 2
     panel_y = (htr - panel_height) // 2
     
@@ -202,7 +232,7 @@ def selection_profil():
     
     # Bouton "Utiliser ce profil" (remplace le bouton de retour)
     use_profile_btn = {
-        "rect": Rect(panel_x + (panel_width - profile_btn_width) // 2, panel_y + panel_height - 180, profile_btn_width, 60),
+        "rect": Rect(panel_x + (panel_width - profile_btn_width) // 2, panel_y + panel_height - 140, profile_btn_width, 60),
         "text": "Utiliser ce profil",
         "hover": False,
         "a_joue_son": False
@@ -211,7 +241,7 @@ def selection_profil():
     # Bouton de création de profil
     create_btn = {
         "rect": Rect(panel_x + (panel_width - profile_btn_width) // 2, 
-                   panel_y + panel_height - 100, 
+                   panel_y + panel_height - 60, 
                    profile_btn_width, 60),
         "text": "Créer un nouveau profil",
         "hover": False,
@@ -339,6 +369,13 @@ def selection_profil():
             cancel_text = font.Font(None, 35).render(cancel_btn["text"], True, TEXTE)
             cancel_text_rect = cancel_text.get_rect(center=cancel_btn["rect"].center)
             ecr.blit(cancel_text, cancel_text_rect)
+        
+            # Afficher le message d'erreur si nécessaire
+            if error_message and current_time - error_display_time < 3000:  # Afficher pendant 3 secondes
+                error_font = font.Font(None, 28)
+                error_text = error_font.render(error_message, True, BOUTON_REINIT_FOND)
+                error_rect = error_text.get_rect(center=(panel_x + panel_width // 2, input_box.bottom + 100))
+                ecr.blit(error_text, error_rect)
             
         elif deleting_profile is not None:
             # Confirmation de suppression
@@ -402,9 +439,19 @@ def selection_profil():
             profile_list = profiles.get("profiles", [])
             
             # Zone de contenu pour les profils avec clippage
-            content_area = Rect(panel_x + 50, panel_y + 100, panel_width - 100, panel_height - 220)
+            content_area = Rect(panel_x + 50, panel_y + 100, panel_width - 130, panel_height - 260)  # Réduire la largeur pour faire place à la barre
             draw.rect(ecr, VOLUME_BAR_BG, content_area, border_radius=15)
             draw.rect(ecr, VOLUME_BAR_BORDER, content_area, 2, border_radius=15)
+            
+            # Paramètres de la barre de défilement
+            scrollbar_width = 20  # Barre plus large et visible
+            scrollbar_height = content_area.height 
+            scrollbar_x = content_area.right + 10  # Positionner à droite de la zone de contenu
+            scrollbar_y = content_area.y
+            
+            # Dessiner le fond de la barre de défilement (toujours visible)
+            scrollbar_bg = Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height)
+            draw.rect(ecr, BARRE_FOND_BLANC, scrollbar_bg, border_radius=10)
             
             # Limiter le scroll
             max_scroll = max(0, len(profile_list) - max_visible_profiles)
@@ -420,7 +467,7 @@ def selection_profil():
                 btn_rect = Rect(
                     panel_x + (panel_width - profile_btn_width) // 2,
                     profile_y + i * (profile_btn_height + profile_btn_spacing),
-                    profile_btn_width,
+                    profile_btn_width - 30,  # Réduire légèrement pour s'adapter à la zone plus étroite
                     profile_btn_height
                 )
                 
@@ -492,27 +539,24 @@ def selection_profil():
             # Réinitialiser la zone de clippage
             ecr.set_clip(None)
             
-            # Dessiner la scrollbar si nécessaire
-            if len(profile_list) > max_visible_profiles:
-                scrollbar_width = 10
-                scrollbar_height = content_area.height - 40
-                scrollbar_x = content_area.right - scrollbar_width - 10
-                scrollbar_y = content_area.y + 20
-                
-                # Fond de la scrollbar
-                draw.rect(ecr, BARRE_FOND_BLANC, Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height), border_radius=5)
-                
-                # Poignée (thumb) de la scrollbar
-                thumb_height = max(30, scrollbar_height * (max_visible_profiles / len(profile_list)))
-                thumb_pos = scrollbar_y + (scroll_offset / max_scroll) * (scrollbar_height - thumb_height) if max_scroll > 0 else scrollbar_y
+            # Dessiner la poignée de la scrollbar
+            if len(profile_list) > 0:  # Toujours dessiner la barre, même si pas besoin de défilement
+                if len(profile_list) > max_visible_profiles:
+                    # Si besoin de défilement
+                    thumb_height = max(50, scrollbar_height * (max_visible_profiles / len(profile_list)))
+                    thumb_pos = scrollbar_y + (scroll_offset / max_scroll) * (scrollbar_height - thumb_height) if max_scroll > 0 else scrollbar_y
+                else:
+                    # Si tout est visible
+                    thumb_height = scrollbar_height
+                    thumb_pos = scrollbar_y
                 
                 thumb_rect = Rect(scrollbar_x, thumb_pos, scrollbar_width, thumb_height)
-                draw.rect(ecr, VOLUME_HANDLE, thumb_rect, border_radius=5)
-                draw.rect(ecr, VOLUME_BAR_BORDER, thumb_rect, 1, border_radius=5)
+                draw.rect(ecr, VOLUME_HANDLE, thumb_rect, border_radius=10)
+                draw.rect(ecr, VOLUME_BAR_BORDER, thumb_rect, 1, border_radius=10)
             
             # Bouton "Utiliser ce profil"
             use_profile_btn["rect"] = Rect(panel_x + (panel_width - profile_btn_width) // 2, 
-                                          panel_y + panel_height - 180, 
+                                          panel_y + panel_height - 140, 
                                           profile_btn_width, 60)
             use_profile_btn["hover"] = use_profile_btn["rect"].collidepoint(mouse.get_pos())
             use_color = MENU_JEU_BUTTON_HOVER if use_profile_btn["hover"] else MENU_JEU_BUTTON
@@ -529,12 +573,10 @@ def selection_profil():
             elif not use_profile_btn["hover"]:
                 use_profile_btn["a_joue_son"] = False
                 
-            # Déplacer le bouton de création un peu plus bas
-            create_btn["rect"] = Rect(panel_x + (panel_width - profile_btn_width) // 2, 
-                                     panel_y + panel_height - 100, 
-                                     profile_btn_width, 60)
-            
             # Bouton de création de profil
+            create_btn["rect"] = Rect(panel_x + (panel_width - profile_btn_width) // 2, 
+                                     panel_y + panel_height - 60, 
+                                     profile_btn_width, 60)
             create_btn["hover"] = create_btn["rect"].collidepoint(mouse.get_pos())
             create_color = MENU_JEU_BUTTON_HOVER if create_btn["hover"] else MENU_JEU_BUTTON
             draw.rect(ecr, create_color, create_btn["rect"], border_radius=15)
@@ -627,7 +669,7 @@ def selection_profil():
                         hovered_btn_rect = Rect(
                             panel_x + (panel_width - profile_btn_width) // 2,
                             profile_y + i * (profile_btn_height + profile_btn_spacing),
-                            profile_btn_width,
+                            profile_btn_width - 30,  # Ajusté pour correspondre à la largeur des boutons
                             profile_btn_height
                         )
                         
@@ -745,9 +787,14 @@ def selection_profil():
                             # Créer le profil si le nom n'est pas vide
                             if new_profile_name.strip():
                                 profile_id = create_profile(new_profile_name)
-                                # Recharger les profils
-                                profiles = load_or_create_profiles()
-                                creating_profile = False
+                                if profile_id:
+                                    # Recharger les profils
+                                    profiles = load_or_create_profiles()
+                                    creating_profile = False
+                                else:
+                                    # Afficher un message d'erreur
+                                    error_message = "Ce nom de profil existe déjà"
+                                    error_display_time = current_time
                         
                         # Clic sur le bouton Annuler
                         elif cancel_btn["rect"].collidepoint(evt.pos):
@@ -784,7 +831,7 @@ def selection_profil():
                             btn_rect = Rect(
                                 panel_x + (panel_width - profile_btn_width) // 2,
                                 profile_y + i * (profile_btn_height + profile_btn_spacing),
-                                profile_btn_width,
+                                profile_btn_width - 30,  # Ajusté pour correspondre
                                 profile_btn_height
                             )
                             
@@ -845,6 +892,13 @@ def selection_profil():
                                     # Recharger les profils
                                     profiles = load_or_create_profiles()
                                     active_profile_id = profiles.get("active_profile")
+                        
+                        # Gestion du clic sur la barre de défilement
+                        scrollbar_bg = Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height)
+                        if scrollbar_bg.collidepoint(evt.pos):
+                            relative_y = evt.pos[1] - scrollbar_y
+                            scroll_offset = (relative_y / scrollbar_height) * max_scroll
+                            scroll_offset = max(0, min(scroll_offset, max_scroll))
                 
                 elif evt.button == 4:  # Molette vers le haut
                     if not creating_profile and deleting_profile is None:
@@ -857,8 +911,19 @@ def selection_profil():
                         scroll_offset = min(max_scroll, scroll_offset + 0.5)
             
             elif evt.type == MOUSEMOTION:
-                # Gestion du survol pour les sons
-                pass
+                # Gestion du déplacement pour la barre de défilement
+                if evt.buttons[0] == 1:  # Bouton gauche enfoncé
+                    # Vérifier si on fait glisser la poignée de défilement
+                    if len(profile_list) > max_visible_profiles:
+                        thumb_height = max(50, scrollbar_height * (max_visible_profiles / len(profile_list)))
+                        thumb_pos = scrollbar_y + (scroll_offset / max_scroll) * (scrollbar_height - thumb_height)
+                        thumb_rect = Rect(scrollbar_x, thumb_pos, scrollbar_width, thumb_height)
+                        
+                        if thumb_rect.collidepoint(evt.pos) or any(b for b in evt.buttons if b) and scrollbar_bg.collidepoint(evt.pos):
+                            # Si on a déjà cliqué sur la poignée et qu'on la fait glisser
+                            relative_y = evt.pos[1] - scrollbar_y
+                            scroll_offset = (relative_y / scrollbar_height) * max_scroll
+                            scroll_offset = max(0, min(scroll_offset, max_scroll))
         
         display.flip()
         clock.tick(60)
