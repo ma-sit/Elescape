@@ -85,7 +85,7 @@ def dessiner_menu(ecr, image):
 
     # Affichage du titre
     police_titre = font.Font(None, taille_titre)
-    txt_titre = police_titre.render("Vitanox", True, NOM_JEU)
+    txt_titre = police_titre.render("Elescape", True, NOM_JEU)
     rect_titre = txt_titre.get_rect(center=(lrg // 2, htr // 4))
     ecr.blit(txt_titre, rect_titre)
     
@@ -99,7 +99,7 @@ def dessiner_menu(ecr, image):
     
     # Description du jeu sous les boutons dans un rectangle semi-transparent
     description = [
-        "Bienvenue dans Vitanox, un jeu de découverte et de création !",
+        "Bienvenue dans Elescape, un jeu de découverte et de création !",
         "Combinez des éléments, explorez des environnements divers et variés,",
         "et découvrez plus de 30 objets uniques dans plusieurs niveaux captivants."
     ]

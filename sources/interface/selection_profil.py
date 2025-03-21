@@ -200,20 +200,20 @@ def selection_profil():
     profile_btn_height = 80
     profile_btn_spacing = 20
     
+    # Bouton "Utiliser ce profil" (remplace le bouton de retour)
+    use_profile_btn = {
+        "rect": Rect(panel_x + (panel_width - profile_btn_width) // 2, panel_y + panel_height - 180, profile_btn_width, 60),
+        "text": "Utiliser ce profil",
+        "hover": False,
+        "a_joue_son": False
+    }
+    
     # Bouton de création de profil
     create_btn = {
         "rect": Rect(panel_x + (panel_width - profile_btn_width) // 2, 
                    panel_y + panel_height - 100, 
                    profile_btn_width, 60),
         "text": "Créer un nouveau profil",
-        "hover": False,
-        "a_joue_son": False
-    }
-    
-    # Bouton de retour
-    back_btn = {
-        "rect": Rect(panel_x + 20, panel_y + 20, 40, 40),
-        "text": "←",
         "hover": False,
         "a_joue_son": False
     }
@@ -272,22 +272,8 @@ def selection_profil():
         title_rect = title_surface.get_rect(center=(panel_x + panel_width // 2, panel_y + 50))
         ecr.blit(title_surface, title_rect)
         
-        # Dessiner le bouton de retour
-        back_btn["hover"] = back_btn["rect"].collidepoint(mouse.get_pos())
-        back_color = PARAM_BUTTON_HOVER if back_btn["hover"] else PARAM_BUTTON_BG
-        draw.rect(ecr, back_color, back_btn["rect"], border_radius=15)
-        draw.rect(ecr, PARAM_PANEL_BORDER, back_btn["rect"], 2, border_radius=15)
-        
-        back_font = font.Font(None, 40)
-        back_text = back_font.render(back_btn["text"], True, TEXTE)
-        back_rect = back_text.get_rect(center=back_btn["rect"].center)
-        ecr.blit(back_text, back_rect)
-        
-        if back_btn["hover"] and not back_btn["a_joue_son"]:
-            son_survol.play()
-            back_btn["a_joue_son"] = True
-        elif not back_btn["hover"]:
-            back_btn["a_joue_son"] = False
+        # Le bouton de retour est remplacé par le bouton "Utiliser ce profil"
+        # Il sera dessiné ailleurs dans le code, en bas du panneau
         
         if creating_profile:
             # Interface de création de profil
@@ -524,6 +510,30 @@ def selection_profil():
                 draw.rect(ecr, VOLUME_HANDLE, thumb_rect, border_radius=5)
                 draw.rect(ecr, VOLUME_BAR_BORDER, thumb_rect, 1, border_radius=5)
             
+            # Bouton "Utiliser ce profil"
+            use_profile_btn["rect"] = Rect(panel_x + (panel_width - profile_btn_width) // 2, 
+                                          panel_y + panel_height - 180, 
+                                          profile_btn_width, 60)
+            use_profile_btn["hover"] = use_profile_btn["rect"].collidepoint(mouse.get_pos())
+            use_color = MENU_JEU_BUTTON_HOVER if use_profile_btn["hover"] else MENU_JEU_BUTTON
+            draw.rect(ecr, use_color, use_profile_btn["rect"], border_radius=15)
+            draw.rect(ecr, MENU_JEU_BORDER, use_profile_btn["rect"], 2, border_radius=15)
+            
+            use_text = font.Font(None, 35).render(use_profile_btn["text"], True, TEXTE)
+            use_text_rect = use_text.get_rect(center=use_profile_btn["rect"].center)
+            ecr.blit(use_text, use_text_rect)
+            
+            if use_profile_btn["hover"] and not use_profile_btn["a_joue_son"]:
+                son_survol.play()
+                use_profile_btn["a_joue_son"] = True
+            elif not use_profile_btn["hover"]:
+                use_profile_btn["a_joue_son"] = False
+                
+            # Déplacer le bouton de création un peu plus bas
+            create_btn["rect"] = Rect(panel_x + (panel_width - profile_btn_width) // 2, 
+                                     panel_y + panel_height - 100, 
+                                     profile_btn_width, 60)
+            
             # Bouton de création de profil
             create_btn["hover"] = create_btn["rect"].collidepoint(mouse.get_pos())
             create_color = MENU_JEU_BUTTON_HOVER if create_btn["hover"] else MENU_JEU_BUTTON
@@ -543,8 +553,8 @@ def selection_profil():
             # Afficher le panneau de statistiques si un profil est survolé
             if hover_profile and not creating_profile and deleting_profile is None:
                 # Calculer les dimensions et la position du panneau
-                stats_panel_width = 280
-                stats_panel_height = 240
+                stats_panel_width = 350  # Augmenté de 280 à 350
+                stats_panel_height = 300  # Augmenté de 240 à 300
                 stats_panel_x = panel_x + panel_width + 20  # Positionné à droite du panneau principal
                 stats_panel_y = panel_y + (panel_height - stats_panel_height) // 2  # Centré verticalement
                 
@@ -583,9 +593,9 @@ def selection_profil():
                 combinations = hover_profile.get("combinations", len(elements_decouverts))
                 
                 # Afficher les statistiques
-                stats_font = font.Font(None, 28)
-                stats_data_font = font.Font(None, 30)
-                line_height = 40
+                stats_font = font.Font(None, 32)  # Augmenté de 28 à 32
+                stats_data_font = font.Font(None, 34)  # Augmenté de 30 à 34
+                line_height = 45  # Augmenté pour accommoder les polices plus grandes
                 start_y = 80
                 
                 # Niveaux débloqués
@@ -690,14 +700,19 @@ def selection_profil():
                     
             elif evt.type == MOUSEBUTTONDOWN:
                 if evt.button == 1:
-                    # Clic sur le bouton de retour
-                    if back_btn["rect"].collidepoint(evt.pos):
+                    # Clic sur le bouton "Utiliser ce profil"
+                    if use_profile_btn["rect"].collidepoint(evt.pos):
                         son_clicmenu.play()
+                        # Si on est en mode création ou suppression, on annule
                         if creating_profile:
                             creating_profile = False
                         elif deleting_profile is not None:
                             deleting_profile = None
                         else:
+                            # Si un profil est survolé, l'activer et quitter
+                            if hover_profile:
+                                set_active_profile(hover_profile["id"])
+                            # Sinon, juste quitter
                             running = False
                     
                     # Gestion selon le mode actuel

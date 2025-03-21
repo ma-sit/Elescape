@@ -283,7 +283,7 @@ def creer_objet(new_id, img, target_obj, objets):
 # Classe du tutoriel amélioré
 class TutorielAmeliore:
     """
-    Classe pour gérer le tutoriel amélioré du jeu Vitanox avec des effets visuels
+    Classe pour gérer le tutoriel amélioré du jeu Elescape avec des effets visuels
     et une progression plus interactive.
     """
     def __init__(self, screen_width, screen_height, scale_factor=1.0):
@@ -295,7 +295,7 @@ class TutorielAmeliore:
         # Étapes du tutoriel
         self.etapes = [
             {
-                "texte": "Bienvenue sur Vitanox !",
+                "texte": "Bienvenue sur Elescape !",
                 "auto_avance": True,
                 "delai": 2000,
                 "action_requise": False,
@@ -405,7 +405,7 @@ def page_jeu(niveau):
     tutorial_active = niveau == 1
     tutorial_step = 0
     tutorial_steps = [
-        "Bienvenue sur Vitanox",
+        "Bienvenue sur Elescape",
         "Clique droit n'importe où pour déplacer ton personnage",
         "Clique gauche sur un objet pour le sélectionner",
         "Déplace-le vers un autre objet compatible pour les fusionner",
