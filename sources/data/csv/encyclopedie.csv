@@ -33,3 +33,4 @@ ID;Nom;Creations;DR;Image;Type;Mission
 31;mangeoire;;0;data/images/elements/mangeoire.png;classique;
 32;vieux monsieur;;1;data/images/autres/niv1.png;objectif;J'ai froid, peux-tu me faire un feu de camp?
 33;Panneau d'information;;1;data/images/autres/book-open-text.png;objectif;Ce niveau arrive prochainement
+34;Panneau;;1;data/images/autres/panneau.png;objectif;Petite maison à consrtuire
