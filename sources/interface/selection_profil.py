@@ -221,7 +221,7 @@ def selection_profil():
     
     # Dimensions
     panel_width = 600
-    panel_height = 550  # Augmenté pour avoir plus d'espace vertical
+    panel_height = 600  
     panel_x = (lrg - panel_width) // 2
     panel_y = (htr - panel_height) // 2
     
