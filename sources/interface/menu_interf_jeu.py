@@ -1,3 +1,6 @@
+#Projet : Elescape
+#Auteurs : Mathis MENNESSIER ; Julien MONGENET ; Simon BILLE
+
 from pygame import *
 import json
 from shared.components.config import *

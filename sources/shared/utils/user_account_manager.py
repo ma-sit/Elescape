@@ -1,3 +1,6 @@
+#Projet : Elescape
+#Auteurs : Mathis MENNESSIER ; Julien MONGENET ; Simon BILLE
+
 import os
 import json
 import time

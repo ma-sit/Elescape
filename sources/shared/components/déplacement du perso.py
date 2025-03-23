@@ -1,3 +1,7 @@
+#Projet : Elescape
+#Auteurs : Mathis MENNESSIER ; Julien MONGENET ; Simon BILLE
+
+
 import pygame
 import sys
 import math

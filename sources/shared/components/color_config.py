@@ -1,3 +1,5 @@
+#Projet : Elescape
+#Auteurs : Mathis MENNESSIER ; Julien MONGENET ; Simon BILLE
 
 # Couleurs générales
 BORDURE = (50, 50, 50)

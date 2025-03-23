@@ -1,3 +1,6 @@
+#Projet : Elescape
+#Auteurs : Mathis MENNESSIER ; Julien MONGENET ; Simon BILLE
+
 from pygame import *
 from shared.components.color_config import *  # Import des couleurs standardisées
 
